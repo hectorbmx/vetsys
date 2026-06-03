@@ -29,6 +29,17 @@
 
         @csrf
 
+        @if ($errors->any())
+            <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+                <p class="font-black uppercase tracking-widest text-[10px] mb-2">Revisa la informacion</p>
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
             
             {{-- Header del Card con contraste --}}
@@ -69,6 +80,9 @@
                                class="w-full bg-slate-50 border-slate-200 rounded-xl pl-[72px] pr-4 py-3 text-sm font-medium focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all"
                                placeholder="clinica-sanjose">
                     </div>
+                    @error('slug')
+                        <p class="text-[10px] font-bold text-red-500 uppercase tracking-wide mt-1 ml-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="space-y-2">
@@ -114,9 +128,12 @@
                                 class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all cursor-pointer">
                             <option value="">Seleccionar</option>
                             @foreach($plans as $plan)
-                                <option value="{{ $plan->id }}">{{ $plan->name }}</option>
+                                <option value="{{ $plan->id }}" @selected(old('plan_id') == $plan->id)>{{ $plan->name }}</option>
                             @endforeach
                         </select>
+                        @error('plan_id')
+                            <p class="text-[10px] font-bold text-red-500 uppercase tracking-wide mt-1 ml-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="space-y-2">
@@ -125,10 +142,13 @@
                         </label>
                         <select name="status"
                                 class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all cursor-pointer">
-                            <option value="active">Activo</option>
-                            <option value="inactive">Inactivo</option>
-                            <option value="suspended">Suspendido</option>
+                            <option value="inactive" @selected(old('status', 'inactive') === 'inactive')>Inactivo</option>
+                            <option value="active" @selected(old('status', 'inactive') === 'active')>Activo</option>
+                            <option value="suspended" @selected(old('status', 'inactive') === 'suspended')>Suspendido</option>
                         </select>
+                        @error('status')
+                            <p class="text-[10px] font-bold text-red-500 uppercase tracking-wide mt-1 ml-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 

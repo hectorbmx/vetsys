@@ -77,19 +77,23 @@ public function show(Tenant $tenant)
     }
     public function store(Request $request)
     {
+        $request->merge([
+            'slug' => Str::slug($request->input('slug') ?: $request->input('name')),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:tenants,slug'],
+            'slug' => ['required', 'string', 'max:255', 'unique:tenants,slug'],
             'business_name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
-            'plan_id' => ['required', 'exists:plans,id'],
             'status' => ['required', 'in:active,inactive,suspended,cancelled'],
+            'plan_id' => [
+                Rule::requiredIf(fn () => $request->input('status') === 'active'),
+                'nullable',
+                'exists:plans,id',
+            ],
         ]);
-
-        $validated['slug'] = $validated['slug']
-            ? Str::slug($validated['slug'])
-            : Str::slug($validated['name']);
 
         $validated['is_active'] = $validated['status'] === 'active';
         $validated['created_by'] = auth()->id();
