@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\ReportesController;
 
 use App\Http\Controllers\Auth\InvitationController;
 
+use App\Http\Controllers\Auth\ActivationController;
+
 use App\Http\Controllers\Auth\LoginController;
 
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
@@ -36,6 +38,10 @@ use App\Http\Controllers\Client\StatementController;
 Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.accept');
 
 Route::post('/invitation/{token}', [InvitationController::class, 'store'])->name('invitation.store');
+
+Route::get('/activar-cuenta', [ActivationController::class, 'show'])->name('activation.show');
+
+Route::post('/activar-cuenta', [ActivationController::class, 'store'])->name('activation.store');
 
 $redirectAuthenticatedUser = function () {
     $user = auth()->user();

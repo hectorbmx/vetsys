@@ -16,7 +16,7 @@ class InvitationController extends Controller
             ->firstOrFail();
 
         if ($user->invitation_expires_at && $user->invitation_expires_at->isPast()) {
-            abort(403, 'La invitación ha expirado.');
+            abort(403, 'La invitacion ha expirado.');
         }
 
         return view('auth.invitation', compact('token', 'user'));
@@ -29,7 +29,7 @@ class InvitationController extends Controller
             ->firstOrFail();
 
         if ($user->invitation_expires_at && $user->invitation_expires_at->isPast()) {
-            return back()->with('error', 'La invitación ha expirado.');
+            return back()->with('error', 'La invitacion ha expirado.');
         }
 
         $validated = $request->validate([
@@ -47,6 +47,6 @@ class InvitationController extends Controller
 
         return redirect()
             ->route('login')
-            ->with('success', 'Cuenta activada correctamente. Ya puedes iniciar sesión.');
+            ->with('status', 'Cuenta activada correctamente. Ya puedes iniciar sesion.');
     }
 }

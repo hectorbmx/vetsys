@@ -72,4 +72,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(User::class, 'created_by');
     }
+
+    public static function activationCodeHash(string $code): string
+    {
+        return hash('sha256', 'activation-code:' . $code);
+    }
 }

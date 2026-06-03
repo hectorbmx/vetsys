@@ -9,13 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use App\Mail\TenantUserInvitationMail;
-use Illuminate\Support\Facades\Mail;
-
 use App\Models\TenantSubscription;
 use App\Models\TenantPayment;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Spatie\Permission\Models\Role;
 
 use App\Models\User;
 
@@ -121,7 +119,11 @@ public function show(Tenant $tenant)
         ],
     ]);
 
-    $token = Str::random(64);
+    $activationCode = (string) random_int(100000, 999999);
+
+    foreach (['client-admin', 'client-user'] as $roleName) {
+        Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+    }
 
     $user = User::create([
         'tenant_id' => $tenant->id,
@@ -135,21 +137,20 @@ public function show(Tenant $tenant)
         'is_active' => false,
 
         'created_by' => auth()->id(),
-        'invitation_token' => hash('sha256', $token),
+        'invitation_token' => User::activationCodeHash($activationCode),
         'invitation_expires_at' => now()->addDays(7),
     ]);
 
     $user->assignRole($validated['role']);
 
-    // Por ahora probamos el link sin correo.
-    $invitationUrl = route('invitation.accept', $token);
-    Mail::to($user->email)->send(
-        new TenantUserInvitationMail($user, $tenant, $invitationUrl)
-    );
+    $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
+    session()->flash('activation_code', $activationCode);
+    session()->flash('activation_email', $user->email);
+    session()->flash('activation_expires_at', $activationExpiresAt);
 
   return redirect()
     ->route('admin.tenants.show', $tenant)
-    ->with('success', 'Usuario invitado correctamente. Se envió el enlace de activación por correo.');
+    ->with('success', 'Usuario registrado correctamente. Comparte el codigo de activacion con el tenant.');
 }
 
 public function assignPlan(Request $request, Tenant $tenant)

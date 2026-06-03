@@ -7,6 +7,36 @@
 {{-- Inicializamos Alpine en el contenedor principal --}}
 <div x-data="{ userModal: false }" class="space-y-8">
 
+    @if(session('activation_code'))
+        <div class="bg-white border border-[#38B2AC]/30 rounded-[24px] shadow-sm overflow-hidden">
+            <div class="p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#38B2AC]">
+                        Codigo de activacion generado
+                    </p>
+                    <h2 class="text-3xl font-black text-[#0F172A] tracking-widest mt-2">
+                        {{ session('activation_code') }}
+                    </h2>
+                    <p class="text-sm text-slate-500 font-semibold mt-2">
+                        Usuario: {{ session('activation_email') }} · Expira: {{ session('activation_expires_at') }}
+                    </p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{{ route('activation.show') }}"
+                       class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#0F172A] text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition">
+                        Ir a activacion
+                    </a>
+                    <button type="button"
+                            x-data
+                            @click="navigator.clipboard.writeText('{{ session('activation_code') }}')"
+                            class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-slate-200 text-[#0F172A] text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition">
+                        Copiar codigo
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Header Compacto --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div class="flex items-center gap-4">
@@ -479,7 +509,7 @@
                         </div>
                     </div>
                     
-                    <p class="text-[10px] text-slate-400 pt-4 border-t border-slate-100 font-medium italic">Se enviará automáticamente un token de verificación para que el miembro configure su contraseña.</p>
+                    <p class="text-[10px] text-slate-400 pt-4 border-t border-slate-100 font-medium italic">Se generara un codigo de activacion de 6 digitos para que el miembro configure su contrasena.</p>
                 </div>
 
                 {{-- Footer de Acciones --}}
@@ -508,7 +538,9 @@
         message: '', 
         type: 'success',
         init() {
-            @if(session('success'))
+            @if(session('activation_code'))
+                this.pop('Usuario registrado correctamente. Comparte el codigo de activacion con el tenant.', 'success');
+            @elseif(session('success'))
                 this.pop('{{ session('success') }}', 'success');
             @endif
             @if(session('error'))

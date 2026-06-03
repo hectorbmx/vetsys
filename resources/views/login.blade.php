@@ -176,12 +176,20 @@
         <div class="my-7 border-t border-slate-100"></div>
 
         {{-- Contact sales --}}
-        <p class="text-center text-sm text-slate-500">
-            ¿No tienes una cuenta?
-            <a href="#" class="font-bold text-slate-800 hover:text-blue-600 transition-colors">
-                Contacta a ventas
-            </a>
-        </p>
+        <div class="space-y-2 text-center text-sm text-slate-500">
+            <p>
+                Tienes un codigo de activacion?
+                <a href="{{ route('activation.show') }}" class="font-bold text-slate-800 hover:text-blue-600 transition-colors">
+                    Activa tu cuenta
+                </a>
+            </p>
+            <p>
+                No tienes una cuenta?
+                <a href="#" class="font-bold text-slate-800 hover:text-blue-600 transition-colors">
+                    Contacta a ventas
+                </a>
+            </p>
+        </div>
     </div>
 
     {{-- ── FOOTER NAV ── --}}
