@@ -84,6 +84,7 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::resource('tenants', TenantsController::class);
         Route::post('/tenants/{tenant}/users', [TenantsController::class, 'storeUser'])->name('tenants.users.store');
+        Route::post('/tenants/{tenant}/users/{user}/resend-activation-code', [TenantsController::class, 'resendActivationCode'])->name('tenants.users.resend-activation-code');
         Route::post('/planes/{plan}/sync-stripe', [PlanesController::class, 'syncStripe'])->name('planes.sync-stripe');
         Route::resource('planes', PlanesController::class);
         Route::get('/reportes', [ReportesController::class, 'index'])->name('reportes.index');

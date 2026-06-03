@@ -384,18 +384,34 @@
                                     <p class="text-xs text-slate-400 font-medium">{{ $user->email }}</p>
                                 </td>
                                 <td class="px-8 py-4">
-                                    <div class="flex gap-2">
+                                    <div class="flex flex-wrap gap-2">
                                         @foreach($user->getRoleNames() as $role)
                                             <span class="px-2 py-0.5 rounded bg-slate-100 text-[9px] font-black uppercase text-slate-600 tracking-tighter not-italic">
                                                 {{ $role }}
                                             </span>
                                         @endforeach
+                                        @if(!$user->is_active && !$user->invitation_accepted_at)
+                                            <span class="px-2 py-0.5 rounded {{ $user->invitation_expires_at?->isPast() ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700' }} text-[9px] font-black uppercase tracking-tighter not-italic">
+                                                {{ $user->invitation_expires_at?->isPast() ? 'Codigo expirado' : 'Pendiente activar' }}
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
-                                <td class="px-8 py-4 text-right">
+                                <td class="px-8 py-4">
+                                    <div class="flex items-center justify-end gap-3">
+                                        @if(!$user->is_active && !$user->invitation_accepted_at)
+                                            <form method="POST" action="{{ route('admin.tenants.users.resend-activation-code', [$tenant, $user]) }}">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="px-3 py-2 rounded-xl bg-[#0F172A] text-white text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-colors not-italic">
+                                                    Reenviar codigo
+                                                </button>
+                                            </form>
+                                        @endif
                                     <button class="text-slate-300 hover:text-red-500 transition-colors">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -538,9 +554,7 @@
         message: '', 
         type: 'success',
         init() {
-            @if(session('activation_code'))
-                this.pop('Usuario registrado correctamente. Comparte el codigo de activacion con el tenant.', 'success');
-            @elseif(session('success'))
+            @if(session('success'))
                 this.pop('{{ session('success') }}', 'success');
             @endif
             @if(session('error'))

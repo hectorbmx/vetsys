@@ -239,4 +239,33 @@ public function assignPlan(Request $request, Tenant $tenant)
         ->route('admin.tenants.show', $tenant)
         ->with('success', 'Plan asignado correctamente.');
 }
+
+public function resendActivationCode(Tenant $tenant, User $user)
+{
+    if ((int) $user->tenant_id !== (int) $tenant->id) {
+        abort(404);
+    }
+
+    if ($user->is_active || $user->invitation_accepted_at) {
+        return redirect()
+            ->route('admin.tenants.show', $tenant)
+            ->with('error', 'Este usuario ya activo su cuenta.');
+    }
+
+    $activationCode = (string) random_int(100000, 999999);
+
+    $user->update([
+        'invitation_token' => User::activationCodeHash($activationCode),
+        'invitation_expires_at' => now()->addDays(7),
+    ]);
+
+    $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
+    session()->flash('activation_code', $activationCode);
+    session()->flash('activation_email', $user->email);
+    session()->flash('activation_expires_at', $activationExpiresAt);
+
+    return redirect()
+        ->route('admin.tenants.show', $tenant)
+        ->with('success', 'Codigo de activacion regenerado correctamente.');
+}
 }
