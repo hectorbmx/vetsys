@@ -104,7 +104,7 @@ public function show(Tenant $tenant)
             ->route('admin.tenants.index')
             ->with('success', 'Cliente creado correctamente.');
     }
- public function storeUser(Request $request, Tenant $tenant)
+public function storeUser(Request $request, Tenant $tenant)
 {
     // dd($request->all());
     $validated = $request->validate([
@@ -155,6 +155,62 @@ public function show(Tenant $tenant)
   return redirect()
     ->route('admin.tenants.show', $tenant)
     ->with('success', 'Usuario registrado correctamente. Comparte el codigo de activacion con el tenant.');
+}
+
+public function resendTenantActivationCode(Tenant $tenant)
+{
+    if (!$tenant->email) {
+        return redirect()
+            ->route('admin.tenants.show', $tenant)
+            ->with('error', 'El cliente no tiene email corporativo registrado.');
+    }
+
+    foreach (['client-admin', 'client-user'] as $roleName) {
+        Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+    }
+
+    $user = User::where('email', $tenant->email)->first();
+
+    if ($user && (int) $user->tenant_id !== (int) $tenant->id) {
+        return redirect()
+            ->route('admin.tenants.show', $tenant)
+            ->with('error', 'El email corporativo ya esta asignado a otro usuario.');
+    }
+
+    if ($user && $user->invitation_accepted_at) {
+        return redirect()
+            ->route('admin.tenants.show', $tenant)
+            ->with('error', 'El administrador del cliente ya activo su cuenta.');
+    }
+
+    $user ??= new User([
+        'tenant_id' => $tenant->id,
+        'email' => $tenant->email,
+        'created_by' => auth()->id(),
+    ]);
+
+    $activationCode = (string) random_int(100000, 999999);
+
+    $user->fill([
+        'name' => $user->name ?: ($tenant->business_name ?: $tenant->name),
+        'password' => $user->password ?: Hash::make(Str::random(32)),
+        'is_active' => false,
+        'invitation_token' => User::activationCodeHash($activationCode),
+        'invitation_expires_at' => now()->addDays(7),
+        'invitation_accepted_at' => null,
+    ]);
+
+    $user->save();
+    $user->assignRole('client-admin');
+
+    $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
+    session()->flash('activation_code', $activationCode);
+    session()->flash('activation_email', $user->email);
+    session()->flash('activation_expires_at', $activationExpiresAt);
+
+    return redirect()
+        ->route('admin.tenants.show', $tenant)
+        ->with('success', 'Codigo de activacion del administrador generado correctamente.');
 }
 
 public function assignPlan(Request $request, Tenant $tenant)
@@ -250,7 +306,7 @@ public function resendActivationCode(Tenant $tenant, User $user)
         abort(404);
     }
 
-    if ($user->is_active) {
+    if ($user->invitation_accepted_at) {
         return redirect()
             ->route('admin.tenants.show', $tenant)
             ->with('error', 'Este usuario ya activo su cuenta.');
@@ -259,6 +315,7 @@ public function resendActivationCode(Tenant $tenant, User $user)
     $activationCode = (string) random_int(100000, 999999);
 
     $user->update([
+        'is_active' => false,
         'invitation_token' => User::activationCodeHash($activationCode),
         'invitation_expires_at' => now()->addDays(7),
         'invitation_accepted_at' => null,
