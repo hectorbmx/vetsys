@@ -390,7 +390,7 @@
                                                 {{ $role }}
                                             </span>
                                         @endforeach
-                                        @if(!$user->is_active && !$user->invitation_accepted_at)
+                                        @if(!$user->is_active)
                                             <span class="px-2 py-0.5 rounded {{ $user->invitation_expires_at?->isPast() ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700' }} text-[9px] font-black uppercase tracking-tighter not-italic">
                                                 {{ $user->invitation_expires_at?->isPast() ? 'Codigo expirado' : 'Pendiente activar' }}
                                             </span>
@@ -399,7 +399,7 @@
                                 </td>
                                 <td class="px-8 py-4">
                                     <div class="flex items-center justify-end gap-3">
-                                        @if(!$user->is_active && !$user->invitation_accepted_at)
+                                        @if(!$user->is_active)
                                             <form method="POST" action="{{ route('admin.tenants.users.resend-activation-code', [$tenant, $user]) }}">
                                                 @csrf
                                                 <button type="submit"

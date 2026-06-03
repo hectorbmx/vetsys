@@ -246,7 +246,7 @@ public function resendActivationCode(Tenant $tenant, User $user)
         abort(404);
     }
 
-    if ($user->is_active || $user->invitation_accepted_at) {
+    if ($user->is_active) {
         return redirect()
             ->route('admin.tenants.show', $tenant)
             ->with('error', 'Este usuario ya activo su cuenta.');
@@ -257,6 +257,7 @@ public function resendActivationCode(Tenant $tenant, User $user)
     $user->update([
         'invitation_token' => User::activationCodeHash($activationCode),
         'invitation_expires_at' => now()->addDays(7),
+        'invitation_accepted_at' => null,
     ]);
 
     $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
