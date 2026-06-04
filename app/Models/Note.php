@@ -16,8 +16,10 @@ class Note extends Model
         'total' => 'decimal:2'
     ];
 
+    public function tenant() { return $this->belongsTo(Tenant::class); }
     public function customer() { return $this->belongsTo(Customer::class); }
     public function details() { return $this->hasMany(NoteDetail::class); }
+    public function paymentLinks() { return $this->hasMany(NotePaymentLink::class); }
     
     // Relación a los abonos aplicados mediante la tabla pivote
    // En app/Models/Note.php

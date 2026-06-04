@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use App\Models\NotePaymentLink;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Tenant;
+use App\Models\TenantNotification;
 use App\Models\TenantPayment;
 use App\Models\TenantSubscription;
 use App\Models\AdminNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Stripe\StripeClient;
 use Stripe\Webhook;
 
@@ -44,6 +49,11 @@ class StripeWebhookController extends Controller
 
     private function handleCheckoutCompleted($session): void
     {
+        if (($session->metadata->flow ?? null) === 'customer_note_payment') {
+            $this->handleCustomerNoteCheckoutCompleted($session);
+            return;
+        }
+
         if (($session->metadata->flow ?? null) !== 'saas_plan_checkout') {
             return;
         }
@@ -86,6 +96,106 @@ class StripeWebhookController extends Controller
         if (($session->payment_status ?? null) === 'paid') {
             $this->activateTenantPlan($tenant, $plan, $subscription, $payment->period_starts_at, $payment->period_ends_at);
         }
+    }
+
+    private function handleCustomerNoteCheckoutCompleted($session): void
+    {
+        if (($session->payment_status ?? null) !== 'paid') {
+            return;
+        }
+
+        $paymentLink = NotePaymentLink::with(['note', 'tenant', 'customer', 'paymentMethod'])
+            ->find($session->metadata->note_payment_link_id ?? null);
+
+        if (!$paymentLink || $paymentLink->status === 'paid' || !$paymentLink->note) {
+            return;
+        }
+
+        DB::transaction(function () use ($paymentLink, $session) {
+            $paymentLink->refresh();
+
+            if ($paymentLink->status === 'paid') {
+                return;
+            }
+
+            $note = $paymentLink->note()->lockForUpdate()->first();
+
+            if (!$note || $note->status === 'PAGADA') {
+                $paymentLink->update([
+                    'status' => 'paid',
+                    'stripe_checkout_session_id' => $session->id,
+                    'stripe_payment_intent_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
+                    'paid_at' => now(),
+                ]);
+                return;
+            }
+
+            $existingPayment = Payment::where('provider', 'stripe')
+                ->where('provider_session_id', $session->id)
+                ->first();
+
+            if ($existingPayment) {
+                return;
+            }
+
+            $paymentMethodId = $paymentLink->payment_method_id
+                ?: $this->cardPaymentMethodIdForTenant($paymentLink->tenant_id);
+
+            if (!$paymentMethodId) {
+                return;
+            }
+
+            $amountToApply = min((float) $paymentLink->amount, max((float) $note->balance, 0));
+
+            if ($amountToApply <= 0) {
+                return;
+            }
+
+            $payment = Payment::create([
+                'tenant_id' => $paymentLink->tenant_id,
+                'customer_id' => $paymentLink->customer_id,
+                'payment_method_id' => $paymentMethodId,
+                'provider' => 'stripe',
+                'provider_payment_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
+                'provider_session_id' => $session->id,
+                'status' => 'paid',
+                'amount' => $amountToApply,
+                'reference' => 'Stripe Checkout ' . $session->id,
+            ]);
+
+            $note->payments()->attach($payment->id, [
+                'amount_applied' => $amountToApply,
+            ]);
+
+            $note->refresh();
+
+            if ($note->balance <= 0) {
+                $note->update(['status' => 'PAGADA']);
+            }
+
+            $paymentLink->update([
+                'status' => 'paid',
+                'stripe_checkout_session_id' => $session->id,
+                'stripe_payment_intent_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
+                'paid_at' => now(),
+            ]);
+
+            TenantNotification::create([
+                'tenant_id' => $paymentLink->tenant_id,
+                'type' => 'customer_note_payment_paid',
+                'title' => 'Nota pagada con Stripe',
+                'body' => ($paymentLink->customer?->full_name ?? 'Un cliente') . ' pago la nota ' . $note->folio . ' por $' . number_format($amountToApply, 2) . ' MXN.',
+                'url' => route('client.ventas.show', $note),
+                'data' => [
+                    'note_id' => $note->id,
+                    'customer_id' => $paymentLink->customer_id,
+                    'payment_id' => $payment->id,
+                    'note_payment_link_id' => $paymentLink->id,
+                    'stripe_checkout_session_id' => $session->id,
+                    'stripe_payment_intent_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
+                ],
+            ]);
+        });
     }
 
     private function handleInvoicePaid($invoice): void
@@ -295,5 +405,19 @@ class StripeWebhookController extends Controller
                 'provider_payment_id' => $payment->provider_payment_id,
             ],
         ]);
+    }
+
+    private function cardPaymentMethodIdForTenant(int $tenantId): ?int
+    {
+        return PaymentMethod::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->get()
+            ->first(function (PaymentMethod $method) {
+                $value = str($method->slug . ' ' . $method->name)->lower()->ascii()->toString();
+
+                return str_contains($value, 'tarjeta')
+                    || str_contains($value, 'card')
+                    || str_contains($value, 'stripe');
+            })?->id;
     }
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\ActivationController;
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\PublicNotePaymentController;
 
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\CustomerController;
@@ -84,6 +85,8 @@ Route::get('/login', function () use ($redirectAuthenticatedUser) {
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
+Route::get('/pagar/{token}', [PublicNotePaymentController::class, 'show'])->name('public.payments.show');
+Route::post('/pagar/{token}/stripe', [PublicNotePaymentController::class, 'checkout'])->name('public.payments.checkout');
 
 Route::middleware(['auth', 'role:super-admin'])
     ->prefix('admin')
@@ -184,6 +187,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('ventas/crear', [NoteController::class, 'create'])->name('ventas.create');
             Route::post('ventas', [NoteController::class, 'store'])->name('ventas.store');
             Route::get('ventas/{note}', [NoteController::class, 'show'])->name('ventas.show');
+            Route::post('ventas/{note}/stripe-payment-link', [NoteController::class, 'createStripePaymentLink'])->name('ventas.stripe-payment-link');
 
             // Endpoints de búsqueda predictiva para Alpine.js (Buscadores)
             Route::get('api/buscar-clientes', [NoteController::class, 'searchCustomers'])->name('api.buscar-clientes');

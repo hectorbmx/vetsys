@@ -15,6 +15,35 @@
             </a>
         </div>
 
+        @if(session('success'))
+            <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl px-4 py-3 text-sm font-semibold">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-rose-50 border border-rose-100 text-rose-700 rounded-xl px-4 py-3 text-sm font-semibold">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if(session('payment_link_url'))
+            <div x-data="{ copied: false, url: @js(session('payment_link_url')) }" class="bg-[#F4F3FF] border border-[#DAD7FE] rounded-[20px] shadow-sm p-5 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-[#635BFF]">Link Stripe generado</p>
+                        <p class="text-xs font-semibold text-slate-500 mt-1">Comparte este link con el cliente para que pague desde su dispositivo.</p>
+                    </div>
+                    <button type="button"
+                            @click="navigator.clipboard.writeText(url); copied = true; setTimeout(() => copied = false, 1800)"
+                            class="bg-[#635BFF] hover:bg-[#5148d8] text-white px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors">
+                        <span x-text="copied ? 'Copiado' : 'Copiar link'"></span>
+                    </button>
+                </div>
+                <input type="text" readonly :value="url" class="w-full bg-white border border-[#DAD7FE] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#0F172A]">
+            </div>
+        @endif
+
         {{-- CLIENTE + ESTADO --}}
         <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -99,6 +128,43 @@
                 </div>
             </div>
         </div>
+
+        @if($note->balance > 0)
+            <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cobro con Stripe</p>
+                        <p class="text-xs text-slate-500 font-semibold mt-1">Genera un link para que el cliente liquide esta nota con tarjeta.</p>
+                    </div>
+                    <form method="POST" action="{{ route('client.ventas.stripe-payment-link', $note) }}">
+                        @csrf
+                        <button type="submit" class="bg-[#635BFF] hover:bg-[#5148d8] text-white px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors">
+                            Generar link
+                        </button>
+                    </form>
+                </div>
+
+                @if($note->paymentLinks->isNotEmpty())
+                    <div class="space-y-2">
+                        @foreach($note->paymentLinks as $link)
+                            <div x-data="{ copied: false, url: @js(route('public.payments.show', $link->token)) }" class="border border-slate-100 bg-slate-50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-black text-[#0F172A]">${{ number_format((float) $link->amount, 2) }} {{ $link->currency }}</p>
+                                    <p class="text-[11px] font-semibold text-slate-400">
+                                        {{ ucfirst($link->status) }} · {{ $link->created_at->format('d/m/Y H:i') }}
+                                    </p>
+                                </div>
+                                <button type="button"
+                                        @click="navigator.clipboard.writeText(url); copied = true; setTimeout(() => copied = false, 1800)"
+                                        class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors">
+                                    <span x-text="copied ? 'Copiado' : 'Copiar'"></span>
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endif
 
         {{-- PAGOS REGISTRADOS --}}
         @if($note->payments->isNotEmpty())

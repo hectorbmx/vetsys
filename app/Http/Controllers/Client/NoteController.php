@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogItem;
 use App\Models\Customer;
 use App\Models\Note;
+use App\Models\PaymentMethod;
+use App\Services\StripeNotePaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -156,8 +158,9 @@ class NoteController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
             'amount_received' => 'nullable|numeric|min:0',
+            'operation_type' => ['required', Rule::in(['credito', 'contado'])],
             'payment_method_id' => [
-                'required_if:amount_received,>0',
+                'required_if:operation_type,contado',
                 'nullable',
                 Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
                     ->where('tenant_id', $tenant->id)
@@ -165,7 +168,14 @@ class NoteController extends Controller
             ],
         ]);
 
-        $note = DB::transaction(function () use ($request, $tenant) {
+        $selectedPaymentMethod = $request->payment_method_id
+            ? PaymentMethod::where('tenant_id', $tenant->id)->find($request->payment_method_id)
+            : null;
+        $generateStripeLink = $request->operation_type === 'contado'
+            && $selectedPaymentMethod
+            && $this->isCardPaymentMethod($selectedPaymentMethod);
+
+        $note = DB::transaction(function () use ($request, $tenant, $generateStripeLink) {
             $animalIds = collect($request->animal_ids)->map(fn ($id) => (int) $id)->unique()->values();
 
             $subtotalPorMascota = 0;
@@ -178,7 +188,7 @@ class NoteController extends Controller
             $ultimoFolio = $tenant->notes()->lockForUpdate()->max('id') ?? 0;
             $nuevoFolio = 'VT-' . str_pad($ultimoFolio + 1, 5, '0', STR_PAD_LEFT);
 
-            $montoRecibido = (float) ($request->amount_received ?? 0);
+            $montoRecibido = $generateStripeLink ? 0 : (float) ($request->amount_received ?? 0);
             $status = $montoRecibido >= $totalNota ? 'PAGADA' : 'PENDIENTE';
 
             $note = $tenant->notes()->create([
@@ -227,8 +237,20 @@ class NoteController extends Controller
             return $note;
         });
 
-        return redirect()->route('client.ventas.index')
-            ->with('success', "Nota {$note->folio} generada correctamente.");
+        $redirect = redirect()->route('client.ventas.show', $note);
+
+        if ($generateStripeLink) {
+            try {
+                $paymentLink = app(StripeNotePaymentService::class)->createLink($note, $selectedPaymentMethod->id);
+                $redirect->with('payment_link_url', route('public.payments.show', $paymentLink->token));
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return $redirect->with('error', 'La nota se guardo, pero no se pudo generar el link Stripe: ' . $exception->getMessage());
+            }
+        }
+
+        return $redirect->with('success', "Nota {$note->folio} generada correctamente.");
     }
 public function show(Note $note)
 {
@@ -239,11 +261,47 @@ public function show(Note $note)
         'details.catalogItem',
         'details.animal',
         'payments.paymentMethod',
+        'paymentLinks' => fn ($query) => $query->latest(),
     ]);
 
     // Agrupar detalles por animal para mostrarlos ordenados
     $detailsByAnimal = $note->details->groupBy('animal_id');
 
     return view('client.ventas.show', compact('note', 'detailsByAnimal'));
+}
+
+public function createStripePaymentLink(Note $note)
+{
+    abort_if($note->tenant_id !== auth()->user()->tenant->id, 403);
+
+    try {
+        $paymentMethod = $this->cardPaymentMethodForTenant(auth()->user()->tenant->id);
+        $paymentLink = app(StripeNotePaymentService::class)->createLink($note, $paymentMethod?->id);
+    } catch (\Throwable $exception) {
+        report($exception);
+
+        return back()->with('error', 'No se pudo generar el link Stripe: ' . $exception->getMessage());
+    }
+
+    return back()
+        ->with('success', 'Link Stripe generado correctamente.')
+        ->with('payment_link_url', route('public.payments.show', $paymentLink->token));
+}
+
+private function isCardPaymentMethod(PaymentMethod $paymentMethod): bool
+{
+    $value = str($paymentMethod->slug . ' ' . $paymentMethod->name)->lower()->ascii()->toString();
+
+    return str_contains($value, 'tarjeta')
+        || str_contains($value, 'card')
+        || str_contains($value, 'stripe');
+}
+
+private function cardPaymentMethodForTenant(int $tenantId): ?PaymentMethod
+{
+    return PaymentMethod::where('tenant_id', $tenantId)
+        ->where('is_active', true)
+        ->get()
+        ->first(fn (PaymentMethod $method) => $this->isCardPaymentMethod($method));
 }
 }
