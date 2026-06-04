@@ -126,6 +126,55 @@
 
             {{-- Información de usuario en el costado derecho --}}
             <div class="flex items-center gap-3">
+                <div class="relative" x-data="{ notificationsOpen: false }">
+                    <button type="button"
+                            @click="notificationsOpen = !notificationsOpen"
+                            class="relative p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all outline-none">
+                        <span class="text-lg leading-none">!</span>
+                        @if(($layoutUnreadNotificationsCount ?? 0) > 0)
+                            <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 px-1 text-[10px] font-black text-white flex items-center justify-center">
+                                {{ $layoutUnreadNotificationsCount > 9 ? '9+' : $layoutUnreadNotificationsCount }}
+                            </span>
+                        @endif
+                    </button>
+
+                    <div x-show="notificationsOpen"
+                         @click.outside="notificationsOpen = false"
+                         x-transition
+                         x-cloak
+                         class="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50">
+                        <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Notificaciones</p>
+                                <p class="text-[11px] font-semibold text-slate-400">{{ $layoutUnreadNotificationsCount ?? 0 }} sin leer</p>
+                            </div>
+                            <a href="{{ route('client.notifications.index') }}" class="text-[10px] font-black uppercase tracking-widest text-[#38B2AC] hover:text-[#0F172A]">Ver todas</a>
+                        </div>
+
+                        <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                            @forelse(($layoutNotifications ?? collect()) as $notification)
+                                <a href="{{ route('client.notifications.open', $notification) }}" class="block px-4 py-3 hover:bg-slate-50 transition-colors {{ $notification->read_at ? '' : 'bg-[#38B2AC]/5' }}">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="text-xs font-black text-[#0F172A]">{{ $notification->title }}</p>
+                                            <p class="text-[11px] font-semibold text-slate-500 mt-1 leading-5">{{ $notification->body }}</p>
+                                            <p class="text-[10px] font-bold text-slate-400 mt-2">{{ $notification->created_at->diffForHumans() }}</p>
+                                        </div>
+                                        @if(!$notification->read_at)
+                                            <span class="mt-1 h-2 w-2 rounded-full bg-[#38B2AC] flex-shrink-0"></span>
+                                        @endif
+                                    </div>
+                                </a>
+                            @empty
+                                <div class="px-4 py-8 text-center">
+                                    <p class="text-xs font-black text-[#0F172A]">Sin notificaciones</p>
+                                    <p class="text-[11px] font-semibold text-slate-400 mt-1">Aqui apareceran avisos de telemedicina y otros eventos.</p>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-right hidden sm:block">
                     <p class="text-xs font-bold text-slate-900 leading-none">{{ auth()->user()->name }}</p>
                     <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold text-[#38B2AC]">

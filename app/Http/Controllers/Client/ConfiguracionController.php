@@ -8,7 +8,11 @@ use Illuminate\Http\Request;
 
 use App\Models\AnimalType;
 use App\Models\AnimalTypeField;
+use App\Models\Animal;
+use App\Models\CatalogItem;
+use App\Models\Customer;
 use App\Models\Plan;
+use App\Models\PriceHistory;
 use App\Models\TenantPayment;
 use App\Models\TenantSubscription;
 use App\Models\User;
@@ -19,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Exception;
 use Spatie\Permission\Models\Role;
 
@@ -399,6 +404,489 @@ public function requestPlanChange(Request $request)
         ->with('success', 'Renovacion solicitada. El plan quedara pendiente hasta que el admin confirme el pago manual.');
 }
 
+public function importCustomers(Request $request)
+{
+    $tenantId = auth()->user()->tenant_id;
+
+    $request->validate([
+        'customers_csv' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+    ]);
+
+    $file = $request->file('customers_csv');
+    $handle = fopen($file->getRealPath(), 'r');
+
+    if ($handle === false) {
+        throw ValidationException::withMessages([
+            'customers_csv' => 'No se pudo leer el archivo CSV.',
+        ]);
+    }
+
+    $firstLine = fgets($handle);
+
+    if ($firstLine === false) {
+        fclose($handle);
+
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'El CSV esta vacio.');
+    }
+
+    $delimiter = $this->detectCsvDelimiter($firstLine);
+    $headers = $this->normalizeCsvHeaders(str_getcsv($firstLine, $delimiter));
+    $requiredHeaders = ['clienteid', 'nombre', 'ap', 'am', 'correo', 'telefono', 'created_at', 'estatus'];
+    $missingHeaders = array_diff($requiredHeaders, $headers);
+
+    if (!empty($missingHeaders)) {
+        fclose($handle);
+
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'Faltan columnas requeridas en el CSV: ' . implode(', ', $missingHeaders) . '.');
+    }
+
+    $created = 0;
+    $skipped = 0;
+    $errors = [];
+    $rowNumber = 1;
+
+    DB::transaction(function () use ($handle, $delimiter, $headers, $tenantId, &$created, &$skipped, &$errors, &$rowNumber) {
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $rowNumber++;
+
+            if ($this->isEmptyCsvRow($row)) {
+                continue;
+            }
+
+            $data = $this->combineCsvRow($headers, $row);
+            $legacyId = trim((string) ($data['clienteid'] ?? ''));
+            $name = trim((string) ($data['nombre'] ?? ''));
+            $lastName = trim(implode(' ', array_filter([
+                trim((string) ($data['ap'] ?? '')),
+                trim((string) ($data['am'] ?? '')),
+            ])));
+            $email = trim((string) ($data['correo'] ?? ''));
+            $phone = $this->normalizePhone((string) ($data['telefono'] ?? ''));
+
+            if ($name === '') {
+                $errors[] = "Fila {$rowNumber}: nombre vacio.";
+                continue;
+            }
+
+            $existingQuery = Customer::query()
+                ->where('tenant_id', $tenantId)
+                ->where('notes', 'like', "%Legacy ClienteID: {$legacyId}%");
+
+            if ($legacyId !== '' && $existingQuery->exists()) {
+                $skipped++;
+                continue;
+            }
+
+            $createdAt = $this->parseLegacyDate($data['created_at'] ?? null);
+
+            $customer = new Customer([
+                'tenant_id' => $tenantId,
+                'name' => $name,
+                'last_name' => $lastName !== '' ? $lastName : null,
+                'email' => filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null,
+                'phone' => $phone !== '' ? $phone : null,
+                'status' => ((string) ($data['estatus'] ?? '1')) === '0' ? 'inactive' : 'active',
+                'notes' => trim('Importado desde legacy. Legacy ClienteID: ' . ($legacyId !== '' ? $legacyId : 'sin-id')),
+            ]);
+            $customer->created_at = $createdAt ?? now();
+            $customer->updated_at = now();
+            $customer->save();
+
+            $created++;
+        }
+    });
+
+    fclose($handle);
+
+    $message = "Importacion terminada. Creados: {$created}. Omitidos: {$skipped}.";
+
+    if (!empty($errors)) {
+        $message .= ' Errores: ' . implode(' ', array_slice($errors, 0, 5));
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'importar')
+        ->with($created > 0 ? 'success' : 'error', $message);
+}
+
+public function importServices(Request $request)
+{
+    $tenantId = auth()->user()->tenant_id;
+
+    $request->validate([
+        'services_csv' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+    ]);
+
+    $file = $request->file('services_csv');
+    $handle = fopen($file->getRealPath(), 'r');
+
+    if ($handle === false) {
+        throw ValidationException::withMessages([
+            'services_csv' => 'No se pudo leer el archivo CSV.',
+        ]);
+    }
+
+    $firstLine = fgets($handle);
+
+    if ($firstLine === false) {
+        fclose($handle);
+
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'El CSV de servicios esta vacio.');
+    }
+
+    $delimiter = $this->detectCsvDelimiter($firstLine);
+    $headers = $this->normalizeCsvHeaders(str_getcsv($firstLine, $delimiter));
+    $requiredHeaders = ['servid', 'sctype', 'precio', 'estatus', 'created_at'];
+    $missingHeaders = array_diff($requiredHeaders, $headers);
+
+    if (!empty($missingHeaders)) {
+        fclose($handle);
+
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'Faltan columnas requeridas en el CSV de servicios: ' . implode(', ', $missingHeaders) . '.');
+    }
+
+    $created = 0;
+    $skipped = 0;
+    $errors = [];
+    $rowNumber = 1;
+
+    DB::transaction(function () use ($handle, $delimiter, $headers, $tenantId, &$created, &$skipped, &$errors, &$rowNumber) {
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $rowNumber++;
+
+            if ($this->isEmptyCsvRow($row)) {
+                continue;
+            }
+
+            $data = $this->combineCsvRow($headers, $row);
+            $legacyId = trim((string) ($data['servid'] ?? ''));
+            $name = trim((string) ($data['sctype'] ?? ''));
+            $price = $this->normalizeMoney($data['precio'] ?? 0);
+
+            if ($name === '') {
+                $errors[] = "Fila {$rowNumber}: nombre de servicio vacio.";
+                continue;
+            }
+
+            if ($legacyId !== '' && CatalogItem::query()
+                ->where('tenant_id', $tenantId)
+                ->where('type', 'service')
+                ->where('description', 'like', "%Legacy ServID: {$legacyId}%")
+                ->exists()) {
+                $skipped++;
+                continue;
+            }
+
+            $createdAt = $this->parseLegacyDate($data['created_at'] ?? null);
+
+            $item = new CatalogItem([
+                'tenant_id' => $tenantId,
+                'name' => $name,
+                'sku' => null,
+                'type' => 'service',
+                'description' => trim('Importado desde legacy. Legacy ServID: ' . ($legacyId !== '' ? $legacyId : 'sin-id')),
+                'tax_percentage' => 0.00,
+                'has_inventory' => false,
+                'is_active' => ((string) ($data['estatus'] ?? '1')) !== '0',
+            ]);
+            $item->created_at = $createdAt ?? now();
+            $item->updated_at = now();
+            $item->save();
+
+            PriceHistory::create([
+                'tenant_id' => $tenantId,
+                'catalog_item_id' => $item->id,
+                'price' => $price,
+                'start_date' => $createdAt ?? now(),
+                'end_date' => null,
+            ]);
+
+            $created++;
+        }
+    });
+
+    fclose($handle);
+
+    $message = "Importacion de servicios terminada. Creados: {$created}. Omitidos: {$skipped}.";
+
+    if (!empty($errors)) {
+        $message .= ' Errores: ' . implode(' ', array_slice($errors, 0, 5));
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'importar')
+        ->with($created > 0 ? 'success' : 'error', $message);
+}
+
+public function importHorses(Request $request)
+{
+    $tenantId = auth()->user()->tenant_id;
+    $animalTypeId = 2;
+
+    if (!AnimalType::query()->where('tenant_id', $tenantId)->where('id', $animalTypeId)->exists()) {
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'No existe el animal_type_id 2 para este tenant.');
+    }
+
+    $request->validate([
+        'horses_csv' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+    ]);
+
+    $file = $request->file('horses_csv');
+    $handle = fopen($file->getRealPath(), 'r');
+
+    if ($handle === false) {
+        throw ValidationException::withMessages([
+            'horses_csv' => 'No se pudo leer el archivo CSV.',
+        ]);
+    }
+
+    $firstLine = fgets($handle);
+
+    if ($firstLine === false) {
+        fclose($handle);
+
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'El CSV de caballos esta vacio.');
+    }
+
+    $delimiter = $this->detectCsvDelimiter($firstLine);
+    $headers = $this->normalizeCsvHeaders(str_getcsv($firstLine, $delimiter));
+    $requiredHeaders = [
+        'caballoid',
+        'clienteid',
+        'nombre',
+        'fnacimiento',
+        'color',
+        'sexo',
+        'raza',
+        'clubid',
+        'microchip',
+        'estatus',
+        'fechanac',
+        'fotochip',
+        'fecharegistro',
+    ];
+    $missingHeaders = array_diff($requiredHeaders, $headers);
+
+    if (!empty($missingHeaders)) {
+        fclose($handle);
+
+        return back()
+            ->with('activeTab', 'importar')
+            ->with('error', 'Faltan columnas requeridas en el CSV de caballos: ' . implode(', ', $missingHeaders) . '.');
+    }
+
+    $created = 0;
+    $skipped = 0;
+    $errors = [];
+    $rowNumber = 1;
+
+    DB::transaction(function () use ($handle, $delimiter, $headers, $tenantId, $animalTypeId, &$created, &$skipped, &$errors, &$rowNumber) {
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $rowNumber++;
+
+            if ($this->isEmptyCsvRow($row)) {
+                continue;
+            }
+
+            $data = $this->combineCsvRow($headers, $row);
+            $legacyHorseId = trim((string) ($data['caballoid'] ?? ''));
+            $legacyCustomerId = trim((string) ($data['clienteid'] ?? ''));
+            $name = trim((string) ($data['nombre'] ?? ''));
+
+            if ($name === '') {
+                $errors[] = "Fila {$rowNumber}: nombre de caballo vacio.";
+                continue;
+            }
+
+            if ($legacyHorseId !== '' && Animal::query()
+                ->where('tenant_id', $tenantId)
+                ->where('animal_type_id', $animalTypeId)
+                ->where('notes', 'like', "%Legacy CaballoID: {$legacyHorseId}%")
+                ->exists()) {
+                $skipped++;
+                continue;
+            }
+
+            $customer = Customer::query()
+                ->where('tenant_id', $tenantId)
+                ->where('notes', 'like', "%Legacy ClienteID: {$legacyCustomerId}%")
+                ->first();
+
+            if (!$customer) {
+                $errors[] = "Fila {$rowNumber}: no se encontro cliente legacy {$legacyCustomerId}.";
+                continue;
+            }
+
+            $birthdate = $this->parseLegacyDate($data['fechanac'] ?? null)
+                ?? $this->parseLegacyDate($data['fnacimiento'] ?? null);
+            $createdAt = $this->parseLegacyDate($data['fecharegistro'] ?? null);
+            $status = ((string) ($data['estatus'] ?? '1')) === '0' ? 'inactive' : 'active';
+            $microchip = trim((string) ($data['microchip'] ?? ''));
+
+            $animal = new Animal([
+                'tenant_id' => $tenantId,
+                'customer_id' => $customer->id,
+                'animal_type_id' => $animalTypeId,
+                'name' => $name,
+                'sex' => $this->normalizeLegacySex($data['sexo'] ?? null),
+                'birthdate' => $birthdate,
+                'color' => trim((string) ($data['color'] ?? '')) ?: null,
+                'microchip' => $microchip !== '' ? $microchip : null,
+                'status' => $status,
+                'notes' => $this->buildHorseLegacyNotes($data, $legacyHorseId, $legacyCustomerId),
+            ]);
+            $animal->created_at = $createdAt ?? now();
+            $animal->updated_at = now();
+            $animal->save();
+
+            $created++;
+        }
+    });
+
+    fclose($handle);
+
+    $message = "Importacion de caballos terminada. Creados: {$created}. Omitidos: {$skipped}.";
+
+    if (!empty($errors)) {
+        $message .= ' Errores: ' . implode(' ', array_slice($errors, 0, 5));
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'importar')
+        ->with($created > 0 ? 'success' : 'error', $message);
+}
+
+private function detectCsvDelimiter(string $line): string
+{
+    $delimiters = [',', ';', "\t"];
+    $bestDelimiter = ',';
+    $bestCount = 0;
+
+    foreach ($delimiters as $delimiter) {
+        $count = count(str_getcsv($line, $delimiter));
+
+        if ($count > $bestCount) {
+            $bestCount = $count;
+            $bestDelimiter = $delimiter;
+        }
+    }
+
+    return $bestDelimiter;
+}
+
+private function normalizeCsvHeaders(array $headers): array
+{
+    return array_map(function ($header) {
+        $header = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header);
+
+        return Str::of($header)->trim()->lower()->replace(' ', '_')->toString();
+    }, $headers);
+}
+
+private function combineCsvRow(array $headers, array $row): array
+{
+    $row = array_pad($row, count($headers), null);
+
+    return array_combine($headers, array_slice($row, 0, count($headers))) ?: [];
+}
+
+private function isEmptyCsvRow(array $row): bool
+{
+    return trim(implode('', $row)) === '';
+}
+
+private function normalizePhone(string $phone): string
+{
+    return preg_replace('/\D+/', '', $phone) ?? '';
+}
+
+private function normalizeMoney($value): float
+{
+    $value = trim((string) $value);
+    $value = str_replace(['$', ' ', ','], '', $value);
+
+    return max(0, (float) $value);
+}
+
+private function normalizeLegacySex($sex): string
+{
+    $sex = Str::of((string) $sex)->trim()->lower()->ascii()->toString();
+
+    return match ($sex) {
+        'm', 'macho', 'male' => 'male',
+        'h', 'hembra', 'f', 'female' => 'female',
+        default => 'unknown',
+    };
+}
+
+private function buildHorseLegacyNotes(array $data, string $legacyHorseId, string $legacyCustomerId): string
+{
+    $parts = [
+        'Importado desde legacy.',
+        'Legacy CaballoID: ' . ($legacyHorseId !== '' ? $legacyHorseId : 'sin-id') . '.',
+        'Legacy ClienteID: ' . ($legacyCustomerId !== '' ? $legacyCustomerId : 'sin-id') . '.',
+    ];
+
+    foreach ([
+        'raza' => 'Raza',
+        'clubid' => 'Legacy ClubID',
+        'fotochip' => 'Foto chip',
+    ] as $key => $label) {
+        $value = trim((string) ($data[$key] ?? ''));
+
+        if ($value !== '') {
+            $parts[] = "{$label}: {$value}.";
+        }
+    }
+
+    return trim(implode(' ', $parts));
+}
+
+private function parseLegacyDate($date): ?Carbon
+{
+    if (blank($date)) {
+        return null;
+    }
+
+    $rawDate = trim((string) $date);
+
+    if (
+        $rawDate === ''
+        || str_starts_with($rawDate, '0000-00-00')
+        || str_starts_with($rawDate, '0001-01-01')
+        || preg_match('/^0{1,2}[\/\-]0{1,2}[\/\-]0{2,4}/', $rawDate)
+    ) {
+        return null;
+    }
+
+    try {
+        $parsedDate = Carbon::parse($rawDate);
+
+        if ((int) $parsedDate->format('Y') < 1900) {
+            return null;
+        }
+
+        return $parsedDate;
+    } catch (\Throwable $exception) {
+        return null;
+    }
+}
+
 private function nextSubscriptionStart($tenant): Carbon
 {
     if ($tenant->subscription_ends_at && $tenant->subscription_ends_at->isFuture()) {
@@ -416,5 +904,76 @@ private function nextSubscriptionEnd(Carbon $startsAt, ?string $billingPeriod): 
         default => null,
     };
 }
+public function stripeCheckout(Request $request)
+{
+    $tenant = auth()->user()->tenant()->with('plan')->firstOrFail();
 
+    $data = $request->validate([
+        'plan_id' => [
+            'required',
+            Rule::exists('plans', 'id')->where(fn ($query) => $query->where('is_active', true)),
+        ],
+    ]);
+
+    $plan = Plan::findOrFail($data['plan_id']);
+
+    if (!$plan->stripe_price_id) {
+        return back()
+            ->with('activeTab', 'facturacion')
+            ->with('error', 'Este plan aún no está sincronizado con Stripe.');
+    }
+
+    $secret = config('services.stripe.secret');
+
+    if (!$secret) {
+        return back()
+            ->with('activeTab', 'facturacion')
+            ->with('error', 'STRIPE_SECRET no está configurado.');
+    }
+
+    $stripe = new \Stripe\StripeClient($secret);
+
+    $customerId = $tenant->stripe_customer_id;
+
+    if (!$customerId) {
+        $customer = $stripe->customers->create([
+            'name' => $tenant->business_name ?: $tenant->name,
+            'email' => $tenant->email,
+            'metadata' => [
+                'tenant_id' => (string) $tenant->id,
+            ],
+        ]);
+
+        $customerId = $customer->id;
+
+        $tenant->update([
+            'stripe_customer_id' => $customerId,
+        ]);
+    }
+
+    $session = $stripe->checkout->sessions->create([
+        'mode' => 'subscription',
+        'customer' => $customerId,
+        'line_items' => [
+            [
+                'price' => $plan->stripe_price_id,
+                'quantity' => 1,
+            ],
+        ],
+        'success_url' => route('client.mi-configuracion.index') . '?stripe_success=1',
+        'cancel_url' => route('client.mi-configuracion.index') . '?stripe_cancel=1',
+        'metadata' => [
+            'tenant_id' => (string) $tenant->id,
+            'plan_id' => (string) $plan->id,
+        ],
+        'subscription_data' => [
+            'metadata' => [
+                'tenant_id' => (string) $tenant->id,
+                'plan_id' => (string) $plan->id,
+            ],
+        ],
+    ]);
+
+    return redirect($session->url);
+}
 }

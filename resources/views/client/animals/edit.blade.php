@@ -3,7 +3,35 @@
 @section('title', 'Editar Mascota')
 
 @section('content')
-<div class="space-y-6" x-data="{ tab: 'datos', loading: false }">
+<div class="space-y-6" x-data="{
+    tab: @js(session('animalTab', 'datos')),
+    loading: false,
+    tenantQuery: '',
+    tenantResults: [],
+    selectedTenant: null,
+    tenantSearchUrl: @js(route('client.api.telemedicine.tenants')),
+    searchTenants() {
+        if (this.selectedTenant || this.tenantQuery.length < 2) {
+            this.tenantResults = [];
+            return;
+        }
+
+        fetch(`${this.tenantSearchUrl}?q=${encodeURIComponent(this.tenantQuery)}`)
+            .then(response => response.json())
+            .then(data => { this.tenantResults = data; })
+            .catch(() => { this.tenantResults = []; });
+    },
+    selectTenant(tenant) {
+        this.selectedTenant = tenant;
+        this.tenantQuery = tenant.label;
+        this.tenantResults = [];
+    },
+    removeTenant() {
+        this.selectedTenant = null;
+        this.tenantQuery = '';
+        this.tenantResults = [];
+    }
+}">
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
         @if(session('success'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition class="bg-white border-l-4 border-emerald-500 rounded-xl shadow-xl p-4 flex items-center justify-between border border-slate-100">
@@ -55,6 +83,9 @@
                 </button>
                 <button type="button" @click="tab = 'extra'" :class="tab === 'extra' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Mas Informacion
+                </button>
+                <button type="button" @click="tab = 'telemedicina'" :class="tab === 'telemedicina' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                    Telemedicina
                 </button>
             </nav>
         </div>
@@ -241,6 +272,125 @@
             <div class="border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
                 <p class="text-sm font-black text-[#0F172A]">Mas informacion del paciente</p>
                 <p class="text-xs font-semibold text-slate-400 mt-2">Este espacio queda listo para vacunas, archivos, signos vitales o campos clinicos extendidos.</p>
+            </div>
+        </div>
+
+        <div x-show="tab === 'telemedicina'" class="p-6 space-y-6" x-cloak>
+            @if(session('telemedicine_link'))
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+                    <p class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Link generado</p>
+                    <input type="text" readonly value="{{ session('telemedicine_link') }}" class="mt-3 w-full bg-white border border-emerald-100 rounded-xl px-4 py-3 text-xs font-semibold text-[#0F172A]">
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <form action="{{ route('client.animals.telemedicine-shares.store', $animal) }}" method="POST" @submit="if (!selectedTenant) { $event.preventDefault(); return; }" class="lg:col-span-1 border border-slate-200 rounded-2xl p-5 space-y-4 bg-slate-50/40">
+                    @csrf
+
+                    <div>
+                        <p class="text-sm font-black text-[#0F172A]">Compartir expediente</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-1">El tenant destino podra ver este expediente en modo lectura mientras el acceso este activo.</p>
+                    </div>
+
+                    <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                        <input type="checkbox" checked required class="rounded border-slate-300 text-[#38B2AC] focus:ring-[#38B2AC]">
+                        <span class="text-xs font-black uppercase tracking-widest text-[#0F172A]">Activar compartir</span>
+                    </label>
+
+                    <div class="space-y-2 relative">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Tenant destino *</label>
+                        <input type="hidden" name="shared_with_tenant_id" :value="selectedTenant ? selectedTenant.id : ''">
+                        <input type="text"
+                               x-model="tenantQuery"
+                               @input.debounce.300ms="searchTenants()"
+                               :disabled="selectedTenant !== null"
+                               placeholder="Busca por nombre, slug o ID..."
+                               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pr-20 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none disabled:bg-slate-50">
+
+                        <template x-if="selectedTenant">
+                            <button type="button" @click="removeTenant()" class="absolute right-3 top-8 rounded-lg bg-rose-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600">
+                                Quitar
+                            </button>
+                        </template>
+
+                        <div x-show="tenantResults.length > 0" x-cloak class="absolute z-30 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                            <template x-for="tenant in tenantResults" :key="tenant.id">
+                                <button type="button" @click="selectTenant(tenant)" class="block w-full px-4 py-3 text-left hover:bg-slate-50">
+                                    <span class="block text-xs font-black text-[#0F172A]" x-text="tenant.label"></span>
+                                    <span class="block text-[11px] font-semibold text-slate-400" x-text="tenant.business_name ? `${tenant.business_name} · ${tenant.slug}` : tenant.slug"></span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <p x-show="tenantQuery.length > 0 && tenantQuery.length < 2 && !selectedTenant" x-cloak class="text-[11px] font-semibold text-slate-400">
+                            Escribe al menos 2 caracteres para buscar.
+                        </p>
+                    </div>
+
+                    <button type="submit" :disabled="!selectedTenant" class="w-full bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-40 disabled:pointer-events-none">
+                        Generar enlace
+                    </button>
+                </form>
+
+                <div class="lg:col-span-2 border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                    <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/60">
+                        <p class="text-sm font-black text-[#0F172A]">Accesos activos</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-1">Revoca un acceso para invalidar su link inmediatamente.</p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100">
+                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tenant destino</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ultimo acceso</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Link</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Accion</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @forelse($animal->shares->sortByDesc('created_at') as $share)
+                                    <tr>
+                                        <td class="px-4 py-3 text-xs font-bold text-[#0F172A]">
+                                            #{{ $share->shared_with_tenant_id }} {{ $share->sharedWithTenant?->name ? '- ' . $share->sharedWithTenant->name : '' }}
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex text-[9px] font-black uppercase tracking-widest {{ $share->is_active ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-100' }} px-2.5 py-1 rounded-full">
+                                                {{ $share->is_active ? 'Activo' : 'Revocado' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-xs font-semibold text-slate-500">{{ optional($share->last_accessed_at)->format('d/m/Y H:i') ?? '--' }}</td>
+                                        <td class="px-4 py-3">
+                                            @if($share->is_active)
+                                                <input type="text" readonly value="{{ route('client.telemedicine.animals.show', $share->token) }}" class="w-64 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-500">
+                                            @else
+                                                <span class="text-[11px] font-semibold text-slate-300">Link inactivo</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            @if($share->is_active)
+                                                <form action="{{ route('client.telemedicine-shares.destroy', $share) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="px-3 py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest hover:bg-rose-100">
+                                                        Revocar
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="text-[11px] font-semibold text-slate-300">--</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-10 text-center text-xs font-bold text-slate-400">Este expediente todavia no se comparte con otros tenants.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

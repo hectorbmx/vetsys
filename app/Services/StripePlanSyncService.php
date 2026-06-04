@@ -8,16 +8,18 @@ use Stripe\StripeClient;
 
 class StripePlanSyncService
 {
-    public function __construct(private ?StripeClient $stripe = null)
-    {
-        $secret = config('services.stripe.secret');
+    private StripeClient $stripe;
 
-        if (!$secret) {
-            throw new \RuntimeException('STRIPE_SECRET no esta configurado.');
-        }
+public function __construct()
+{
+    $secret = config('services.stripe.secret');
 
-        $this->stripe ??= new StripeClient($secret);
+    if (!$secret) {
+        throw new \RuntimeException('STRIPE_SECRET no esta configurado.');
     }
+
+    $this->stripe = new StripeClient($secret);
+}
 
     /**
      * @throws ApiErrorException

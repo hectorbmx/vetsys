@@ -74,6 +74,11 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             🧾 Roles
         </button>
+        <button @click="currentTab = 'importar'"
+                :class="currentTab === 'importar' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            ⬆️ Importar Catalogos
+        </button>
     </div>
 
     {{-- CONTENIDO DE LAS PESTAÑAS --}}
@@ -464,6 +469,152 @@
                 <div class="mt-5 rounded-2xl bg-white/10 p-4">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-300">No disponible para tenants</p>
                     <p class="text-sm font-black mt-1">super-admin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- TAB 7: IMPORTAR CATALOGOS --}}
+    <div x-show="currentTab === 'importar'" x-transition:enter="transition duration-200" class="space-y-6" style="display: none;">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Importar clientes legacy</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                        Carga el CSV exportado desde la tabla legacy de usuarios. Se importara al tenant #{{ auth()->user()->tenant_id }}.
+                    </p>
+                </div>
+
+                <form action="{{ route('client.mi-configuracion.import-customers') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+                    @csrf
+
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Columnas esperadas</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach(['ClienteID', 'Nombre', 'AP', 'AM', 'Correo', 'Telefono', 'created_at', 'estatus'] as $column)
+                                <span class="rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-[#0F172A]">{{ $column }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Archivo CSV *</label>
+                        <input type="file" name="customers_csv" accept=".csv,text/csv,text/plain" required class="block w-full text-xs font-semibold text-[#0F172A] file:mr-4 file:rounded-xl file:border-0 file:bg-[#0F172A] file:px-5 file:py-3 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                        @error('customers_csv')
+                            <p class="text-[11px] font-bold text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="inline-flex items-center justify-center bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">
+                        Importar clientes
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-[#0F172A] rounded-[24px] p-6 text-white shadow-xl shadow-slate-200">
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#38B2AC]">Mapeo aplicado</p>
+                <div class="mt-5 space-y-3 text-xs font-semibold text-slate-300">
+                    <p><span class="font-black text-white">Nombre</span> pasa a name.</p>
+                    <p><span class="font-black text-white">AP + AM</span> pasan a last_name.</p>
+                    <p><span class="font-black text-white">Correo</span> pasa a email si es valido.</p>
+                    <p><span class="font-black text-white">Telefono</span> pasa a phone solo con digitos.</p>
+                    <p><span class="font-black text-white">estatus</span> 0 queda inactive; cualquier otro valor queda active.</p>
+                    <p><span class="font-black text-white">ClienteID</span> se guarda en notes para evitar duplicados.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Importar servicios legacy</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                        Crea servicios en catalog_items y su precio vigente en price_histories para el tenant #{{ auth()->user()->tenant_id }}.
+                    </p>
+                </div>
+
+                <form action="{{ route('client.mi-configuracion.import-services') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+                    @csrf
+
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Columnas esperadas</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach(['ServID', 'ScType', 'Precio', 'estatus', 'created_at'] as $column)
+                                <span class="rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-[#0F172A]">{{ $column }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Archivo CSV *</label>
+                        <input type="file" name="services_csv" accept=".csv,text/csv,text/plain" required class="block w-full text-xs font-semibold text-[#0F172A] file:mr-4 file:rounded-xl file:border-0 file:bg-[#0F172A] file:px-5 file:py-3 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                        @error('services_csv')
+                            <p class="text-[11px] font-bold text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="inline-flex items-center justify-center bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">
+                        Importar servicios
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm">
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#38B2AC]">Mapeo servicios</p>
+                <div class="mt-5 space-y-3 text-xs font-semibold text-slate-500">
+                    <p><span class="font-black text-[#0F172A]">ScType</span> pasa a catalog_items.name.</p>
+                    <p><span class="font-black text-[#0F172A]">Precio</span> crea price_histories.price vigente.</p>
+                    <p><span class="font-black text-[#0F172A]">estatus</span> 0 queda inactivo; cualquier otro valor queda activo.</p>
+                    <p><span class="font-black text-[#0F172A]">ServID</span> se guarda en description para evitar duplicados.</p>
+                    <p><span class="font-black text-[#0F172A]">type</span> siempre queda como service.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Importar caballos legacy</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                        Crea pacientes en animals usando animal_type_id #2 y relaciona ClienteID contra los clientes ya importados.
+                    </p>
+                </div>
+
+                <form action="{{ route('client.mi-configuracion.import-horses') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+                    @csrf
+
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Columnas esperadas</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach(['CaballoID', 'ClienteID', 'Nombre', 'FNacimiento', 'Color', 'Sexo', 'Raza', 'ClubID', 'Microchip', 'estatus', 'fechaNac', 'fotoChip', 'fechaRegistro'] as $column)
+                                <span class="rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-[#0F172A]">{{ $column }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Archivo CSV *</label>
+                        <input type="file" name="horses_csv" accept=".csv,text/csv,text/plain" required class="block w-full text-xs font-semibold text-[#0F172A] file:mr-4 file:rounded-xl file:border-0 file:bg-[#0F172A] file:px-5 file:py-3 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                        @error('horses_csv')
+                            <p class="text-[11px] font-bold text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="inline-flex items-center justify-center bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">
+                        Importar caballos
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-[#0F172A] rounded-[24px] p-6 text-white shadow-xl shadow-slate-200">
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#38B2AC]">Mapeo caballos</p>
+                <div class="mt-5 space-y-3 text-xs font-semibold text-slate-300">
+                    <p><span class="font-black text-white">ClienteID</span> busca customers.notes con Legacy ClienteID.</p>
+                    <p><span class="font-black text-white">Nombre</span> pasa a animals.name.</p>
+                    <p><span class="font-black text-white">fechaNac/FNacimiento</span> pasa a birthdate.</p>
+                    <p><span class="font-black text-white">Sexo</span> se normaliza a male, female o unknown.</p>
+                    <p><span class="font-black text-white">Color y Microchip</span> pasan directo a animals.</p>
+                    <p><span class="font-black text-white">Raza, ClubID y fotoChip</span> quedan en notes.</p>
                 </div>
             </div>
         </div>

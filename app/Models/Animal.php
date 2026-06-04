@@ -66,4 +66,9 @@ public function vaccinationLetters()
 {
     return $this->hasMany(VaccinationLetter::class);
 }
+
+public function shares()
+{
+    return $this->hasMany(AnimalShare::class);
+}
 }

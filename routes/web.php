@@ -27,6 +27,8 @@ use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\Client\StatementController;
 use App\Http\Controllers\Client\ClubController;
 use App\Http\Controllers\Client\VaccinationLetterController;
+use App\Http\Controllers\Client\TelemedicineController;
+use App\Http\Controllers\Client\NotificationController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -105,6 +107,9 @@ Route::middleware(['auth', 'role:super-admin'])
         ->group(function () {
             Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
             Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+            Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
+            Route::get('/notificaciones/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
+            Route::patch('/notificaciones/{notification}/leer', [NotificationController::class, 'markRead'])->name('notifications.mark-read');
             /*
             |--------------------------------------------------------------------------
             | CUSTOMERS / ANIMALS
@@ -114,6 +119,11 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'show'])->name('vaccination-letters.show');
             Route::get('vaccination-letters/{vaccinationLetter}/print', [VaccinationLetterController::class, 'print'])->name('vaccination-letters.print');
             Route::post('animals/{animal}/vaccination-letters', [VaccinationLetterController::class, 'store'])->name('animals.vaccination-letters.store');
+            Route::post('animals/{animal}/telemedicine-shares', [TelemedicineController::class, 'store'])->name('animals.telemedicine-shares.store');
+            Route::delete('telemedicine-shares/{animalShare}', [TelemedicineController::class, 'destroy'])->name('telemedicine-shares.destroy');
+            Route::get('api/telemedicina/tenants', [TelemedicineController::class, 'searchTenants'])->name('api.telemedicine.tenants');
+            Route::get('telemedicina/expedientes/{token}', [TelemedicineController::class, 'show'])->name('telemedicine.animals.show');
+            Route::get('telemedicina/expedientes/{token}/cartas/{vaccinationLetter}', [TelemedicineController::class, 'letter'])->name('telemedicine.vaccination-letters.show');
             Route::resource('animals', AnimalController::class);
             Route::patch('clubes/{club}/members', [ClubController::class, 'updateMembers'])->name('clubes.members.update');
             Route::resource('clubes', ClubController::class);
@@ -138,7 +148,10 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::post('mi-configuracion', [ClientConfiguracionController::class, 'store'])->name('mi-configuracion.store');
             Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
             Route::post('mi-configuracion/plan', [ClientConfiguracionController::class, 'requestPlanChange'])->name('mi-configuracion.plan.request');
-            
+            Route::post('mi-configuracion/importar-clientes', [ClientConfiguracionController::class, 'importCustomers'])->name('mi-configuracion.import-customers');
+            Route::post('mi-configuracion/importar-servicios', [ClientConfiguracionController::class, 'importServices'])->name('mi-configuracion.import-services');
+            Route::post('mi-configuracion/importar-caballos', [ClientConfiguracionController::class, 'importHorses'])->name('mi-configuracion.import-horses');
+            Route::post('mi-configuracion/plan/stripe-checkout', [ClientConfiguracionController::class, 'stripeCheckout']) ->name('mi-configuracion.plan.stripe-checkout');
             /*
             |--------------------------------------------------------------------------
             | MI CONFIGURACION > FIELDS (CAMPOS DINÁMICOS)

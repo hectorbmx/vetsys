@@ -150,6 +150,7 @@ class AnimalController extends Controller
             'customer',
             'animalType',
             'club',
+            'shares.sharedWithTenant',
             'vaccinationLetters' => fn ($query) => $query
                 ->where('tenant_id', $tenantId)
                 ->orderBy('created_at')
