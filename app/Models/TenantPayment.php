@@ -38,6 +38,11 @@ public function plan()
     return $this->belongsTo(Plan::class);
 }
 
+public function tenant()
+{
+    return $this->belongsTo(Tenant::class);
+}
+
 public function subscription()
 {
     return $this->belongsTo(TenantSubscription::class, 'tenant_subscription_id');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\TenantsController;
 use App\Http\Controllers\Admin\ConfiguracionController;
 use App\Http\Controllers\Admin\PlanesController;
 use App\Http\Controllers\Admin\ReportesController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 
 
 use App\Http\Controllers\Auth\InvitationController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\ActivationController;
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\StripeWebhookController;
 
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\CustomerController;
@@ -81,6 +83,7 @@ Route::get('/login', function () use ($redirectAuthenticatedUser) {
 
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 
 Route::middleware(['auth', 'role:super-admin'])
     ->prefix('admin')
@@ -88,6 +91,9 @@ Route::middleware(['auth', 'role:super-admin'])
     ->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/notificaciones', [AdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notificaciones/{notification}', [AdminNotificationController::class, 'open'])->name('notifications.open');
+        Route::patch('/notificaciones/{notification}/leer', [AdminNotificationController::class, 'markRead'])->name('notifications.mark-read');
         Route::resource('tenants', TenantsController::class);
         Route::post('/tenants/{tenant}/resend-activation-code', [TenantsController::class, 'resendTenantActivationCode'])->name('tenants.resend-activation-code');
         Route::post('/tenants/{tenant}/users', [TenantsController::class, 'storeUser'])->name('tenants.users.store');
@@ -98,6 +104,7 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
         //asigna plan a tenant
         Route::post('/tenants/{tenant}/assign-plan', [TenantsController::class, 'assignPlan'])->name('tenants.assign-plan');
+        Route::post('/tenants/{tenant}/stripe-checkout-link', [TenantsController::class, 'stripeCheckoutLink'])->name('tenants.stripe-checkout-link');
 
     });
 

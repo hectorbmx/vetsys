@@ -60,6 +60,23 @@
         </div>
     @endif
 
+    @if(session('stripe_checkout_link'))
+        <div class="bg-white border border-[#635BFF]/30 rounded-[24px] shadow-sm overflow-hidden">
+            <div class="p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#635BFF]">Link de pago Stripe</p>
+                    <p class="text-xs text-slate-500 font-semibold mt-3 break-all">{{ session('stripe_checkout_link') }}</p>
+                </div>
+                <button type="button"
+                        x-data
+                        @click="navigator.clipboard.writeText('{{ session('stripe_checkout_link') }}')"
+                        class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#635BFF] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#5148d8] transition">
+                    Copiar link
+                </button>
+            </div>
+        </div>
+    @endif
+
     {{-- Header Compacto --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div class="flex items-center gap-4">
@@ -149,6 +166,24 @@
             Agregar Plan
         </button>
     </div>
+
+    <form method="POST" action="{{ route('admin.tenants.stripe-checkout-link', $tenant) }}" class="mx-8 mt-6 rounded-2xl border border-[#635BFF]/20 bg-[#635BFF]/5 p-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-end">
+        @csrf
+        <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-[#635BFF] mb-2">Generar link Stripe para enviar</label>
+            <select name="plan_id" required class="w-full rounded-2xl border-slate-200 focus:border-[#635BFF] focus:ring-[#635BFF]">
+                <option value="">Selecciona un plan sincronizado</option>
+                @foreach($plans as $plan)
+                    @if($plan->stripe_price_id)
+                        <option value="{{ $plan->id }}">{{ $plan->name }} - ${{ number_format($plan->price ?? 0, 2) }} {{ $plan->currency }}</option>
+                    @endif
+                @endforeach
+            </select>
+        </div>
+        <button type="submit" class="px-5 py-3 rounded-2xl bg-[#635BFF] text-white text-[11px] font-black uppercase tracking-widest hover:bg-[#5148d8]">
+            Generar link
+        </button>
+    </form>
 
     @if($pendingPlanRequest)
         <div class="mx-8 mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">

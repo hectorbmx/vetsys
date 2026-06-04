@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\TenantNotification;
+use App\Models\AdminNotification;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 
@@ -39,6 +40,27 @@ class AppServiceProvider extends ServiceProvider
                 ->get());
 
             $view->with('layoutUnreadNotificationsCount', (clone $baseQuery)
+                ->whereNull('read_at')
+                ->count());
+        });
+
+        View::composer('layouts.admin', function ($view) {
+            $user = auth()->user();
+
+            if (!$user || !$user->hasRole('super-admin')) {
+                $view->with('layoutAdminNotifications', collect());
+                $view->with('layoutAdminUnreadNotificationsCount', 0);
+                return;
+            }
+
+            $baseQuery = AdminNotification::query();
+
+            $view->with('layoutAdminNotifications', (clone $baseQuery)
+                ->latest()
+                ->limit(6)
+                ->get());
+
+            $view->with('layoutAdminUnreadNotificationsCount', (clone $baseQuery)
                 ->whereNull('read_at')
                 ->count());
         });

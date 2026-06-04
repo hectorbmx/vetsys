@@ -370,6 +370,18 @@
                                     {{ $tenant?->plan_id === $plan->id ? 'Renovar plan actual' : 'Contratar renovacion manual' }}
                                 </button>
                             </form>
+
+                            @if($plan->stripe_price_id)
+                                <form action="{{ route('client.mi-configuracion.plan.stripe-checkout') }}" method="POST" class="mt-3">
+                                    @csrf
+                                    <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                    <button type="submit" class="w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-[#635BFF] text-white hover:bg-[#5148d8] shadow-sm">
+                                        Pagar con Stripe
+                                    </button>
+                                </form>
+                            @else
+                                <p class="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stripe no sincronizado</p>
+                            @endif
                         </div>
                     @empty
                         <div class="md:col-span-2 px-6 py-12 text-center text-sm font-bold text-slate-400">

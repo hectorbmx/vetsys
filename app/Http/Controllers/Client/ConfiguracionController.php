@@ -26,6 +26,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Exception;
 use Spatie\Permission\Models\Role;
+use App\Services\StripeTenantCheckoutService;
 
 class ConfiguracionController extends Controller
 {
@@ -917,62 +918,21 @@ public function stripeCheckout(Request $request)
 
     $plan = Plan::findOrFail($data['plan_id']);
 
-    if (!$plan->stripe_price_id) {
+    try {
+        $session = app(StripeTenantCheckoutService::class)->createPlanCheckout(
+            $tenant,
+            $plan,
+            route('client.mi-configuracion.index') . '?stripe_success=1',
+            route('client.mi-configuracion.index') . '?stripe_cancel=1',
+            auth()->id()
+        );
+    } catch (\Throwable $exception) {
+        report($exception);
+
         return back()
             ->with('activeTab', 'facturacion')
-            ->with('error', 'Este plan aún no está sincronizado con Stripe.');
+            ->with('error', 'No se pudo abrir Stripe Checkout: ' . $exception->getMessage());
     }
-
-    $secret = config('services.stripe.secret');
-
-    if (!$secret) {
-        return back()
-            ->with('activeTab', 'facturacion')
-            ->with('error', 'STRIPE_SECRET no está configurado.');
-    }
-
-    $stripe = new \Stripe\StripeClient($secret);
-
-    $customerId = $tenant->stripe_customer_id;
-
-    if (!$customerId) {
-        $customer = $stripe->customers->create([
-            'name' => $tenant->business_name ?: $tenant->name,
-            'email' => $tenant->email,
-            'metadata' => [
-                'tenant_id' => (string) $tenant->id,
-            ],
-        ]);
-
-        $customerId = $customer->id;
-
-        $tenant->update([
-            'stripe_customer_id' => $customerId,
-        ]);
-    }
-
-    $session = $stripe->checkout->sessions->create([
-        'mode' => 'subscription',
-        'customer' => $customerId,
-        'line_items' => [
-            [
-                'price' => $plan->stripe_price_id,
-                'quantity' => 1,
-            ],
-        ],
-        'success_url' => route('client.mi-configuracion.index') . '?stripe_success=1',
-        'cancel_url' => route('client.mi-configuracion.index') . '?stripe_cancel=1',
-        'metadata' => [
-            'tenant_id' => (string) $tenant->id,
-            'plan_id' => (string) $plan->id,
-        ],
-        'subscription_data' => [
-            'metadata' => [
-                'tenant_id' => (string) $tenant->id,
-                'plan_id' => (string) $plan->id,
-            ],
-        ],
-    ]);
 
     return redirect($session->url);
 }

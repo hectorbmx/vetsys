@@ -17,6 +17,8 @@ use App\Models\TenantPayment;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
+use App\Services\StripeTenantCheckoutService;
+use App\Models\TenantNotification;
 
 use App\Models\User;
 
@@ -309,6 +311,49 @@ public function assignPlan(Request $request, Tenant $tenant)
     return redirect()
         ->route('admin.tenants.show', $tenant)
         ->with('success', 'Plan asignado correctamente.');
+}
+
+public function stripeCheckoutLink(Request $request, Tenant $tenant)
+{
+    $data = $request->validate([
+        'plan_id' => [
+            'required',
+            Rule::exists('plans', 'id')->where(fn ($query) => $query->where('is_active', true)),
+        ],
+    ]);
+
+    $plan = Plan::findOrFail($data['plan_id']);
+
+    try {
+        $session = app(StripeTenantCheckoutService::class)->createPlanCheckout(
+            $tenant,
+            $plan,
+            route('login') . '?stripe_success=1',
+            route('login') . '?stripe_cancel=1',
+            auth()->id()
+        );
+    } catch (\Throwable $exception) {
+        report($exception);
+
+        return back()->with('error', 'No se pudo generar el link de Stripe: ' . $exception->getMessage());
+    }
+
+    TenantNotification::create([
+        'tenant_id' => $tenant->id,
+        'actor_user_id' => auth()->id(),
+        'type' => 'saas_payment_link_created',
+        'title' => 'Pago pendiente de SaaS',
+        'body' => 'VetSys genero un link de pago Stripe para el plan ' . $plan->name . ' por $' . number_format((float) $plan->price, 2) . ' ' . ($plan->currency ?? 'MXN') . '.',
+        'url' => $session->url,
+        'data' => [
+            'plan_id' => $plan->id,
+            'stripe_checkout_session_id' => $session->id,
+        ],
+    ]);
+
+    return back()
+        ->with('success', 'Link de Stripe generado correctamente. Puedes copiarlo y enviarlo al tenant.')
+        ->with('stripe_checkout_link', $session->url);
 }
 
 public function resendActivationCode(Tenant $tenant, User $user)
