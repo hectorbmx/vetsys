@@ -253,6 +253,17 @@
 
         {{-- TAB: NOTAS --}}
         <div x-show="tab === 'notas'" class="p-6">
+            <div class="flex justify-between items-center gap-4 mb-5">
+                <div>
+                    <h2 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Notas de Venta</h2>
+                    <p class="text-[11px] text-slate-400 font-semibold mt-1">Ventas y saldos registrados para este cliente.</p>
+                </div>
+                <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
+                   class="bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
+                    Nueva nota
+                </a>
+            </div>
+
             <table class="w-full text-left">
                 <thead>
                     <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
@@ -361,6 +372,19 @@
                             class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
                         >
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Club</label>
+                    <select
+                        name="club_id"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                    >
+                        <option value="">Sin club</option>
+                        @foreach($clubs as $club)
+                            <option value="{{ $club->id }}">{{ $club->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 {{-- Color + Peso --}}

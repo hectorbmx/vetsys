@@ -33,12 +33,15 @@
                 Activar cuenta
             </h1>
             <p class="text-sm text-slate-500 font-medium mt-2">
-                Ingresa el codigo de 6 digitos que te compartio el administrador y crea tu contrasena.
+                {{ isset($token) && $token ? 'Crea tu contrasena para activar tu cuenta.' : 'Ingresa el codigo de 6 digitos que te compartio el administrador y crea tu contrasena.' }}
             </p>
         </div>
 
         <form action="{{ route('activation.store') }}" method="POST" class="px-8 py-7 space-y-5">
             @csrf
+            @if(isset($token) && $token)
+                <input type="hidden" name="activation_token" value="{{ $token }}">
+            @endif
 
             @if($errors->any())
                 <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -58,29 +61,32 @@
                 <input id="email"
                        type="email"
                        name="email"
-                       value="{{ old('email') }}"
+                       value="{{ old('email', $tenant->email ?? '') }}"
                        autocomplete="email"
                        required
+                       @if(isset($token) && $token) readonly @endif
                        placeholder="ejemplo@clinica.com"
                        class="vet-input w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 placeholder-slate-400 transition">
             </div>
 
-            <div>
-                <label for="code" class="block text-sm font-bold text-slate-700 mb-2">
-                    Codigo de activacion
-                </label>
-                <input id="code"
-                       type="text"
-                       name="code"
-                       value="{{ old('code') }}"
-                       inputmode="numeric"
-                       maxlength="6"
-                       pattern="[0-9]{6}"
-                       autocomplete="one-time-code"
-                       required
-                       placeholder="000000"
-                       class="vet-input w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-2xl font-black tracking-[0.35em] text-slate-900 placeholder-slate-300 transition">
-            </div>
+            @unless(isset($token) && $token)
+                <div>
+                    <label for="code" class="block text-sm font-bold text-slate-700 mb-2">
+                        Codigo de activacion
+                    </label>
+                    <input id="code"
+                           type="text"
+                           name="code"
+                           value="{{ old('code') }}"
+                           inputmode="numeric"
+                           maxlength="6"
+                           pattern="[0-9]{6}"
+                           autocomplete="one-time-code"
+                           required
+                           placeholder="000000"
+                           class="vet-input w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-2xl font-black tracking-[0.35em] text-slate-900 placeholder-slate-300 transition">
+                </div>
+            @endunless
 
             <div>
                 <label for="password" class="block text-sm font-bold text-slate-700 mb-2">

@@ -69,6 +69,11 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             🧾 Plan y Pagos
         </button>
+         <button @click="currentTab = 'roles'"
+                :class="currentTab === 'roles' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            🧾 Roles
+        </button>
     </div>
 
     {{-- CONTENIDO DE LAS PESTAÑAS --}}
@@ -203,7 +208,7 @@
             </div>
 
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-                @if($canInviteUsers)
+                @if($canInviteUsers && $canManageTeam)
                     <form action="{{ route('client.mi-configuracion.users.store') }}" method="POST" class="p-6 space-y-5">
                         @csrf
                         <div>
@@ -234,6 +239,14 @@
                             Enviar invitacion
                         </button>
                     </form>
+                @elseif(!$canManageTeam)
+                    <div class="p-8 text-center">
+                        <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">!</div>
+                        <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Sin permisos</h3>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto mt-2">
+                            Solo un Administrador puede invitar usuarios y asignar roles dentro del tenant.
+                        </p>
+                    </div>
                 @else
                     <div class="p-8 text-center">
                         <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">+</div>
@@ -397,6 +410,61 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    {{-- TAB 6: ROLES --}}
+    <div x-show="currentTab === 'roles'" x-transition:enter="transition duration-200" class="space-y-6" style="display: none;">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Roles del tenant</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                        Estos roles son fijos para operar la clinica. El rol super-admin pertenece solo al dueno del SaaS.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 bg-slate-50/10">
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rol</th>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripcion</th>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Usuarios</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($roleOptions as $roleValue => $roleLabel)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
+                                            {{ $roleLabel }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs font-semibold text-slate-500">
+                                        {{ $roleDescriptions[$roleValue] ?? 'Rol operativo del tenant.' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-xs font-black text-[#0F172A]">
+                                        {{ $teamUsers->filter(fn ($teamUser) => $teamUser->roles->pluck('name')->contains($roleValue))->count() }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-[#0F172A] rounded-[24px] p-6 text-white shadow-xl shadow-slate-200">
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#38B2AC]">Regla SaaS</p>
+                <h3 class="text-xl font-black mt-4">Roles controlados</h3>
+                <p class="text-xs font-semibold text-slate-300 mt-3 leading-6">
+                    Por seguridad no permitimos crear roles libres desde el tenant. Asi evitamos que un cliente genere permisos superiores o mezcle roles del SaaS con roles operativos.
+                </p>
+                <div class="mt-5 rounded-2xl bg-white/10 p-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-300">No disponible para tenants</p>
+                    <p class="text-sm font-black mt-1">super-admin</p>
+                </div>
             </div>
         </div>
     </div>

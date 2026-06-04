@@ -43,8 +43,16 @@
                             </td>
 
                             {{-- Cliente --}}
-                            <td class="px-6 py-4">
+                            {{-- <td class="px-6 py-4">
                                 <span class="text-xs font-bold text-[#0F172A] block">{{ $note->customer->full_name }}</span>
+                                <span class="text-[10px] text-slate-400 font-medium block">📞 {{ $note->customer->phone ?? 'Sin Teléfono' }}</span>
+                            </td> --}}
+                            {{-- Cliente --}}
+                            <td class="px-6 py-4">
+                                <a href="{{ route('client.customers.show', $note->customer->id) }}" 
+                                class="text-xs font-bold text-[#0F172A] block hover:text-blue-600 hover:underline transition-colors">
+                                    {{ $note->customer->full_name }}
+                                </a>
                                 <span class="text-[10px] text-slate-400 font-medium block">📞 {{ $note->customer->phone ?? 'Sin Teléfono' }}</span>
                             </td>
 
@@ -82,9 +90,10 @@
 
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
-                                <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg text-[11px] font-bold text-slate-700 transition-colors shadow-sm">
-                                    Ver Detalle
-                                </button>
+                                <a href="{{ route('client.ventas.show', $note->id) }}"
+                                    class="px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg text-[11px] font-bold text-slate-700 transition-colors shadow-sm">
+                                        Ver Detalle
+                                    </a>
                             </td>
                         </tr>
                     @empty

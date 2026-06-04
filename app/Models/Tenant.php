@@ -31,13 +31,24 @@ class Tenant extends Model
         'subscription_ends_at',
         'is_active',
         'created_by',
+        'activation_code_token',
+        'activation_link_token',
+        'activation_expires_at',
+        'activated_at',
     ];
 
     protected $casts = [
         'trial_ends_at' => 'datetime',
         'subscription_ends_at' => 'datetime',
+        'activation_expires_at' => 'datetime',
+        'activated_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    public static function activationCodeHash(string $code): string
+    {
+        return hash('sha256', 'tenant-activation-code:' . $code);
+    }
     public function users()
     {
         return $this->hasMany(User::class);
@@ -75,6 +86,11 @@ public function animals()
     return $this->hasMany(Animal::class);
 }
 
+public function clubs()
+{
+    return $this->hasMany(Club::class);
+}
+
 public function animalTypeFields()
 {
     return $this->hasMany(AnimalTypeField::class);
@@ -109,5 +125,10 @@ public function clientPayments()
 public function noteDetails()
 {
     return $this->hasMany(NoteDetail::class);
+}
+
+public function vaccinationLetters()
+{
+    return $this->hasMany(VaccinationLetter::class);
 }
 }

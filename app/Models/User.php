@@ -32,6 +32,7 @@ class User extends Authenticatable
         'last_login_ip',
         'created_by',
         'invitation_token',
+        'invitation_link_token',
         'invitation_expires_at',
         'invitation_accepted_at',
     ];

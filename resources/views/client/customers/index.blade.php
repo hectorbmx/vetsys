@@ -143,7 +143,14 @@
                             </td>
 
                             {{-- Mascotas (Relación belongsTo/hasMany dinámico) --}}
+                            {{-- Cantidad de Mascotas --}}
                             <td class="px-6 py-4">
+                                <span class="inline-flex items-center text-[10px] font-black text-[#38B2AC] bg-[#38B2AC]/10 px-2.5 py-1 rounded-full">
+                                    {{ $customer->animals_count ?? $customer->animals->count() }}
+                                    {{ ($customer->animals_count ?? $customer->animals->count()) == 1 ? 'mascota' : 'mascotas' }}
+                                </span>
+                            </td>
+                            {{-- <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1.5 max-w-[220px]">
                                     @forelse($customer->animals as $animal)
                                         <span class="text-[10px] font-bold text-[#38B2AC] bg-[#38B2AC]/10 px-2 py-0.5 rounded-md">
@@ -153,7 +160,7 @@
                                         <span class="text-[10px] text-slate-400 font-medium italic">Sin mascotas</span>
                                     @endforelse
                                 </div>
-                            </td>
+                            </td> --}}
 
                             {{-- Fecha de Registro --}}
                             <td class="px-6 py-4">

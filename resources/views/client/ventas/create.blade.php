@@ -294,6 +294,7 @@ function salesPOS() {
         storeRoute: "{{ route('client.ventas.store') }}",
         searchCustomerUrl: "{{ route('client.api.buscar-clientes') }}",
         searchItemUrl: "{{ route('client.api.buscar-articulos') }}",
+        prefilledCustomer: @js($prefilledCustomer),
         
         // Estados de búsqueda
         customerQuery: '',
@@ -316,6 +317,15 @@ function salesPOS() {
 
         // Inicializador del componente
         initPOS() {
+            if (this.prefilledCustomer) {
+                localStorage.removeItem('vet_pos_backup');
+                this.selectedCustomer = this.prefilledCustomer;
+                this.customerQuery = this.prefilledCustomer.full_name;
+                this.customerSuggestions = [];
+                this.selectedAnimalIds = [];
+                return;
+            }
+
             // Verificar si hay una sesión previa accidentada en el LocalStorage
             if (localStorage.getItem('vet_pos_backup')) {
                 this.showRecoveryAlert = true;

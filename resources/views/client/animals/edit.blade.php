@@ -50,6 +50,9 @@
                 <button type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Historial de Servicios
                 </button>
+                <button type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                    Cartas de Vacunacion
+                </button>
                 <button type="button" @click="tab = 'extra'" :class="tab === 'extra' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Mas Informacion
                 </button>
@@ -76,6 +79,16 @@
                         <select name="animal_type_id" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none">
                             @foreach($animalTypes as $type)
                                 <option value="{{ $type->id }}" @selected(old('animal_type_id', $animal->animal_type_id) == $type->id)>{{ $type->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Club</label>
+                        <select name="club_id" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none">
+                            <option value="">Sin club</option>
+                            @foreach($clubs as $club)
+                                <option value="{{ $club->id }}" @selected(old('club_id', $animal->club_id) == $club->id)>{{ $club->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -167,6 +180,60 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div x-show="tab === 'vacunacion'" class="p-6 space-y-6" x-cloak>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <form action="{{ route('client.animals.vaccination-letters.store', $animal) }}" method="POST" enctype="multipart/form-data" class="lg:col-span-1 border border-slate-200 rounded-2xl p-5 space-y-4 bg-slate-50/40">
+                    @csrf
+
+                    <div>
+                        <p class="text-sm font-black text-[#0F172A]">Nueva carta</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-1">Solo se conservan 2 cartas. Al subir una tercera se reemplaza la segunda.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Fecha *</label>
+                        <input type="date" name="date" value="{{ old('date') }}" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Imagen *</label>
+                        <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:bg-[#0F172A] file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                        <p class="text-[10px] text-slate-400 font-semibold">Formatos: JPG, PNG o WEBP. Maximo 5 MB.</p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                        Guardar carta
+                    </button>
+                </form>
+
+                <div class="lg:col-span-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @forelse($animal->vaccinationLetters as $letter)
+                            <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                                <div class="aspect-[4/3] bg-slate-100">
+                                    <img src="{{ route('client.vaccination-letters.show', $letter) }}" alt="Carta de vacunacion {{ $loop->iteration }}" class="w-full h-full object-cover">
+                                </div>
+                                <div class="p-4 flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carta {{ $loop->iteration }}</p>
+                                        <p class="text-sm font-black text-[#0F172A] mt-1">{{ $letter->date->format('d/m/Y') }}</p>
+                                    </div>
+                                    <a href="{{ route('client.vaccination-letters.print', $letter) }}" target="_blank" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                        Imprimir
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="md:col-span-2 border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
+                                <p class="text-sm font-black text-[#0F172A]">Sin cartas de vacunacion</p>
+                                <p class="text-xs font-semibold text-slate-400 mt-2">Sube la primera imagen para este paciente.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
         </div>
 

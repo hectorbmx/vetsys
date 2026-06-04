@@ -75,10 +75,11 @@ class ConfiguracionController extends Controller
     $maxUsers = $tenant?->plan?->max_users;
     $usersUsed = $teamUsers->count();
     $canInviteUsers = is_null($maxUsers) || $usersUsed < (int) $maxUsers;
-    $roleOptions = [
-        'client-admin' => 'Administrador',
-        'client-user' => 'Usuario operativo',
-    ];
+    $roleOptions = $this->tenantRoleOptions();
+    $roleDescriptions = $this->tenantRoleDescriptions();
+    $canManageTeam = $user->hasRole('admin');
+
+    $this->ensureTenantRolesExist();
 
     return view('client.mi-configuracion.index', compact(
         'animalTypes',
@@ -88,6 +89,8 @@ class ConfiguracionController extends Controller
         'usersUsed',
         'canInviteUsers',
         'roleOptions',
+        'roleDescriptions',
+        'canManageTeam',
         'activePlans',
         'subscriptionPayments',
         'pendingPlanRequest',
@@ -213,9 +216,12 @@ public function fieldsStore(Request $request, AnimalType $animalType)
 
 public function storeUser(Request $request)
 {
+    abort_unless(auth()->user()->hasRole('admin'), 403);
+
     $tenant = auth()->user()->tenant()->with('plan')->firstOrFail();
     $usersUsed = $tenant->users()->count();
     $maxUsers = $tenant->plan?->max_users;
+    $roleOptions = $this->tenantRoleOptions();
 
     if (!is_null($maxUsers) && $usersUsed >= (int) $maxUsers) {
         return back()
@@ -233,7 +239,7 @@ public function storeUser(Request $request)
         ],
         'role' => [
             'required',
-            Rule::in(['client-admin', 'client-user']),
+            Rule::in(array_keys($roleOptions)),
         ],
     ]);
 
@@ -246,14 +252,13 @@ public function storeUser(Request $request)
 
     $validated = $validator->validated();
 
+    $activationCode = (string) random_int(100000, 999999);
     $token = Str::random(64);
 
     try {
-        foreach (['client-admin', 'client-user'] as $roleName) {
-            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-        }
+        $this->ensureTenantRolesExist();
 
-        DB::transaction(function () use ($tenant, $validated, $token) {
+        DB::transaction(function () use ($tenant, $validated, $token, $activationCode) {
             $user = User::create([
                 'tenant_id' => $tenant->id,
                 'name' => $validated['name'],
@@ -261,14 +266,15 @@ public function storeUser(Request $request)
                 'password' => Hash::make(Str::random(32)),
                 'is_active' => false,
                 'created_by' => auth()->id(),
-                'invitation_token' => hash('sha256', $token),
+                'invitation_token' => User::activationCodeHash($activationCode),
+                'invitation_link_token' => hash('sha256', $token),
                 'invitation_expires_at' => now()->addDays(7),
             ]);
 
             $user->assignRole($validated['role']);
 
             Mail::to($user->email)->send(
-                new TenantUserInvitationMail($user, $tenant, route('invitation.accept', $token))
+                new TenantUserInvitationMail($user, $tenant, route('invitation.accept', $token), $activationCode)
             );
         });
 
@@ -284,6 +290,38 @@ public function storeUser(Request $request)
             ->with('activeTab', 'usuarios')
             ->with('error', 'No se pudo invitar al usuario. Revisa la configuraciÃ³n de correo o intenta de nuevo.');
     }
+}
+
+private function tenantRoleOptions(): array
+{
+    return [
+        'admin' => 'Administrador',
+        'asistente' => 'Asistente',
+        'cajero' => 'Cajero',
+    ];
+}
+
+private function tenantRoleDescriptions(): array
+{
+    return [
+        'admin' => 'Administra usuarios, configuracion y operacion del tenant.',
+        'asistente' => 'Apoya la operacion clinica y la captura diaria del tenant.',
+        'cajero' => 'Atiende ventas, cobros y movimientos de caja del tenant.',
+    ];
+}
+
+private function ensureTenantRolesExist(): void
+{
+    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+    foreach (array_keys($this->tenantRoleOptions()) as $role) {
+        Role::firstOrCreate([
+            'name' => $role,
+            'guard_name' => 'web',
+        ]);
+    }
+
+    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 }
 
 public function requestPlanChange(Request $request)

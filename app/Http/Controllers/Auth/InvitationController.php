@@ -11,7 +11,7 @@ class InvitationController extends Controller
 {
     public function show(string $token)
     {
-        $user = User::where('invitation_token', hash('sha256', $token))
+        $user = User::where('invitation_link_token', hash('sha256', $token))
             ->whereNull('invitation_accepted_at')
             ->firstOrFail();
 
@@ -24,7 +24,7 @@ class InvitationController extends Controller
 
     public function store(Request $request, string $token)
     {
-        $user = User::where('invitation_token', hash('sha256', $token))
+        $user = User::where('invitation_link_token', hash('sha256', $token))
             ->whereNull('invitation_accepted_at')
             ->firstOrFail();
 
@@ -42,6 +42,7 @@ class InvitationController extends Controller
             'email_verified_at' => now(),
             'invitation_accepted_at' => now(),
             'invitation_token' => null,
+            'invitation_link_token' => null,
             'invitation_expires_at' => null,
         ]);
 

@@ -14,6 +14,7 @@ class Animal extends Model
     protected $fillable = [
         'tenant_id',
         'customer_id',
+        'club_id',
         'animal_type_id',
         'name',
         'photo_path',
@@ -55,5 +56,14 @@ class Animal extends Model
 public function noteDetails()
 {
     return $this->hasMany(NoteDetail::class);
+}
+public function club()
+{
+    return $this->belongsTo(Club::class);
+}
+
+public function vaccinationLetters()
+{
+    return $this->hasMany(VaccinationLetter::class);
 }
 }

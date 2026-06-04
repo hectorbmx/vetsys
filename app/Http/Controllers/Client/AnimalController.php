@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Animal;
 use App\Models\Customer;
 use App\Models\AnimalType;
+use App\Models\Club;
 use Illuminate\Validation\Rule;
 
 use Exception;
@@ -21,7 +22,7 @@ class AnimalController extends Controller
     $tenantId = auth()->user()->tenant_id;
 
     // 1. Cargamos relaciones reales del modelo: customer y animalType
-    $animals = Animal::with(['customer', 'animalType'])
+    $animals = Animal::with(['customer', 'animalType', 'club'])
         ->where('tenant_id', $tenantId)
         ->when($request->filled('q'), function ($query) use ($request) {
             $search = $request->q;
@@ -32,6 +33,9 @@ class AnimalController extends Controller
                   // Búsqueda por el nombre del tipo de animal (Especie)
                   ->orWhereHas('animalType', function ($typeQuery) use ($search) {
                       $typeQuery->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('club', function ($clubQuery) use ($search) {
+                      $clubQuery->where('name', 'like', "%{$search}%");
                   })
                   // Búsqueda por el nombre del dueño
                   ->orWhereHas('customer', function ($customerQuery) use ($search) {
@@ -55,7 +59,12 @@ class AnimalController extends Controller
         ->orderBy('name')
         ->get();
 
-    return view('client.animals.index', compact('animals', 'customers', 'animalTypes'));
+    $clubs = Club::where('tenant_id', $tenantId)
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get();
+
+    return view('client.animals.index', compact('animals', 'customers', 'animalTypes', 'clubs'));
 }
 
     /**
@@ -76,7 +85,14 @@ class AnimalController extends Controller
 
     // 1. Validamos usando los campos EXACTOS de tu modelo Animal
     $data = $request->validate([
-        'customer_id'    => ['required', 'exists:customers,id'],
+        'customer_id'    => [
+            'required',
+            Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+        ],
+        'club_id' => [
+            'nullable',
+            Rule::exists('clubs', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+        ],
         'animal_type_id' => ['required', 'exists:animal_types,id'], // El select dinámico
         'name'           => ['required', 'string', 'max:255'],
         'sex'            => ['required', 'in:male,female,unknown'], // Campos de tu fillable
@@ -130,7 +146,15 @@ class AnimalController extends Controller
 
         abort_unless($animal->tenant_id === $tenantId, 404);
 
-        $animal->load(['customer', 'animalType']);
+        $animal->load([
+            'customer',
+            'animalType',
+            'club',
+            'vaccinationLetters' => fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->orderBy('created_at')
+                ->orderBy('id'),
+        ]);
 
         $customers = Customer::where('tenant_id', $tenantId)
             ->where('status', 'active')
@@ -142,13 +166,18 @@ class AnimalController extends Controller
             ->orderBy('name')
             ->get();
 
+        $clubs = Club::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         $serviceHistory = $animal->noteDetails()
             ->where('tenant_id', $tenantId)
             ->with(['note', 'catalogItem'])
             ->latest()
             ->get();
 
-        return view('client.animals.edit', compact('animal', 'customers', 'animalTypes', 'serviceHistory'));
+        return view('client.animals.edit', compact('animal', 'customers', 'animalTypes', 'clubs', 'serviceHistory'));
     }
 
     /**
@@ -164,6 +193,10 @@ class AnimalController extends Controller
             'customer_id' => [
                 'required',
                 Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
+            'club_id' => [
+                'nullable',
+                Rule::exists('clubs', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
             ],
             'animal_type_id' => [
                 'required',

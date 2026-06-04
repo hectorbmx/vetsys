@@ -25,6 +25,8 @@ use App\Http\Controllers\Client\ProfileController;
 
 use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\Client\StatementController;
+use App\Http\Controllers\Client\ClubController;
+use App\Http\Controllers\Client\VaccinationLetterController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -40,6 +42,8 @@ Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('
 Route::post('/invitation/{token}', [InvitationController::class, 'store'])->name('invitation.store');
 
 Route::get('/activar-cuenta', [ActivationController::class, 'show'])->name('activation.show');
+
+Route::get('/activar-cuenta/{token}', [ActivationController::class, 'show'])->name('activation.link');
 
 Route::post('/activar-cuenta', [ActivationController::class, 'store'])->name('activation.store');
 
@@ -107,7 +111,12 @@ Route::middleware(['auth', 'role:super-admin'])
             |--------------------------------------------------------------------------
             |*/
             Route::resource('customers', CustomerController::class);
+            Route::get('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'show'])->name('vaccination-letters.show');
+            Route::get('vaccination-letters/{vaccinationLetter}/print', [VaccinationLetterController::class, 'print'])->name('vaccination-letters.print');
+            Route::post('animals/{animal}/vaccination-letters', [VaccinationLetterController::class, 'store'])->name('animals.vaccination-letters.store');
             Route::resource('animals', AnimalController::class);
+            Route::patch('clubes/{club}/members', [ClubController::class, 'updateMembers'])->name('clubes.members.update');
+            Route::resource('clubes', ClubController::class);
 
             /*
             |--------------------------------------------------------------------------
@@ -154,7 +163,8 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('ventas', [NoteController::class, 'index'])->name('ventas.index');
             Route::get('ventas/crear', [NoteController::class, 'create'])->name('ventas.create');
             Route::post('ventas', [NoteController::class, 'store'])->name('ventas.store');
-            
+            Route::get('ventas/{note}', [NoteController::class, 'show'])->name('ventas.show');
+
             // Endpoints de búsqueda predictiva para Alpine.js (Buscadores)
             Route::get('api/buscar-clientes', [NoteController::class, 'searchCustomers'])->name('api.buscar-clientes');
             Route::get('api/buscar-articulos', [NoteController::class, 'searchItems'])->name('api.buscar-articulos');

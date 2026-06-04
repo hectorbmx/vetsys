@@ -115,6 +115,7 @@
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pet Name</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Specie / Breed</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Owner (Customer)</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Club</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Weight</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
@@ -155,6 +156,17 @@
                             </td>
 
                             {{-- Peso --}}
+                            <td class="px-6 py-4">
+                                @if($animal->club)
+                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-[#38B2AC] bg-teal-50 px-2.5 py-1 rounded-full">
+                                        {{ $animal->club->name }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-400 font-semibold">Sin club</span>
+                                @endif
+                            </td>
+
+                            {{-- Peso --}}
                             <td class="px-6 py-4 text-xs font-bold text-[#0F172A]">
                                 {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
                             </td>
@@ -176,7 +188,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-slate-400">No hay mascotas registradas para los criterios de búsqueda.</p>
                             </td>
                         </tr>
@@ -202,7 +214,33 @@
      x-transition:leave-end="opacity-0"
      class="fixed inset-0 z-50 overflow-y-auto" 
      style="display: none;"
-     x-data="{ loading: false }">
+     x-data="{
+        loading: false,
+        customerQuery: '',
+        selectedCustomer: null,
+        customerSuggestions: [],
+        searchCustomerUrl: '{{ route('client.api.buscar-clientes') }}',
+        searchCustomers() {
+            if (this.selectedCustomer || this.customerQuery.length < 2) {
+                this.customerSuggestions = [];
+                return;
+            }
+
+            fetch(`${this.searchCustomerUrl}?q=${encodeURIComponent(this.customerQuery)}`)
+                .then(response => response.json())
+                .then(data => { this.customerSuggestions = data; });
+        },
+        selectCustomer(customer) {
+            this.selectedCustomer = customer;
+            this.customerQuery = customer.full_name;
+            this.customerSuggestions = [];
+        },
+        removeCustomer() {
+            this.selectedCustomer = null;
+            this.customerQuery = '';
+            this.customerSuggestions = [];
+        }
+     }">
     
     <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
         <div class="fixed inset-0 transition-opacity bg-[#0F172A]/80 backdrop-blur-sm" @click="if(!loading) animalModal = false"></div>
@@ -220,7 +258,7 @@
             </div>
 
             {{-- Formulario --}}
-            <form action="{{ route('client.animals.store') }}" method="POST" @submit="loading = true">
+            <form action="{{ route('client.animals.store') }}" method="POST" @submit="if (!selectedCustomer) { $event.preventDefault(); return; } loading = true">
                 @csrf
                 
                 <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -229,15 +267,48 @@
                 </div>
 
                 <div class="p-8 space-y-5">
-                    {{-- Selección del Dueño --}}
-                    <div class="space-y-2">
+                    {{-- Buscador del propietario --}}
+                    <div class="space-y-2 relative">
                         <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Propietario / Dueño *</label>
-                        <select name="customer_id" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner cursor-pointer appearance-none">
-                            <option value="" disabled selected>Selecciona un dueño de la lista...</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->full_name }} ({{ $customer->phone }})</option>
-                            @endforeach
-                        </select>
+                        <div class="relative">
+                            <input type="text"
+                                   x-model="customerQuery"
+                                   @input.debounce.300ms="searchCustomers()"
+                                   placeholder="Escribe nombre, apellido o telefono..."
+                                   :disabled="selectedCustomer !== null"
+                                   required
+                                   class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 pr-36 text-sm font-semibold text-[#0F172A] placeholder-slate-400 focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+
+                            <template x-if="selectedCustomer">
+                                <button type="button"
+                                        @click="removeCustomer()"
+                                        class="absolute right-3 top-2.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest hover:bg-rose-100">
+                                    Cambiar
+                                </button>
+                            </template>
+                        </div>
+
+                        <input type="hidden" name="customer_id" :value="selectedCustomer ? selectedCustomer.id : ''">
+
+                        <div x-show="customerSuggestions.length > 0"
+                             x-cloak
+                             class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden divide-y divide-slate-100">
+                            <template x-for="customer in customerSuggestions" :key="customer.id">
+                                <button type="button"
+                                        @click="selectCustomer(customer)"
+                                        class="w-full p-3 hover:bg-slate-50 transition-colors flex justify-between items-center text-left">
+                                    <span>
+                                        <span class="text-xs font-bold text-[#0F172A] block" x-text="customer.full_name"></span>
+                                        <span class="text-[10px] text-slate-400 font-medium" x-text="customer.phone || 'Sin telefono'"></span>
+                                    </span>
+                                    <span class="text-[9px] bg-teal-50 text-[#38B2AC] font-black px-2 py-1 rounded-full uppercase tracking-wider" x-text="customer.animals.length + ' mascotas'"></span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <p x-show="customerQuery.length > 0 && customerQuery.length < 2 && !selectedCustomer" x-cloak class="text-[11px] text-slate-400 font-semibold">
+                            Escribe al menos 2 caracteres para buscar.
+                        </p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -263,6 +334,16 @@
                                 </p>
                             @endif
                         </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Club</label>
+                        <select name="club_id" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner cursor-pointer">
+                            <option value="">Sin club</option>
+                            @foreach($clubs as $club)
+                                <option value="{{ $club->id }}">{{ $club->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     {{-- GRID DE 3 COLUMNAS: SEXO, FECHA, PESO --}}

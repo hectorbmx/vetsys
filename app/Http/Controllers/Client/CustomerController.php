@@ -11,31 +11,32 @@ use Exception;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request)
-    {
-        $tenantId = auth()->user()->tenant_id;
+   public function index(Request $request)
+{
+    $tenantId = auth()->user()->tenant_id;
 
-        $customers = Customer::query()
-            ->where('tenant_id', $tenantId)
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $search = $request->q;
+    $customers = Customer::query()
+        ->where('tenant_id', $tenantId)
+        ->withCount('animals')
+        ->when($request->filled('q'), function ($query) use ($request) {
+            $search = $request->q;
 
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->filled('status'), function ($query) use ($request) {
-                $query->where('status', $request->status);
-            })
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        })
+        ->when($request->filled('status'), function ($query) use ($request) {
+            $query->where('status', $request->status);
+        })
+        ->latest()
+        ->paginate(15)
+        ->withQueryString();
 
-        return view('client.customers.index', compact('customers'));
-    }
+    return view('client.customers.index', compact('customers'));
+}
 
     // public function create()
     // {
@@ -100,8 +101,13 @@ public function show($id)
         ->orderBy('name')
         ->get();
 
+    $clubs = \App\Models\Club::where('tenant_id', auth()->user()->tenant_id)
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get();
+
     // return view('client.customers.show', compact('customer','paymentMethods'));
-        return view('client.customers.show', compact('customer', 'paymentMethods', 'animalTypes'));
+        return view('client.customers.show', compact('customer', 'paymentMethods', 'animalTypes', 'clubs'));
 
 }
 

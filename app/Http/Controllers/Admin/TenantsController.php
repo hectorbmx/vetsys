@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Tenant;
 use App\Models\Plan;
+use App\Mail\TenantActivationMail;
+use App\Mail\TenantUserInvitationMail;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use App\Models\TenantSubscription;
 use App\Models\TenantPayment;
@@ -85,24 +88,37 @@ public function show(Tenant $tenant)
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:tenants,slug'],
             'business_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'status' => ['required', 'in:active,inactive,suspended,cancelled'],
-            'plan_id' => [
-                Rule::requiredIf(fn () => $request->input('status') === 'active'),
-                'nullable',
-                'exists:plans,id',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('tenants', 'email'),
+                Rule::unique('users', 'email'),
             ],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', 'in:active,inactive,suspended,cancelled'],
+            'plan_id' => ['required', 'exists:plans,id'],
         ]);
 
-        $validated['is_active'] = $validated['status'] === 'active';
-        $validated['created_by'] = auth()->id();
+        $activationCode = (string) random_int(100000, 999999);
+        $activationToken = Str::random(64);
+        $activationUrl = route('activation.link', $activationToken);
 
-        Tenant::create($validated);
+        $validated['status'] = 'inactive';
+        $validated['is_active'] = false;
+        $validated['created_by'] = auth()->id();
+        $validated['activation_code_token'] = Tenant::activationCodeHash($activationCode);
+        $validated['activation_link_token'] = hash('sha256', $activationToken);
+        $validated['activation_expires_at'] = now()->addDays(7);
+
+        $tenant = Tenant::create($validated);
+        $mailSent = $this->sendTenantActivationMail($tenant, $activationUrl, $activationCode);
+
+        $this->flashTenantActivation($tenant, $activationCode, $activationUrl, $mailSent);
 
         return redirect()
-            ->route('admin.tenants.index')
-            ->with('success', 'Cliente creado correctamente.');
+            ->route('admin.tenants.show', $tenant)
+            ->with('success', 'Cliente creado correctamente. Comparte el acceso de activacion.');
     }
 public function storeUser(Request $request, Tenant $tenant)
 {
@@ -119,15 +135,15 @@ public function storeUser(Request $request, Tenant $tenant)
 
         'role' => [
             'required',
-            Rule::in(['client-admin', 'client-user']),
+            Rule::in(['admin']),
         ],
     ]);
 
     $activationCode = (string) random_int(100000, 999999);
+    $invitationToken = Str::random(64);
+    $invitationUrl = route('invitation.accept', $invitationToken);
 
-    foreach (['client-admin', 'client-user'] as $roleName) {
-        Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-    }
+    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
 
     $user = User::create([
         'tenant_id' => $tenant->id,
@@ -142,19 +158,29 @@ public function storeUser(Request $request, Tenant $tenant)
 
         'created_by' => auth()->id(),
         'invitation_token' => User::activationCodeHash($activationCode),
+        'invitation_link_token' => hash('sha256', $invitationToken),
         'invitation_expires_at' => now()->addDays(7),
     ]);
 
     $user->assignRole($validated['role']);
 
+    $mailSent = $this->sendInvitationMail($user, $tenant, $invitationUrl, $activationCode);
+
     $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
     session()->flash('activation_code', $activationCode);
     session()->flash('activation_email', $user->email);
     session()->flash('activation_expires_at', $activationExpiresAt);
+    session()->flash('activation_link', $invitationUrl);
+    session()->flash(
+        $mailSent ? 'activation_mail_sent' : 'activation_mail_failed',
+        $mailSent
+            ? 'Tambien enviamos el link de invitacion por correo.'
+            : 'El usuario se creo, pero no se pudo enviar el correo. Puedes copiar el codigo o el link.'
+    );
 
   return redirect()
     ->route('admin.tenants.show', $tenant)
-    ->with('success', 'Usuario registrado correctamente. Comparte el codigo de activacion con el tenant.');
+    ->with('success', 'Usuario registrado correctamente.');
 }
 
 public function resendTenantActivationCode(Tenant $tenant)
@@ -165,52 +191,37 @@ public function resendTenantActivationCode(Tenant $tenant)
             ->with('error', 'El cliente no tiene email corporativo registrado.');
     }
 
-    foreach (['client-admin', 'client-user'] as $roleName) {
-        Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-    }
-
-    $user = User::where('email', $tenant->email)->first();
-
-    if ($user && (int) $user->tenant_id !== (int) $tenant->id) {
+    if ($tenant->activated_at || $tenant->users()->exists()) {
         return redirect()
             ->route('admin.tenants.show', $tenant)
-            ->with('error', 'El email corporativo ya esta asignado a otro usuario.');
+            ->with('error', 'Este tenant ya tiene una cuenta activa.');
     }
 
-    if ($user && $user->invitation_accepted_at) {
+    if (User::where('email', $tenant->email)->exists()) {
         return redirect()
             ->route('admin.tenants.show', $tenant)
-            ->with('error', 'El administrador del cliente ya activo su cuenta.');
+            ->with('error', 'Ya existe un usuario con el email corporativo de este tenant.');
     }
-
-    $user ??= new User([
-        'tenant_id' => $tenant->id,
-        'email' => $tenant->email,
-        'created_by' => auth()->id(),
-    ]);
 
     $activationCode = (string) random_int(100000, 999999);
+    $activationToken = Str::random(64);
+    $activationUrl = route('activation.link', $activationToken);
 
-    $user->fill([
-        'name' => $user->name ?: ($tenant->business_name ?: $tenant->name),
-        'password' => $user->password ?: Hash::make(Str::random(32)),
+    $tenant->update([
+        'status' => 'inactive',
         'is_active' => false,
-        'invitation_token' => User::activationCodeHash($activationCode),
-        'invitation_expires_at' => now()->addDays(7),
-        'invitation_accepted_at' => null,
+        'activation_code_token' => Tenant::activationCodeHash($activationCode),
+        'activation_link_token' => hash('sha256', $activationToken),
+        'activation_expires_at' => now()->addDays(7),
+        'activated_at' => null,
     ]);
 
-    $user->save();
-    $user->assignRole('client-admin');
-
-    $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
-    session()->flash('activation_code', $activationCode);
-    session()->flash('activation_email', $user->email);
-    session()->flash('activation_expires_at', $activationExpiresAt);
+    $mailSent = $this->sendTenantActivationMail($tenant, $activationUrl, $activationCode);
+    $this->flashTenantActivation($tenant, $activationCode, $activationUrl, $mailSent);
 
     return redirect()
         ->route('admin.tenants.show', $tenant)
-        ->with('success', 'Codigo de activacion del administrador generado correctamente.');
+        ->with('success', 'Acceso de activacion del tenant generado correctamente.');
 }
 
 public function assignPlan(Request $request, Tenant $tenant)
@@ -283,8 +294,8 @@ public function assignPlan(Request $request, Tenant $tenant)
         );
 
         $tenantData = [
-            'status' => 'active',
-            'is_active' => true,
+            'status' => $tenant->activated_at ? 'active' : 'inactive',
+            'is_active' => (bool) $tenant->activated_at,
             'subscription_ends_at' => $endsAt,
         ];
 
@@ -313,21 +324,73 @@ public function resendActivationCode(Tenant $tenant, User $user)
     }
 
     $activationCode = (string) random_int(100000, 999999);
+    $invitationToken = Str::random(64);
+    $invitationUrl = route('invitation.accept', $invitationToken);
 
     $user->update([
         'is_active' => false,
         'invitation_token' => User::activationCodeHash($activationCode),
+        'invitation_link_token' => hash('sha256', $invitationToken),
         'invitation_expires_at' => now()->addDays(7),
         'invitation_accepted_at' => null,
     ]);
+
+    $mailSent = $this->sendInvitationMail($user, $tenant, $invitationUrl, $activationCode);
 
     $activationExpiresAt = $user->invitation_expires_at->format('d/m/Y H:i');
     session()->flash('activation_code', $activationCode);
     session()->flash('activation_email', $user->email);
     session()->flash('activation_expires_at', $activationExpiresAt);
+    session()->flash('activation_link', $invitationUrl);
+    session()->flash(
+        $mailSent ? 'activation_mail_sent' : 'activation_mail_failed',
+        $mailSent
+            ? 'Tambien reenviamos el link de invitacion por correo.'
+            : 'No se pudo enviar el correo. Puedes copiar el codigo o el link.'
+    );
 
     return redirect()
         ->route('admin.tenants.show', $tenant)
-        ->with('success', 'Codigo de activacion regenerado correctamente.');
+        ->with('success', 'Acceso de activacion regenerado correctamente.');
+}
+
+private function sendInvitationMail(User $user, Tenant $tenant, string $invitationUrl, string $activationCode): bool
+{
+    try {
+        Mail::to($user->email)->send(
+            new TenantUserInvitationMail($user, $tenant, $invitationUrl, $activationCode)
+        );
+
+        return true;
+    } catch (\Throwable $exception) {
+        return false;
+    }
+}
+
+private function sendTenantActivationMail(Tenant $tenant, string $activationUrl, string $activationCode): bool
+{
+    try {
+        Mail::to($tenant->email)->send(
+            new TenantActivationMail($tenant, $activationUrl, $activationCode)
+        );
+
+        return true;
+    } catch (\Throwable $exception) {
+        return false;
+    }
+}
+
+private function flashTenantActivation(Tenant $tenant, string $activationCode, string $activationUrl, bool $mailSent): void
+{
+    session()->flash('activation_code', $activationCode);
+    session()->flash('activation_email', $tenant->email);
+    session()->flash('activation_expires_at', $tenant->activation_expires_at?->format('d/m/Y H:i'));
+    session()->flash('activation_link', $activationUrl);
+    session()->flash(
+        $mailSent ? 'activation_mail_sent' : 'activation_mail_failed',
+        $mailSent
+            ? 'Tambien enviamos el link de activacion por correo.'
+            : 'No se pudo enviar el correo. Puedes copiar el codigo o el link.'
+    );
 }
 }

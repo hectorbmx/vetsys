@@ -28,10 +28,32 @@ class NoteController extends Controller
     /**
      * Muestra el formulario reactivo del punto de venta.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $paymentMethods = auth()->user()->tenant->paymentMethods()->where('is_active', true)->get();
-        return view('client.ventas.create', compact('paymentMethods'));
+        $tenant = auth()->user()->tenant;
+        $paymentMethods = $tenant->paymentMethods()->where('is_active', true)->get();
+        $prefilledCustomer = null;
+
+        if ($request->filled('customer_id')) {
+            $customer = $tenant->customers()
+                ->whereKey($request->integer('customer_id'))
+                ->with(['animals' => function ($q) {
+                    $q->select('id', 'customer_id', 'name')
+                        ->where('status', 'active');
+                }])
+                ->first();
+
+            if ($customer) {
+                $prefilledCustomer = [
+                    'id' => $customer->id,
+                    'full_name' => $customer->full_name,
+                    'phone' => $customer->phone,
+                    'animals' => $customer->animals,
+                ];
+            }
+        }
+
+        return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer'));
     }
 
     /**
@@ -106,7 +128,11 @@ class NoteController extends Controller
         $tenant = auth()->user()->tenant;
 
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                'integer',
+                Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)),
+            ],
             'date_at' => 'required|date',
             'animal_ids' => 'required|array|min:1',
             'animal_ids.*' => [
@@ -120,11 +146,23 @@ class NoteController extends Controller
                 }),
             ],
             'items' => 'required|array|min:1',
-            'items.*.id' => 'required|exists:catalog_items,id',
+            'items.*.id' => [
+                'required',
+                'integer',
+                Rule::exists('catalog_items', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $tenant->id)
+                    ->where('is_active', true)),
+            ],
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
             'amount_received' => 'nullable|numeric|min:0',
-            'payment_method_id' => 'required_if:amount_received,>0|nullable|exists:payment_methods,id',
+            'payment_method_id' => [
+                'required_if:amount_received,>0',
+                'nullable',
+                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $tenant->id)
+                    ->where('is_active', true)),
+            ],
         ]);
 
         $note = DB::transaction(function () use ($request, $tenant) {
@@ -164,7 +202,7 @@ class NoteController extends Controller
                         'subtotal' => $subtotal,
                     ]);
 
-                    $catalogItem = CatalogItem::find($itemData['id']);
+                    $catalogItem = $tenant->catalogItems()->find($itemData['id']);
                     if ($catalogItem->has_inventory && $catalogItem->inventory) {
                         $catalogItem->inventory->decrement('stock_actual', $itemData['quantity']);
                     }
@@ -192,4 +230,20 @@ class NoteController extends Controller
         return redirect()->route('client.ventas.index')
             ->with('success', "Nota {$note->folio} generada correctamente.");
     }
+public function show(Note $note)
+{
+    abort_if($note->tenant_id !== auth()->user()->tenant->id, 403);
+
+    $note->load([
+        'customer',
+        'details.catalogItem',
+        'details.animal',
+        'payments.paymentMethod',
+    ]);
+
+    // Agrupar detalles por animal para mostrarlos ordenados
+    $detailsByAnimal = $note->details->groupBy('animal_id');
+
+    return view('client.ventas.show', compact('note', 'detailsByAnimal'));
+}
 }

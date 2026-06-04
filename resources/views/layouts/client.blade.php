@@ -44,6 +44,7 @@
                         ['route' => 'client.profile.index', 'icon' => '◎', 'label' => 'Perfil'],
                         ['route' => 'client.customers.index', 'icon' => '👥', 'label' => 'Clientes'],
                         ['route' => 'client.animals.index', 'icon' => '🐕', 'label' => 'Mascotas'],
+                        ['route' => 'client.clubes.index', 'icon' => '🏇', 'label' => 'Clubes'],
                         ['route' => 'client.servicios.index', 'icon' => '⚙️', 'label' => 'Servicios'],
                         ['route' => 'client.mi-configuracion.index', 'icon' => '⚙️', 'label' => 'Configuración'],
                         ['route' => 'client.ventas.index', 'icon' => '🛒', 'label' => 'Ventas'],

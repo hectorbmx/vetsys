@@ -17,6 +17,21 @@
                     <h2 class="text-3xl font-black text-[#0F172A] tracking-widest mt-2">
                         {{ session('activation_code') }}
                     </h2>
+                    @if(session('activation_link'))
+                        <p class="text-xs text-slate-500 font-semibold mt-3 break-all">
+                            Link: {{ session('activation_link') }}
+                        </p>
+                    @endif
+                    @if(session('activation_mail_sent'))
+                        <p class="text-xs font-black text-emerald-600 uppercase tracking-widest mt-3">
+                            {{ session('activation_mail_sent') }}
+                        </p>
+                    @endif
+                    @if(session('activation_mail_failed'))
+                        <p class="text-xs font-black text-amber-600 uppercase tracking-widest mt-3">
+                            {{ session('activation_mail_failed') }}
+                        </p>
+                    @endif
                     <p class="text-sm text-slate-500 font-semibold mt-2">
                         Usuario: {{ session('activation_email') }} · Expira: {{ session('activation_expires_at') }}
                     </p>
@@ -32,6 +47,14 @@
                             class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-slate-200 text-[#0F172A] text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition">
                         Copiar codigo
                     </button>
+                    @if(session('activation_link'))
+                        <button type="button"
+                                x-data
+                                @click="navigator.clipboard.writeText('{{ session('activation_link') }}')"
+                                class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-slate-200 text-[#0F172A] text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition">
+                            Copiar link
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -385,6 +408,7 @@
                 <table class="w-full text-left">
                     <tbody class="divide-y divide-slate-100 italic">
                         @forelse($tenant->users as $user)
+                            @php($needsActivation = !$user->is_active || !$user->invitation_accepted_at)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-8 py-4">
                                     <p class="font-black text-[#0F172A] not-italic">{{ $user->name }}</p>
@@ -397,7 +421,7 @@
                                                 {{ $role }}
                                             </span>
                                         @endforeach
-                                        @if(!$user->invitation_accepted_at)
+                                        @if($needsActivation)
                                             <span class="px-2 py-0.5 rounded {{ $user->invitation_expires_at?->isPast() ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700' }} text-[9px] font-black uppercase tracking-tighter not-italic">
                                                 {{ $user->invitation_expires_at?->isPast() ? 'Codigo expirado' : 'Pendiente activar' }}
                                             </span>
@@ -406,7 +430,7 @@
                                 </td>
                                 <td class="px-8 py-4">
                                     <div class="flex items-center justify-end gap-3">
-                                        @if(!$user->invitation_accepted_at)
+                                        @if($needsActivation)
                                             <form method="POST" action="{{ route('admin.tenants.users.resend-activation-code', [$tenant, $user]) }}">
                                                 @csrf
                                                 <button type="submit"
@@ -522,8 +546,7 @@
                         <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Asignar Rol en la Clínica</label>
                         <div class="relative">
                             <select name="role" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-black text-[#0F172A] focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-sm appearance-none">
-                                <option value="client-admin">Administrador (Acceso Total)</option>
-                                <option value="client-user">Editor / Usuario Estándar</option>
+                                <option value="admin">Administrador (Acceso Total)</option>
                             </select>
                             {{-- Icono de flecha personalizado para el select --}}
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
