@@ -129,10 +129,11 @@
                 <div class="relative" x-data="{ notificationsOpen: false }">
                     <button type="button"
                             @click="notificationsOpen = !notificationsOpen"
-                            class="relative p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all outline-none">
-                        <span class="text-lg leading-none">!</span>
+                            class="relative inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all outline-none {{ ($layoutUnreadNotificationsCount ?? 0) > 0 ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600' }}">
+                        <span class="text-base leading-none">🔔</span>
+                        <span class="hidden md:inline text-[10px] font-black uppercase tracking-widest">Notificaciones</span>
                         @if(($layoutUnreadNotificationsCount ?? 0) > 0)
-                            <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 px-1 text-[10px] font-black text-white flex items-center justify-center">
+                            <span class="ml-1 min-w-[20px] h-5 rounded-full bg-rose-600 px-1.5 text-[10px] font-black text-white flex items-center justify-center">
                                 {{ $layoutUnreadNotificationsCount > 9 ? '9+' : $layoutUnreadNotificationsCount }}
                             </span>
                         @endif
