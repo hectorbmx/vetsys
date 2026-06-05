@@ -7,6 +7,7 @@
     tab: @js(session('animalTab', 'datos')),
     loading: false,
     videoUploading: false,
+    maxVideoUploadBytes: 100 * 1024 * 1024,
     videoFormOpen: false,
     videoPlayerOpen: false,
     playingVideoUrl: '',
@@ -20,6 +21,32 @@
     radiologyUploading: false,
     radiologyImageUrl: '',
     radiologyImageTitle: '',
+    validateVideoFile(event) {
+        const file = event.target.files[0] ?? null;
+
+        if (file && file.size > this.maxVideoUploadBytes) {
+            alert('El video pesa mas de 100 MB. Sube un archivo mas ligero para evitar errores de carga.');
+            event.target.value = '';
+        }
+    },
+    validateVideoUpload(event) {
+        const file = event.target.elements.video.files[0] ?? null;
+
+        if (!file) {
+            alert('Selecciona un video antes de guardar.');
+            event.preventDefault();
+            return;
+        }
+
+        if (file.size > this.maxVideoUploadBytes) {
+            alert('El video pesa mas de 100 MB. Sube un archivo mas ligero para evitar errores de carga.');
+            event.preventDefault();
+            return;
+        }
+
+        this.videoUploading = true;
+        this.videoFormOpen = false;
+    },
     tenantQuery: '',
     tenantResults: [],
     selectedTenant: null,
@@ -397,7 +424,7 @@
                         </button>
                     </div>
 
-                    <form action="{{ route('client.animals.videos.store', $animal) }}" method="POST" enctype="multipart/form-data" @submit="videoUploading = true; videoFormOpen = false" class="space-y-4 p-5">
+                    <form action="{{ route('client.animals.videos.store', $animal) }}" method="POST" enctype="multipart/form-data" @submit="validateVideoUpload($event)" class="space-y-4 p-5">
                         @csrf
 
                         <div class="space-y-2">
@@ -412,8 +439,8 @@
 
                         <div class="space-y-2">
                             <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Video *</label>
-                            <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska" required class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:bg-[#0F172A] file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
-                            <p class="text-[10px] text-slate-400 font-semibold">Formatos: MP4, MOV, AVI, WEBM o MKV. Maximo 500 MB.</p>
+                            <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska" required @change="validateVideoFile($event)" class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:bg-[#0F172A] file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                            <p class="text-[10px] text-slate-400 font-semibold">Formatos: MP4, MOV, AVI, WEBM o MKV. Maximo 100 MB.</p>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -551,34 +578,34 @@
                                 </div>
                             @endif
 
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                                 @forelse($study->images as $image)
-                                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                                        <button type="button" @click="radiologyImageUrl = @js(route('client.radiology-images.show', $image)); radiologyImageTitle = @js($image->label ?: $image->original_name ?: 'RX')" class="block aspect-[4/3] w-full bg-slate-100">
+                                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                        <button type="button" @click="radiologyImageUrl = @js(route('client.radiology-images.show', $image)); radiologyImageTitle = @js($image->label ?: $image->original_name ?: 'RX')" class="block aspect-square w-full bg-slate-100">
                                             <img src="{{ route('client.radiology-images.show', $image) }}" alt="{{ $image->label ?? $image->original_name ?? 'RX' }}" class="h-full w-full object-cover">
                                         </button>
-                                        <div class="space-y-3 p-4">
+                                        <div class="space-y-2 p-3">
                                             <div>
-                                                <p class="text-xs font-black text-[#0F172A]">{{ $image->label ?: 'RX' }}</p>
+                                                <p class="truncate text-xs font-black text-[#0F172A]">{{ $image->label ?: 'RX' }}</p>
                                                 <p class="mt-1 text-[11px] font-semibold text-slate-400">
-                                                    {{ \Illuminate\Support\Str::limit($image->original_name ?? 'Imagen', 34) }}
+                                                    {{ \Illuminate\Support\Str::limit($image->original_name ?? 'Imagen', 24) }}
                                                     @if($image->size)
                                                         &middot; {{ number_format($image->size / 1048576, 1) }} MB
                                                     @endif
                                                 </p>
                                             </div>
                                             @if($image->notes)
-                                                <p class="line-clamp-2 text-xs font-semibold text-slate-500">{{ $image->notes }}</p>
+                                                <p class="line-clamp-2 text-[11px] font-semibold text-slate-500">{{ $image->notes }}</p>
                                             @endif
                                             <form action="{{ route('client.radiology-images.destroy', $image) }}" method="POST" onsubmit="return confirm('Eliminar esta RX?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="rounded-lg bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100">Eliminar RX</button>
+                                                <button type="submit" class="rounded-lg bg-rose-50 px-2.5 py-2 text-[9px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100">Eliminar RX</button>
                                             </form>
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="md:col-span-2 xl:col-span-3 rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
+                                    <div class="col-span-full rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
                                         <p class="text-sm font-black text-[#0F172A]">Carpeta sin RX</p>
                                         <p class="mt-2 text-xs font-semibold text-slate-400">Agrega imagenes radiologicas a este estudio.</p>
                                     </div>

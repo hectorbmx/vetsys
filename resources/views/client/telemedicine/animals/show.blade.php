@@ -253,18 +253,18 @@
                                 </div>
                             @endif
 
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                                 @forelse($study->images as $image)
                                     <button type="button"
                                             @click="radiologyImageUrl = @js(route('client.telemedicine.radiology-images.show', [$share->token, $image])); radiologyImageTitle = @js($image->label ?: $image->original_name ?: 'RX')"
-                                            class="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm hover:border-[#38B2AC]">
-                                        <div class="aspect-[4/3] bg-slate-100">
+                                            class="overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm hover:border-[#38B2AC]">
+                                        <div class="aspect-square bg-slate-100">
                                             <img src="{{ route('client.telemedicine.radiology-images.show', [$share->token, $image]) }}" alt="{{ $image->label ?? $image->original_name ?? 'RX' }}" class="h-full w-full object-cover">
                                         </div>
-                                        <div class="p-4">
-                                            <p class="text-xs font-black text-[#0F172A]">{{ $image->label ?: 'RX' }}</p>
+                                        <div class="p-3">
+                                            <p class="truncate text-xs font-black text-[#0F172A]">{{ $image->label ?: 'RX' }}</p>
                                             <p class="mt-1 text-[11px] font-semibold text-slate-400">
-                                                {{ \Illuminate\Support\Str::limit($image->original_name ?? 'Imagen', 34) }}
+                                                {{ \Illuminate\Support\Str::limit($image->original_name ?? 'Imagen', 24) }}
                                                 @if($image->size)
                                                     &middot; {{ number_format($image->size / 1048576, 1) }} MB
                                                 @endif
@@ -272,7 +272,7 @@
                                         </div>
                                     </button>
                                 @empty
-                                    <div class="md:col-span-2 xl:col-span-3 rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
+                                    <div class="col-span-full rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
                                         <p class="text-sm font-black text-[#0F172A]">Carpeta sin RX</p>
                                         <p class="mt-2 text-xs font-semibold text-slate-400">No hay imagenes visibles en este estudio.</p>
                                     </div>

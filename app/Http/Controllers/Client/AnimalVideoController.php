@@ -24,7 +24,7 @@ class AnimalVideoController extends Controller
         $data = $request->validate([
             'video_date' => ['required', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string'],
-            'video' => ['required', 'file', 'mimes:mp4,mov,avi,webm,mkv', 'max:512000'],
+            'video' => ['required', 'file', 'mimes:mp4,mov,avi,webm,mkv', 'max:102400'],
         ]);
 
         $file = $request->file('video');
