@@ -254,7 +254,9 @@ class NoteController extends Controller
     }
 public function show(Note $note)
 {
-    abort_if($note->tenant_id !== auth()->user()->tenant->id, 403);
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
 
     $note->load([
         'customer',
@@ -264,10 +266,15 @@ public function show(Note $note)
         'paymentLinks' => fn ($query) => $query->latest(),
     ]);
 
+    $paymentMethods = $tenant->paymentMethods()
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get();
+
     // Agrupar detalles por animal para mostrarlos ordenados
     $detailsByAnimal = $note->details->groupBy('animal_id');
 
-    return view('client.ventas.show', compact('note', 'detailsByAnimal'));
+    return view('client.ventas.show', compact('note', 'detailsByAnimal', 'paymentMethods'));
 }
 
 public function createStripePaymentLink(Note $note)
@@ -288,11 +295,64 @@ public function createStripePaymentLink(Note $note)
         ->with('payment_link_url', route('public.payments.show', $paymentLink->token));
 }
 
+public function storeManualPayment(Request $request, Note $note)
+{
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
+
+    $request->validate([
+        'amount' => ['required', 'numeric', 'min:0.01'],
+        'payment_method_id' => [
+            'required',
+            Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)),
+        ],
+        'reference' => ['nullable', 'string', 'max:255'],
+    ]);
+
+    if ($note->balance <= 0) {
+        return back()->with('error', 'Esta nota ya no tiene saldo pendiente.');
+    }
+
+    DB::transaction(function () use ($request, $tenant, $note) {
+        $note->refresh();
+        $amountToApply = min((float) $request->amount, max((float) $note->balance, 0));
+
+        if ($amountToApply <= 0) {
+            return;
+        }
+
+        $payment = $tenant->clientPayments()->create([
+            'customer_id' => $note->customer_id,
+            'payment_method_id' => $request->payment_method_id,
+            'amount' => $amountToApply,
+            'reference' => $request->reference ?: 'Pago manual aplicado a nota ' . $note->folio,
+            'provider' => 'manual',
+            'status' => 'paid',
+        ]);
+
+        $note->payments()->attach($payment->id, [
+            'amount_applied' => $amountToApply,
+        ]);
+
+        $note->refresh();
+
+        if ($note->balance <= 0) {
+            $note->update(['status' => 'PAGADA']);
+        }
+    });
+
+    return back()->with('success', 'Pago manual aplicado correctamente.');
+}
+
 private function isCardPaymentMethod(PaymentMethod $paymentMethod): bool
 {
     $value = str($paymentMethod->slug . ' ' . $paymentMethod->name)->lower()->ascii()->toString();
 
     return str_contains($value, 'tarjeta')
+        || str_contains($value, 'tarteja')
         || str_contains($value, 'card')
         || str_contains($value, 'stripe');
 }

@@ -200,6 +200,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::post('ventas', [NoteController::class, 'store'])->name('ventas.store');
             Route::get('ventas/{note}', [NoteController::class, 'show'])->name('ventas.show');
             Route::post('ventas/{note}/stripe-payment-link', [NoteController::class, 'createStripePaymentLink'])->name('ventas.stripe-payment-link');
+            Route::post('ventas/{note}/manual-payment', [NoteController::class, 'storeManualPayment'])->name('ventas.manual-payment');
 
             // Endpoints de búsqueda predictiva para Alpine.js (Buscadores)
             Route::get('api/buscar-clientes', [NoteController::class, 'searchCustomers'])->name('api.buscar-clientes');

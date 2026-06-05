@@ -87,7 +87,9 @@ class CustomerController extends Controller
 public function show($id)
 {
     $customer = Customer::with([
-        'saleNotes',
+        'saleNotes.details.catalogItem',
+        'saleNotes.details.animal',
+        'saleNotes.payments.paymentMethod',
         'animals',
         'payments',
         'accountSetting',

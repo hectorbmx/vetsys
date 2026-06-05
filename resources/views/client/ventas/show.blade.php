@@ -131,17 +131,105 @@
 
         @if($note->balance > 0)
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cobro con Stripe</p>
-                        <p class="text-xs text-slate-500 font-semibold mt-1">Genera un link para que el cliente liquide esta nota con tarjeta.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="border border-[#DAD7FE] bg-[#F4F3FF] rounded-2xl p-4 space-y-3">
+                        <div>
+                            <p class="text-[10px] font-black text-[#635BFF] uppercase tracking-widest">Cobro con Stripe</p>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Genera un link para que el cliente liquide esta nota con tarjeta.</p>
+                        </div>
+                        <form method="POST" action="{{ route('client.ventas.stripe-payment-link', $note) }}">
+                            @csrf
+                            <button type="submit" class="bg-[#635BFF] hover:bg-[#5148d8] text-white px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors">
+                                Generar link
+                            </button>
+                        </form>
                     </div>
-                    <form method="POST" action="{{ route('client.ventas.stripe-payment-link', $note) }}">
-                        @csrf
-                        <button type="submit" class="bg-[#635BFF] hover:bg-[#5148d8] text-white px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors">
-                            Generar link
+
+                    <div x-data="{ openManualPayment: false }" class="border border-emerald-100 bg-emerald-50 rounded-2xl p-4 space-y-3">
+                        <div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Pago manual a esta nota</p>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Registra efectivo, transferencia u otro metodo aplicado solo a {{ $note->folio }}.</p>
+                        </div>
+                        <button type="button"
+                                @click="openManualPayment = true"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors">
+                            Registrar pago
                         </button>
-                    </form>
+
+                        <div x-show="openManualPayment"
+                             x-cloak
+                             x-transition.opacity
+                             class="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/70 backdrop-blur-sm p-4"
+                             @keydown.escape.window="openManualPayment = false">
+                            <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden"
+                                 @click.outside="openManualPayment = false">
+                                <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Pago manual</p>
+                                        <h3 class="text-lg font-black text-[#0F172A] mt-1">{{ $note->folio }}</h3>
+                                    </div>
+                                    <button type="button"
+                                            @click="openManualPayment = false"
+                                            class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 font-black transition-colors">
+                                        x
+                                    </button>
+                                </div>
+
+                                <form method="POST" action="{{ route('client.ventas.manual-payment', $note) }}" class="p-6 space-y-4">
+                                    @csrf
+                                    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex justify-between items-center">
+                                        <span class="text-xs font-black uppercase tracking-widest text-slate-400">Saldo actual</span>
+                                        <span class="text-lg font-black text-rose-600">${{ number_format($note->balance, 2) }}</span>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Monto a aplicar</label>
+                                        <input type="number"
+                                               name="amount"
+                                               min="0.01"
+                                               max="{{ number_format($note->balance, 2, '.', '') }}"
+                                               step="0.01"
+                                               value="{{ number_format($note->balance, 2, '.', '') }}"
+                                               required
+                                               class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Metodo de pago</label>
+                                        <select name="payment_method_id"
+                                                required
+                                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] bg-white focus:outline-none focus:border-[#38B2AC]">
+                                            <option value="">Seleccionar...</option>
+                                            @foreach($paymentMethods as $method)
+                                                <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Referencia</label>
+                                        <input type="text"
+                                               name="reference"
+                                               maxlength="255"
+                                               placeholder="Efectivo, transferencia, recibo, etc."
+                                               class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                                    </div>
+
+                                    <div class="flex gap-3 pt-2">
+                                        <button type="button"
+                                                @click="openManualPayment = false"
+                                                class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-3 rounded-xl text-xs font-black transition-colors">
+                                            Cancelar
+                                        </button>
+                                        <button type="submit"
+                                                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl text-xs font-black transition-colors">
+                                            Aplicar pago
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 @if($note->paymentLinks->isNotEmpty())

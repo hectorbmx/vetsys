@@ -271,21 +271,119 @@
                         <th class="pb-4">Fecha</th>
                         <th class="pb-4">Total</th>
                         <th class="pb-4">Saldo</th>
+                        <th class="pb-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($customer->saleNotes as $note)
-                        <tr>
+                        <tr x-data="{ openNote: false }">
                             <td class="py-4 text-xs font-bold">{{ $note->folio }}</td>
                             <td class="py-4 text-xs font-medium text-slate-600">{{ $note->date_at->format('d/m/Y') }}</td>
                             <td class="py-4 text-xs font-black">${{ number_format($note->total, 2) }}</td>
                             <td class="py-4 text-xs font-bold {{ $note->balance <= 0 ? 'text-emerald-500' : 'text-rose-600' }}">
                                 ${{ number_format($note->balance ?? 0, 2) }}
                             </td>
+                            <td class="py-4 text-right">
+                                <button type="button"
+                                        @click="openNote = true"
+                                        class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
+                                    Ver nota
+                                </button>
+
+                                <div x-show="openNote"
+                                     x-cloak
+                                     x-transition.opacity
+                                     class="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/70 backdrop-blur-sm p-4"
+                                     @keydown.escape.window="openNote = false">
+                                    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-3xl overflow-hidden text-left"
+                                         @click.outside="openNote = false">
+                                        <div class="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-4">
+                                            <div>
+                                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Nota de venta</p>
+                                                <h3 class="text-xl font-black text-[#0F172A] mt-1">{{ $note->folio }}</h3>
+                                                <p class="text-xs font-semibold text-slate-400 mt-1">{{ $note->date_at->format('d/m/Y') }}</p>
+                                            </div>
+                                            <button type="button"
+                                                    @click="openNote = false"
+                                                    class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 font-black transition-colors">
+                                                x
+                                            </button>
+                                        </div>
+
+                                        <div class="p-6 space-y-5">
+                                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</p>
+                                                    <p class="text-lg font-black text-[#0F172A] mt-1">${{ number_format($note->total, 2) }}</p>
+                                                </div>
+                                                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Pagado</p>
+                                                    <p class="text-lg font-black text-emerald-600 mt-1">${{ number_format($note->amount_paid, 2) }}</p>
+                                                </div>
+                                                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4">
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-rose-500">Saldo</p>
+                                                    <p class="text-lg font-black text-rose-600 mt-1">${{ number_format($note->balance, 2) }}</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                                                <div class="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Detalle</p>
+                                                </div>
+                                                <table class="w-full text-left">
+                                                    <thead>
+                                                        <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                                            <th class="px-4 py-3">Concepto</th>
+                                                            <th class="px-4 py-3">Paciente</th>
+                                                            <th class="px-4 py-3 text-center">Cant.</th>
+                                                            <th class="px-4 py-3 text-right">Precio</th>
+                                                            <th class="px-4 py-3 text-right">Subtotal</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-50">
+                                                        @forelse($note->details as $detail)
+                                                            <tr>
+                                                                <td class="px-4 py-3 text-xs font-bold text-[#0F172A]">{{ $detail->catalogItem->name ?? 'Concepto' }}</td>
+                                                                <td class="px-4 py-3 text-xs font-semibold text-slate-500">{{ $detail->animal->name ?? 'N/A' }}</td>
+                                                                <td class="px-4 py-3 text-xs font-bold text-center">{{ $detail->quantity }}</td>
+                                                                <td class="px-4 py-3 text-xs font-bold text-right">${{ number_format($detail->price_at_sale, 2) }}</td>
+                                                                <td class="px-4 py-3 text-xs font-black text-right">${{ number_format($detail->subtotal, 2) }}</td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="5" class="px-4 py-6 text-center text-xs font-semibold text-slate-400">Sin detalle registrado.</td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            @if($note->payments->isNotEmpty())
+                                                <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                                                    <div class="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Pagos aplicados</p>
+                                                    </div>
+                                                    <div class="divide-y divide-slate-50">
+                                                        @foreach($note->payments as $payment)
+                                                            <div class="px-4 py-3 flex items-center justify-between gap-4">
+                                                                <div>
+                                                                    <p class="text-xs font-black text-[#0F172A]">{{ $payment->paymentMethod->name ?? 'Metodo no registrado' }}</p>
+                                                                    <p class="text-[10px] font-semibold text-slate-400">{{ $payment->reference ?? 'Pago aplicado' }}</p>
+                                                                </div>
+                                                                <p class="text-xs font-black text-emerald-600">${{ number_format($payment->pivot->amount_applied, 2) }}</p>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-4 text-xs text-slate-400">Sin notas registradas.</td>
+                            <td colspan="5" class="py-4 text-xs text-slate-400">Sin notas registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>
