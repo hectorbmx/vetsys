@@ -8,6 +8,8 @@ class Payment extends Model
 {
     protected $fillable = [
         'tenant_id',
+        'client_uuid',
+        'synced_from_mobile',
         'customer_id',
         'payment_method_id',
         'provider',
@@ -16,6 +18,10 @@ class Payment extends Model
         'status',
         'amount',
         'reference',
+    ];
+
+    protected $casts = [
+        'synced_from_mobile' => 'boolean',
     ];
 
     public function customer() { return $this->belongsTo(Customer::class); }

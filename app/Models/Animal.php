@@ -13,6 +13,8 @@ class Animal extends Model
 
     protected $fillable = [
         'tenant_id',
+        'client_uuid',
+        'synced_from_mobile',
         'customer_id',
         'club_id',
         'animal_type_id',
@@ -30,6 +32,7 @@ class Animal extends Model
     protected $casts = [
         'birthdate' => 'date',
         'weight' => 'decimal:2',
+        'synced_from_mobile' => 'boolean',
     ];
 
     public function tenant()

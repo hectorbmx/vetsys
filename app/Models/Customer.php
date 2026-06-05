@@ -13,6 +13,8 @@ class Customer extends Model
 
     protected $fillable = [
         'tenant_id',
+        'client_uuid',
+        'synced_from_mobile',
         'name',
         'last_name',
         'email',
@@ -21,6 +23,10 @@ class Customer extends Model
         'address',
         'notes',
         'status',
+    ];
+
+    protected $casts = [
+        'synced_from_mobile' => 'boolean',
     ];
 
     /*

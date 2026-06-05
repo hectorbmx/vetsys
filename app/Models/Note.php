@@ -9,11 +9,21 @@ class Note extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'customer_id', 'folio', 'total', 'status', 'date_at'];
+    protected $fillable = [
+        'tenant_id',
+        'client_uuid',
+        'synced_from_mobile',
+        'customer_id',
+        'folio',
+        'total',
+        'status',
+        'date_at',
+    ];
 
     protected $casts = [
         'date_at' => 'date',
-        'total' => 'decimal:2'
+        'total' => 'decimal:2',
+        'synced_from_mobile' => 'boolean',
     ];
 
     public function tenant() { return $this->belongsTo(Tenant::class); }

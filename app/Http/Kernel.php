@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'tenant.plan' => \App\Http\Middleware\EnsureTenantHasActivePlan::class,
         'check.tenant.subscription' => \App\Http\Middleware\CheckTenantSubscription::class,
+        'api.tenant' => \App\Http\Middleware\EnsureApiTenantAccess::class,
     ];
 }
