@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\AnimalShare;
+use App\Models\AnimalVideo;
+use App\Models\RadiologyImage;
 use App\Models\Tenant;
 use App\Models\TenantNotification;
 use App\Models\VaccinationLetter;
@@ -135,7 +137,18 @@ class TelemedicineController extends Controller
         $share->forceFill(['last_accessed_at' => now()])->save();
 
         $animal = $share->animal()
-            ->with(['tenant', 'customer', 'animalType', 'club', 'vaccinationLetters' => fn ($query) => $query->orderBy('created_at')->orderBy('id')])
+            ->with([
+                'tenant',
+                'customer',
+                'animalType',
+                'club',
+                'vaccinationLetters' => fn ($query) => $query->orderBy('created_at')->orderBy('id'),
+                'videos' => fn ($query) => $query->latest('video_date')->latest('id'),
+                'radiologyStudies' => fn ($query) => $query
+                    ->with(['images' => fn ($imageQuery) => $imageQuery->latest('id')])
+                    ->latest('study_date')
+                    ->latest('id'),
+            ])
             ->firstOrFail();
 
         $serviceHistory = $animal->noteDetails()
@@ -156,6 +169,32 @@ class TelemedicineController extends Controller
         abort_unless(Storage::disk('public')->exists($vaccinationLetter->image_path), 404);
 
         return response()->file(Storage::disk('public')->path($vaccinationLetter->image_path));
+    }
+
+    public function video(string $token, AnimalVideo $animalVideo)
+    {
+        $share = $this->authorizedShare($token);
+
+        abort_unless($animalVideo->tenant_id === $share->tenant_id, 404);
+        abort_unless($animalVideo->animal_id === $share->animal_id, 404);
+        abort_unless(Storage::disk($animalVideo->disk)->exists($animalVideo->path), 404);
+
+        return redirect()->away(
+            Storage::disk($animalVideo->disk)->temporaryUrl($animalVideo->path, now()->addMinutes(30))
+        );
+    }
+
+    public function radiologyImage(string $token, RadiologyImage $radiologyImage)
+    {
+        $share = $this->authorizedShare($token);
+
+        abort_unless($radiologyImage->tenant_id === $share->tenant_id, 404);
+        abort_unless($radiologyImage->animal_id === $share->animal_id, 404);
+        abort_unless(Storage::disk($radiologyImage->disk)->exists($radiologyImage->path), 404);
+
+        return redirect()->away(
+            Storage::disk($radiologyImage->disk)->temporaryUrl($radiologyImage->path, now()->addMinutes(30))
+        );
     }
 
     private function authorizedShare(string $token): AnimalShare

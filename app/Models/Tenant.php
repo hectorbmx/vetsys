@@ -131,4 +131,19 @@ public function vaccinationLetters()
 {
     return $this->hasMany(VaccinationLetter::class);
 }
+
+public function animalVideos()
+{
+    return $this->hasMany(AnimalVideo::class);
+}
+
+public function radiologyStudies()
+{
+    return $this->hasMany(RadiologyStudy::class);
+}
+
+public function radiologyImages()
+{
+    return $this->hasMany(RadiologyImage::class);
+}
 }

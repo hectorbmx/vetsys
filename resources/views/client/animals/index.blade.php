@@ -181,8 +181,8 @@
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button class="p-1.5 text-slate-400 hover:text-[#38B2AC] transition-colors">👁</button>
-                                    <a href="{{ route('client.animals.edit', $animal) }}" class="p-1.5 text-slate-400 hover:text-[#0F172A] transition-colors" title="Editar">Editar</a>
+                                    
+                                    <a href="{{ route('client.animals.edit', $animal) }}" class="p-1.5 text-slate-400 hover:text-[#0F172A] transition-colors" title="Editar">Detalles</a>
                                 </div>
                             </td>
                         </tr>

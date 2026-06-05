@@ -155,6 +155,15 @@ class AnimalController extends Controller
                 ->where('tenant_id', $tenantId)
                 ->orderBy('created_at')
                 ->orderBy('id'),
+            'videos' => fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->latest('video_date')
+                ->latest('id'),
+            'radiologyStudies' => fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->with(['images' => fn ($imageQuery) => $imageQuery->latest('id')])
+                ->latest('study_date')
+                ->latest('id'),
         ]);
 
         $customers = Customer::where('tenant_id', $tenantId)
