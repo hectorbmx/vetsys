@@ -588,7 +588,7 @@
                 <div class="p-6 border-b border-slate-100 bg-slate-50/50">
                     <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Importar caballos legacy</h3>
                     <p class="text-[11px] text-slate-400 font-medium mt-0.5">
-                        Crea pacientes en animals usando animal_type_id #2 y relaciona ClienteID contra los clientes ya importados.
+                        Crea pacientes en animals usando el tipo Caballo/Caballos del tenant y relaciona ClienteID contra los clientes ya importados.
                     </p>
                 </div>
 

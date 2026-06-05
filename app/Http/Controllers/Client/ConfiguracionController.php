@@ -10,6 +10,7 @@ use App\Models\AnimalType;
 use App\Models\AnimalTypeField;
 use App\Models\Animal;
 use App\Models\CatalogItem;
+use App\Models\Club;
 use App\Models\Customer;
 use App\Models\Plan;
 use App\Models\PriceHistory;
@@ -632,13 +633,7 @@ public function importServices(Request $request)
 public function importHorses(Request $request)
 {
     $tenantId = auth()->user()->tenant_id;
-    $animalTypeId = 2;
-
-    if (!AnimalType::query()->where('tenant_id', $tenantId)->where('id', $animalTypeId)->exists()) {
-        return back()
-            ->with('activeTab', 'importar')
-            ->with('error', 'No existe el animal_type_id 2 para este tenant.');
-    }
+    $animalTypeId = $this->resolveHorseAnimalTypeId($tenantId);
 
     $request->validate([
         'horses_csv' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
@@ -737,10 +732,12 @@ public function importHorses(Request $request)
             $createdAt = $this->parseLegacyDate($data['fecharegistro'] ?? null);
             $status = ((string) ($data['estatus'] ?? '1')) === '0' ? 'inactive' : 'active';
             $microchip = trim((string) ($data['microchip'] ?? ''));
+            $club = $this->resolveLegacyClub($tenantId, $data['clubid'] ?? null);
 
             $animal = new Animal([
                 'tenant_id' => $tenantId,
                 'customer_id' => $customer->id,
+                'club_id' => $club?->id,
                 'animal_type_id' => $animalTypeId,
                 'name' => $name,
                 'sex' => $this->normalizeLegacySex($data['sexo'] ?? null),
@@ -856,6 +853,51 @@ private function buildHorseLegacyNotes(array $data, string $legacyHorseId, strin
     }
 
     return trim(implode(' ', $parts));
+}
+
+private function resolveHorseAnimalTypeId(int $tenantId): int
+{
+    $horseType = AnimalType::query()
+        ->where('tenant_id', $tenantId)
+        ->where(function ($query) {
+            $query->where('slug', 'like', 'caballo%')
+                ->orWhere('name', 'like', 'Caballo%')
+                ->orWhere('name', 'like', 'caballo%');
+        })
+        ->orderBy('id')
+        ->first();
+
+    if ($horseType) {
+        return $horseType->id;
+    }
+
+    return AnimalType::create([
+        'tenant_id' => $tenantId,
+        'name' => 'Caballos',
+        'slug' => 'caballos',
+        'description' => 'Tipo creado automaticamente al importar caballos legacy.',
+        'is_active' => true,
+    ])->id;
+}
+
+private function resolveLegacyClub(int $tenantId, $legacyClubId): ?Club
+{
+    $legacyClubId = trim((string) $legacyClubId);
+
+    if ($legacyClubId === '' || strtoupper($legacyClubId) === 'NULL' || $legacyClubId === '0') {
+        return null;
+    }
+
+    return Club::query()->firstOrCreate(
+        [
+            'tenant_id' => $tenantId,
+            'name' => 'Club legacy ' . $legacyClubId,
+        ],
+        [
+            'description' => 'Importado desde legacy. Legacy ClubID: ' . $legacyClubId . '.',
+            'is_active' => true,
+        ]
+    );
 }
 
 private function parseLegacyDate($date): ?Carbon
