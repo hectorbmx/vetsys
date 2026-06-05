@@ -115,7 +115,7 @@
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer Name</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Info</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Primary Pets</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Created At</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
@@ -162,10 +162,15 @@
                                 </div>
                             </td> --}}
 
-                            {{-- Fecha de Registro --}}
+                            {{-- Adeudo General --}}
                             <td class="px-6 py-4">
-                                <div class="text-xs font-bold text-[#0F172A]">{{ $customer->created_at->format('M d, Y') }}</div>
-                                <div class="text-[9px] font-medium text-slate-400 mt-0.5">{{ $customer->created_at->diffForHumans() }}</div>
+                                @php($generalDebt = (float) ($customer->general_debt ?? 0))
+                                <div class="text-xs font-black {{ $generalDebt > 0 ? 'text-rose-600' : 'text-slate-400' }}">
+                                    ${{ number_format($generalDebt, 2) }}
+                                </div>
+                                <div class="text-[9px] font-medium {{ $generalDebt > 0 ? 'text-rose-400' : 'text-emerald-500' }} mt-0.5">
+                                    {{ $generalDebt > 0 ? 'Pendiente' : 'Sin adeudo' }}
+                                </div>
                             </td>
 
                             {{-- Status Badge Dinámico --}}

@@ -18,6 +18,9 @@ class CustomerController extends Controller
     $customers = Customer::query()
         ->where('tenant_id', $tenantId)
         ->withCount('animals')
+        ->withSum([
+            'saleNotes as general_debt' => fn ($query) => $query->where('status', 'PENDIENTE'),
+        ], 'total')
         ->when($request->filled('q'), function ($query) use ($request) {
             $search = $request->q;
 
