@@ -31,12 +31,19 @@ class StripeWebhookController extends Controller
 
         try {
             $event = Webhook::constructEvent($payload, $signature, $secret);
+
+\Log::info('STRIPE EVENT RECEIVED', [
+            'type' => $event->type,
+        ]);
+
+
         } catch (\Throwable $exception) {
             return response('Invalid webhook signature', 400);
         }
 
         match ($event->type) {
             'checkout.session.completed' => $this->handleCheckoutCompleted($event->data->object),
+	    'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
             'invoice.paid' => $this->handleInvoicePaid($event->data->object),
             'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event->data->object),
             'customer.subscription.updated' => $this->handleSubscriptionUpdated($event->data->object),
@@ -420,4 +427,100 @@ class StripeWebhookController extends Controller
                     || str_contains($value, 'stripe');
             })?->id;
     }
+private function handlePaymentIntentSucceeded($paymentIntent): void
+{
+    if (($paymentIntent->metadata->flow ?? null) !== 'customer_note_payment') {
+        return;
+    }
+
+    $paymentLink = NotePaymentLink::with(['note', 'tenant', 'customer', 'paymentMethod'])
+        ->find($paymentIntent->metadata->note_payment_link_id ?? null);
+
+    if (!$paymentLink || $paymentLink->status === 'paid' || !$paymentLink->note) {
+        return;
+    }
+
+    DB::transaction(function () use ($paymentLink, $paymentIntent) {
+        $paymentLink->refresh();
+
+        if ($paymentLink->status === 'paid') {
+            return;
+        }
+
+        $note = $paymentLink->note()->lockForUpdate()->first();
+
+        if (!$note || $note->status === 'PAGADA') {
+            $paymentLink->update([
+                'status' => 'paid',
+                'stripe_payment_intent_id' => $paymentIntent->id,
+                'paid_at' => now(),
+            ]);
+            return;
+        }
+
+        $existingPayment = Payment::where('provider', 'stripe')
+            ->where('provider_payment_id', $paymentIntent->id)
+            ->first();
+
+        if ($existingPayment) {
+            return;
+        }
+
+        $paymentMethodId = $paymentLink->payment_method_id
+            ?: $this->cardPaymentMethodIdForTenant($paymentLink->tenant_id);
+
+        if (!$paymentMethodId) {
+            return;
+        }
+
+        $amountToApply = min((float) $paymentLink->amount, max((float) $note->balance, 0));
+
+        if ($amountToApply <= 0) {
+            return;
+        }
+
+        $payment = Payment::create([
+            'tenant_id' => $paymentLink->tenant_id,
+            'customer_id' => $paymentLink->customer_id,
+            'payment_method_id' => $paymentMethodId,
+            'provider' => 'stripe',
+            'provider_payment_id' => $paymentIntent->id,
+            'provider_session_id' => $paymentIntent->payment_details->order_reference ?? null,
+            'status' => 'paid',
+            'amount' => $amountToApply,
+            'reference' => 'Stripe PaymentIntent ' . $paymentIntent->id,
+        ]);
+
+        $note->payments()->attach($payment->id, [
+            'amount_applied' => $amountToApply,
+        ]);
+
+        $note->refresh();
+
+        if ($note->balance <= 0) {
+            $note->update(['status' => 'PAGADA']);
+        }
+
+        $paymentLink->update([
+            'status' => 'paid',
+            'stripe_payment_intent_id' => $paymentIntent->id,
+            'paid_at' => now(),
+        ]);
+
+        TenantNotification::create([
+            'tenant_id' => $paymentLink->tenant_id,
+            'type' => 'customer_note_payment_paid',
+            'title' => 'Nota pagada con Stripe',
+            'body' => ($paymentLink->customer?->full_name ?? 'Un cliente') . ' pago la nota ' . $note->folio . ' por $' . number_format($amountToApply, 2) . ' MXN.',
+            'url' => route('client.ventas.show', $note),
+            'data' => [
+                'note_id' => $note->id,
+                'customer_id' => $paymentLink->customer_id,
+                'payment_id' => $payment->id,
+                'note_payment_link_id' => $paymentLink->id,
+                'stripe_payment_intent_id' => $paymentIntent->id,
+            ],
+        ]);
+    });
+}
 }
