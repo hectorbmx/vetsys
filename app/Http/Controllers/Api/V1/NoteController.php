@@ -19,6 +19,7 @@ class NoteController extends Controller
     {
         $data = $request->validate([
             'since' => ['nullable', 'date'],
+            'q' => ['nullable', 'string', 'max:120'],
             'customer_id' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::in(['PENDIENTE', 'PAGADA', 'CANCELADA'])],
             'per_page' => ['nullable', 'integer', 'between:1,100'],
@@ -27,7 +28,7 @@ class NoteController extends Controller
         $tenantId = $request->user()->tenant_id;
 
         $notes = Note::withTrashed()
-            ->with('customer')
+            ->with(['customer', 'details.catalogItem'])
             ->where('tenant_id', $tenantId)
             ->when(isset($data['since']), function (Builder $query) use ($data) {
                 $query->where(function (Builder $query) use ($data) {
@@ -37,6 +38,16 @@ class NoteController extends Controller
             })
             ->when(isset($data['customer_id']), fn (Builder $query) => $query->where('customer_id', $data['customer_id']))
             ->when(isset($data['status']), fn (Builder $query) => $query->where('status', $data['status']))
+            ->when(isset($data['q']), function (Builder $query) use ($data) {
+                $search = $data['q'];
+
+                $query->where(function (Builder $query) use ($search) {
+                    $query->where('folio', 'like', "%{$search}%")
+                        ->orWhereHas('details.catalogItem', function (Builder $query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest('id')
             ->paginate($data['per_page'] ?? 50);
 

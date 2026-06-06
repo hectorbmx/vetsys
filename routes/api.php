@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AnimalController;
+use App\Http\Controllers\Api\V1\AnimalTypeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogItemController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -33,8 +34,9 @@ Route::prefix('v1')->group(function () {
             ->except(['destroy']);
         Route::apiResource('animals', AnimalController::class)
             ->except(['destroy']);
+        Route::get('/animal-types', [AnimalTypeController::class, 'index']);
         Route::apiResource('catalog-items', CatalogItemController::class)
-            ->only(['index', 'show']);
+            ->only(['index', 'store', 'show']);
         Route::apiResource('notes', NoteController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/notes/{note}/payment-links', [NoteController::class, 'createPaymentLink']);

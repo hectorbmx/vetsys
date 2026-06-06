@@ -91,7 +91,7 @@ class CustomerController extends Controller
         $this->authorizeTenant($request, $customer);
 
         return response()->json([
-            'data' => $this->serializeCustomer($customer),
+            'data' => $this->serializeCustomer($customer, true),
         ]);
     }
 
@@ -140,9 +140,9 @@ class CustomerController extends Controller
         abort_if($customer->tenant_id !== $request->user()->tenant_id, 404);
     }
 
-    private function serializeCustomer(Customer $customer): array
+    private function serializeCustomer(Customer $customer, bool $withSummary = false): array
     {
-        return [
+        $data = [
             'id' => $customer->id,
             'client_uuid' => $customer->client_uuid,
             'name' => $customer->name,
@@ -159,5 +159,18 @@ class CustomerController extends Controller
             'updated_at' => $customer->updated_at?->toISOString(),
             'deleted_at' => $customer->deleted_at?->toISOString(),
         ];
+
+        if ($withSummary) {
+            $activeNotes = $customer->saleNotes()
+                ->where('status', '!=', 'CANCELADA');
+
+            $data['notes_count'] = (clone $activeNotes)->count();
+            $data['pending_balance'] = (float) (clone $activeNotes)
+                ->where('status', 'PENDIENTE')
+                ->get()
+                ->sum(fn ($note) => $note->balance);
+        }
+
+        return $data;
     }
 }

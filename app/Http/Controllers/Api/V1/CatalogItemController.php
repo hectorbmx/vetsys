@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogItem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CatalogItemController extends Controller
@@ -63,6 +64,49 @@ class CatalogItemController extends Controller
         return response()->json([
             'data' => $this->serializeItem($catalogItem->load('inventory')),
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $tenantId = $request->user()->tenant_id;
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'sku' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('catalog_items', 'sku')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
+            'type' => ['required', Rule::in(['product', 'service'])],
+            'description' => ['nullable', 'string', 'max:500'],
+            'price' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $item = DB::transaction(function () use ($data, $tenantId) {
+            $item = CatalogItem::create([
+                'tenant_id' => $tenantId,
+                'name' => $data['name'],
+                'sku' => $data['sku'] ?? null,
+                'type' => $data['type'],
+                'description' => $data['description'] ?? null,
+                'tax_percentage' => 0,
+                'has_inventory' => false,
+                'is_active' => true,
+            ]);
+
+            $item->priceHistories()->create([
+                'tenant_id' => $tenantId,
+                'price' => $data['price'],
+                'start_date' => now(),
+                'end_date' => null,
+            ]);
+
+            return $item;
+        });
+
+        return response()->json([
+            'data' => $this->serializeItem($item),
+        ], 201);
     }
 
     private function serializeItem(CatalogItem $item): array
