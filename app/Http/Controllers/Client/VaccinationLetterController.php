@@ -26,6 +26,18 @@ class VaccinationLetterController extends Controller
 
         abort_unless($vaccinationLetter->tenant_id === $tenantId, 404);
 
+        return $this->renderPdf($vaccinationLetter);
+    }
+
+    public function signedPrint(Request $request, VaccinationLetter $vaccinationLetter)
+    {
+        abort_unless($request->hasValidSignature(), 403);
+
+        return $this->renderPdf($vaccinationLetter);
+    }
+
+    private function renderPdf(VaccinationLetter $vaccinationLetter)
+    {
         $vaccinationLetter->load(['tenant', 'animal.customer', 'animal.animalType']);
         abort_unless(Storage::disk('public')->exists($vaccinationLetter->image_path), 404);
 

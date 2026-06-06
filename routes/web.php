@@ -89,6 +89,8 @@ Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 Route::get('/pagar/{token}', [PublicNotePaymentController::class, 'show'])->name('public.payments.show');
 Route::post('/pagar/{token}/stripe', [PublicNotePaymentController::class, 'checkout'])->name('public.payments.checkout');
+Route::get('/cartas-vacunacion/{vaccinationLetter}/pdf', [VaccinationLetterController::class, 'signedPrint'])
+    ->name('public.vaccination-letters.print');
 
 Route::middleware(['auth', 'role:super-admin'])
     ->prefix('admin')

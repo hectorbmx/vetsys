@@ -13,6 +13,7 @@ use App\Models\TenantNotification;
 use App\Models\VaccinationLetter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -217,7 +218,12 @@ class AnimalClinicalMediaController extends Controller
             'vaccination_letters' => $animal->vaccinationLetters->map(fn ($letter) => [
                 'id' => $letter->id,
                 'date' => $letter->date?->toDateString(),
-                'image_url' => request()->getSchemeAndHttpHost() . '/storage/' . ltrim($letter->image_path, '/'),
+                'name' => 'Carta de vacunacion - ' . $letter->date?->format('d/m/Y'),
+                'pdf_url' => URL::temporarySignedRoute(
+                    'public.vaccination-letters.print',
+                    now()->addDays(7),
+                    ['vaccinationLetter' => $letter->id]
+                ),
             ])->values(),
             'videos' => $animal->videos->map(fn ($video) => [
                 'id' => $video->id,
