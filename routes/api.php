@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AnimalController;
+use App\Http\Controllers\Api\V1\AnimalClinicalMediaController;
 use App\Http\Controllers\Api\V1\AnimalTypeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogItemController;
@@ -37,6 +38,13 @@ Route::prefix('v1')->group(function () {
             ->except(['destroy']);
         Route::get('/animal-types', [AnimalTypeController::class, 'index']);
         Route::get('/clubs', [ClubController::class, 'index']);
+        Route::get('/animals/{animal}/clinical-media', [AnimalClinicalMediaController::class, 'index']);
+        Route::post('/animals/{animal}/vaccination-letters', [AnimalClinicalMediaController::class, 'storeVaccination']);
+        Route::post('/animals/{animal}/videos', [AnimalClinicalMediaController::class, 'storeVideo']);
+        Route::post('/animals/{animal}/radiology-studies', [AnimalClinicalMediaController::class, 'storeRadiologyStudy']);
+        Route::post('/radiology-studies/{radiologyStudy}/images', [AnimalClinicalMediaController::class, 'storeRadiologyImages']);
+        Route::get('/telemedicine/tenants', [AnimalClinicalMediaController::class, 'searchTenants']);
+        Route::post('/animals/{animal}/telemedicine-shares', [AnimalClinicalMediaController::class, 'share']);
         Route::apiResource('catalog-items', CatalogItemController::class)
             ->only(['index', 'store', 'show']);
         Route::apiResource('notes', NoteController::class)
