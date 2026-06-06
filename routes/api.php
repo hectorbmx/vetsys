@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\MobileBootstrapController;
 use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PaymentMethodController;
 use App\Http\Controllers\Api\V1\SyncController;
 
 /*
@@ -39,6 +40,7 @@ Route::prefix('v1')->group(function () {
             ->except(['destroy']);
         Route::get('/animal-types', [AnimalTypeController::class, 'index']);
         Route::get('/clubs', [ClubController::class, 'index']);
+        Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
         Route::get('/animals/{animal}/clinical-media', [AnimalClinicalMediaController::class, 'index']);
         Route::post('/animals/{animal}/vaccination-letters', [AnimalClinicalMediaController::class, 'storeVaccination']);
         Route::get('/vaccination-letters/{vaccinationLetter}/share-link', [AnimalClinicalMediaController::class, 'vaccinationShareLink']);
