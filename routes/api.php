@@ -50,7 +50,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/telemedicine/tenants', [AnimalClinicalMediaController::class, 'searchTenants']);
         Route::post('/animals/{animal}/telemedicine-shares', [AnimalClinicalMediaController::class, 'share']);
         Route::apiResource('catalog-items', CatalogItemController::class)
-            ->only(['index', 'store', 'show']);
+            ->only(['index', 'store', 'show', 'update']);
         Route::apiResource('notes', NoteController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/notes/{note}/payment-links', [NoteController::class, 'createPaymentLink']);

@@ -109,6 +109,23 @@ class CatalogItemController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, CatalogItem $catalogItem)
+    {
+        abort_if($catalogItem->tenant_id !== $request->user()->tenant_id, 404);
+
+        $data = $request->validate([
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $catalogItem->update([
+            'is_active' => $data['is_active'],
+        ]);
+
+        return response()->json([
+            'data' => $this->serializeItem($catalogItem->fresh()->load('inventory')),
+        ]);
+    }
+
     private function serializeItem(CatalogItem $item): array
     {
         return [
