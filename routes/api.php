@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\ClubController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\MobileBootstrapController;
 use App\Http\Controllers\Api\V1\NoteController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SyncController;
 
@@ -52,6 +53,8 @@ Route::prefix('v1')->group(function () {
             ->only(['index', 'store', 'show']);
         Route::post('/notes/{note}/payment-links', [NoteController::class, 'createPaymentLink']);
         Route::post('/notes/{note}/manual-payment', [NoteController::class, 'storeManualPayment']);
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::get('/customers/{customer}/payments/preview', [PaymentController::class, 'preview']);
         Route::apiResource('payments', PaymentController::class)
             ->only(['index', 'store', 'show']);
