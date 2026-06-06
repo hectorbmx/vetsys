@@ -31,7 +31,7 @@ class VaccinationLetterController extends Controller
 
     public function signedPrint(Request $request, VaccinationLetter $vaccinationLetter)
     {
-        abort_unless($request->hasValidSignature(), 403);
+        abort_unless($request->hasValidRelativeSignature(), 403);
 
         return $this->renderPdf($vaccinationLetter);
     }

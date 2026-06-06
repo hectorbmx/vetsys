@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/clubs', [ClubController::class, 'index']);
         Route::get('/animals/{animal}/clinical-media', [AnimalClinicalMediaController::class, 'index']);
         Route::post('/animals/{animal}/vaccination-letters', [AnimalClinicalMediaController::class, 'storeVaccination']);
+        Route::get('/vaccination-letters/{vaccinationLetter}/share-link', [AnimalClinicalMediaController::class, 'vaccinationShareLink']);
         Route::post('/animals/{animal}/videos', [AnimalClinicalMediaController::class, 'storeVideo']);
         Route::post('/animals/{animal}/radiology-studies', [AnimalClinicalMediaController::class, 'storeRadiologyStudy']);
         Route::post('/radiology-studies/{radiologyStudy}/images', [AnimalClinicalMediaController::class, 'storeRadiologyImages']);

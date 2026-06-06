@@ -59,6 +59,17 @@ class AnimalClinicalMediaController extends Controller
         return response()->json(['data' => $this->serialize($animal)], 201);
     }
 
+    public function vaccinationShareLink(Request $request, VaccinationLetter $vaccinationLetter)
+    {
+        abort_unless($vaccinationLetter->tenant_id === $request->user()->tenant_id, 404);
+
+        return response()->json([
+            'data' => [
+                'url' => $this->vaccinationPdfUrl($vaccinationLetter),
+            ],
+        ]);
+    }
+
     public function storeVideo(Request $request, Animal $animal)
     {
         $this->authorizeAnimal($request, $animal);
@@ -219,11 +230,7 @@ class AnimalClinicalMediaController extends Controller
                 'id' => $letter->id,
                 'date' => $letter->date?->toDateString(),
                 'name' => 'Carta de vacunacion - ' . $letter->date?->format('d/m/Y'),
-                'pdf_url' => URL::temporarySignedRoute(
-                    'public.vaccination-letters.print',
-                    now()->addDays(7),
-                    ['vaccinationLetter' => $letter->id]
-                ),
+                'pdf_url' => $this->vaccinationPdfUrl($letter),
             ])->values(),
             'videos' => $animal->videos->map(fn ($video) => [
                 'id' => $video->id,
@@ -250,5 +257,17 @@ class AnimalClinicalMediaController extends Controller
                 'url' => route('client.telemedicine.animals.show', $share->token),
             ])->values(),
         ];
+    }
+
+    private function vaccinationPdfUrl(VaccinationLetter $letter): string
+    {
+        $relativeUrl = URL::temporarySignedRoute(
+            'public.vaccination-letters.print',
+            now()->addDays(7),
+            ['vaccinationLetter' => $letter->id],
+            false
+        );
+
+        return request()->getSchemeAndHttpHost() . $relativeUrl;
     }
 }
