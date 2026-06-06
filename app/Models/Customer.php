@@ -74,6 +74,22 @@ public function paymentLinks()
     return $this->hasMany(CustomerPaymentLink::class);
 }
 
+public function getOutstandingBalanceAttribute(): float
+{
+    return (float) $this->saleNotes->sum(fn (Note $note) => max($note->balance, 0));
+}
+
+public function getCreditBalanceAttribute(): float
+{
+    $payments = $this->relationLoaded('payments') ? $this->payments : $this->payments()->get();
+    $applied = \Illuminate\Support\Facades\DB::table('note_payments')
+        ->join('payments', 'payments.id', '=', 'note_payments.payment_id')
+        ->where('payments.customer_id', $this->id)
+        ->sum('note_payments.amount_applied');
+
+    return max((float) $payments->sum('amount') - (float) $applied, 0);
+}
+
 public function accountSetting()
 {
     return $this->hasOne(CustomerAccountSetting::class);

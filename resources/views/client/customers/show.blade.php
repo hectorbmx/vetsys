@@ -41,11 +41,14 @@
     <div class="bg-white border border-slate-200 rounded-[24px] p-6">
         <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Adeudo General</p>
         <p class="text-3xl font-black text-rose-500">
-            ${{ number_format($customer->saleNotes->whereIn('status', ['PENDIENTE'])->sum('total'), 2) }}
+            ${{ number_format($customer->outstanding_balance, 2) }}
         </p>
         <p class="text-[10px] text-slate-400 mt-1">
-            {{ $customer->saleNotes->whereIn('status', ['PENDIENTE'])->count() }} nota(s) pendiente(s)
+            {{ $customer->saleNotes->filter(fn ($note) => $note->balance > 0)->count() }} nota(s) pendiente(s)
         </p>
+        @if($customer->credit_balance > 0)
+            <p class="text-[10px] font-black text-emerald-600 mt-2">Saldo a favor: ${{ number_format($customer->credit_balance, 2) }}</p>
+        @endif
     </div>
 
     {{-- Último Pago --}}
@@ -677,6 +680,8 @@
                         <th class="pb-4">Fecha</th>
                         <th class="pb-4">Referencia</th>
                         <th class="pb-4">Método</th>
+                        <th class="pb-4 text-right">Aplicado</th>
+                        <th class="pb-4 text-right">Saldo a favor</th>
                         <th class="pb-4 text-right">Monto</th>
                     </tr>
                 </thead>
@@ -688,11 +693,13 @@
                             <td class="py-4 text-xs font-bold text-slate-500">
                                 <span class="px-2 py-1 bg-slate-100 rounded-lg">{{ $payment->paymentMethod->name ?? 'N/A' }}</span>
                             </td>
+                            <td class="py-4 text-xs font-black text-slate-600 text-right">${{ number_format($payment->amount_applied, 2) }}</td>
+                            <td class="py-4 text-xs font-black text-amber-600 text-right">${{ number_format($payment->unapplied_amount, 2) }}</td>
                             <td class="py-4 text-xs font-black text-emerald-600 text-right">+${{ number_format($payment->amount, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-4 text-xs text-slate-400 text-center">Sin pagos registrados para este cliente.</td>
+                            <td colspan="6" class="py-4 text-xs text-slate-400 text-center">Sin pagos registrados para este cliente.</td>
                         </tr>
                     @endforelse
                 </tbody>

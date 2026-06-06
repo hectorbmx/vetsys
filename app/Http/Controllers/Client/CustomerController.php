@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Note;
+use App\Models\CustomerPaymentLink;
+use App\Services\CustomerStripePaymentProcessor;
+use App\Services\StripeCustomerPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Exception;
@@ -86,12 +89,14 @@ class CustomerController extends Controller
 // CustomerController.php
 public function show($id)
 {
+    $this->reconcilePendingStripePayments((int) $id);
+
     $customer = Customer::with([
         'saleNotes.details.catalogItem',
         'saleNotes.details.animal',
         'saleNotes.payments.paymentMethod',
         'animals',
-        'payments',
+        'payments.paymentMethod',
         'accountSetting',
         'statements' => fn ($query) => $query->latest(),
     ])->findOrFail($id);
@@ -115,6 +120,32 @@ public function show($id)
         return view('client.customers.show', compact('customer', 'paymentMethods', 'animalTypes', 'clubs'));
 
 }
+
+    private function reconcilePendingStripePayments(int $customerId): void
+    {
+        $links = CustomerPaymentLink::where('customer_id', $customerId)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->where('status', 'pending')
+            ->whereNotNull('stripe_checkout_session_id')
+            ->get();
+
+        foreach ($links as $paymentLink) {
+            try {
+                $session = app(StripeCustomerPaymentService::class)
+                    ->retrieveCheckoutSession($paymentLink->stripe_checkout_session_id);
+
+                if (($session->payment_status ?? null) === 'paid' && is_string($session->payment_intent ?? null)) {
+                    app(CustomerStripePaymentProcessor::class)->process(
+                        $paymentLink,
+                        $session->payment_intent,
+                        $session->id
+                    );
+                }
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+    }
 
     public function updateAccountSettings(Request $request, Customer $customer)
     {

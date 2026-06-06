@@ -33,5 +33,15 @@ class Payment extends Model
                     ->withPivot('amount_applied')
                     ->withTimestamps();
     }
+
+    public function getAmountAppliedAttribute(): float
+    {
+        return (float) $this->notes()->sum('note_payments.amount_applied');
+    }
+
+    public function getUnappliedAmountAttribute(): float
+    {
+        return max((float) $this->amount - $this->amount_applied, 0);
+    }
     
 }

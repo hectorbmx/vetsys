@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Note;
 use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
+use App\Services\CustomerPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -233,6 +234,11 @@ class NoteController extends Controller
                     'amount_applied' => $montoAAplicar,
                 ]);
             }
+
+            app(CustomerPaymentService::class)->applyAvailableCredit(
+                Customer::findOrFail($request->customer_id),
+                $note
+            );
 
             return $note;
         });

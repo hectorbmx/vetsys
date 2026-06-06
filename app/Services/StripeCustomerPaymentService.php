@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\CustomerPaymentLink;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Stripe\StripeClient;
 
 class StripeCustomerPaymentService
@@ -42,17 +43,30 @@ class StripeCustomerPaymentService
 
     public function createCheckoutSession(CustomerPaymentLink $paymentLink)
     {
-        $paymentLink->loadMissing(['tenant', 'customer']);
+        return Cache::lock('customer-payment-checkout:' . $paymentLink->id, 30)->block(10, function () use ($paymentLink) {
+            $paymentLink->refresh()->loadMissing(['tenant', 'customer']);
 
-        if (!$paymentLink->is_payable) {
-            throw new \RuntimeException('Este link de pago ya no esta disponible.');
-        }
+            if (!$paymentLink->is_payable) {
+                throw new \RuntimeException('Este link de pago ya no esta disponible.');
+            }
 
-        if ((float) $paymentLink->amount < 10) {
-            throw new \RuntimeException('Stripe requiere un monto minimo de $10.00 MXN para abrir el checkout.');
-        }
+            if ((float) $paymentLink->amount < 10) {
+                throw new \RuntimeException('Stripe requiere un monto minimo de $10.00 MXN para abrir el checkout.');
+            }
 
-        $payload = [
+            if ($paymentLink->stripe_checkout_session_id) {
+                $existingSession = $this->stripe->checkout->sessions->retrieve($paymentLink->stripe_checkout_session_id);
+
+                if (($existingSession->payment_status ?? null) === 'paid') {
+                    throw new \RuntimeException('Este link ya fue pagado.');
+                }
+
+                if (($existingSession->status ?? null) === 'open' && $existingSession->url) {
+                    return $existingSession;
+                }
+            }
+
+            $payload = [
             'mode' => 'payment',
             'line_items' => [[
                 'price_data' => [
@@ -79,16 +93,22 @@ class StripeCustomerPaymentService
                     'customer_payment_link_id' => (string) $paymentLink->id,
                 ],
             ],
-        ];
+            ];
 
-        if ($paymentLink->customer->email) {
-            $payload['customer_email'] = $paymentLink->customer->email;
-        }
+            if ($paymentLink->customer->email) {
+                $payload['customer_email'] = $paymentLink->customer->email;
+            }
 
-        $session = $this->stripe->checkout->sessions->create($payload);
+            $session = $this->stripe->checkout->sessions->create($payload);
 
-        $paymentLink->update(['stripe_checkout_session_id' => $session->id]);
+            $paymentLink->update(['stripe_checkout_session_id' => $session->id]);
 
-        return $session;
+            return $session;
+        });
+    }
+
+    public function retrieveCheckoutSession(string $sessionId)
+    {
+        return $this->stripe->checkout->sessions->retrieve($sessionId);
     }
 }
