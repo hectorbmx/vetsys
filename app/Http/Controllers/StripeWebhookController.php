@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Plan;
 use App\Models\NotePaymentLink;
+use App\Models\CustomerPaymentLink;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Tenant;
@@ -11,6 +12,7 @@ use App\Models\TenantNotification;
 use App\Models\TenantPayment;
 use App\Models\TenantSubscription;
 use App\Models\AdminNotification;
+use App\Services\CustomerPaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +58,11 @@ class StripeWebhookController extends Controller
 
     private function handleCheckoutCompleted($session): void
     {
+        if (($session->metadata->flow ?? null) === 'customer_account_payment') {
+            $this->handleCustomerAccountCheckoutCompleted($session);
+            return;
+        }
+
         if (($session->metadata->flow ?? null) === 'customer_note_payment') {
             $this->handleCustomerNoteCheckoutCompleted($session);
             return;
@@ -103,6 +110,69 @@ class StripeWebhookController extends Controller
         if (($session->payment_status ?? null) === 'paid') {
             $this->activateTenantPlan($tenant, $plan, $subscription, $payment->period_starts_at, $payment->period_ends_at);
         }
+    }
+
+    private function handleCustomerAccountCheckoutCompleted($session): void
+    {
+        if (($session->payment_status ?? null) !== 'paid') {
+            return;
+        }
+
+        $paymentLink = CustomerPaymentLink::with(['customer', 'paymentMethod'])
+            ->find($session->metadata->customer_payment_link_id ?? null);
+
+        if (!$paymentLink || $paymentLink->status === 'paid' || !$paymentLink->customer) {
+            return;
+        }
+
+        DB::transaction(function () use ($paymentLink, $session) {
+            $paymentLink = CustomerPaymentLink::lockForUpdate()->find($paymentLink->id);
+
+            if (!$paymentLink || $paymentLink->status === 'paid') {
+                return;
+            }
+
+            $paymentMethodId = $paymentLink->payment_method_id
+                ?: $this->cardPaymentMethodIdForTenant($paymentLink->tenant_id);
+
+            if (!$paymentMethodId) {
+                return;
+            }
+
+            $payment = app(CustomerPaymentService::class)->apply(
+                $paymentLink->customer,
+                $paymentMethodId,
+                (float) $paymentLink->amount,
+                [
+                    'provider' => 'stripe',
+                    'provider_payment_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
+                    'provider_session_id' => $session->id,
+                    'status' => 'paid',
+                    'reference' => 'Stripe Checkout ' . $session->id,
+                ]
+            );
+
+            $paymentLink->update([
+                'status' => 'paid',
+                'stripe_checkout_session_id' => $session->id,
+                'stripe_payment_intent_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
+                'paid_at' => now(),
+            ]);
+
+            TenantNotification::create([
+                'tenant_id' => $paymentLink->tenant_id,
+                'type' => 'customer_account_payment_paid',
+                'title' => 'Pago de cuenta recibido',
+                'body' => $paymentLink->customer->full_name . ' pago $' . number_format((float) $paymentLink->amount, 2) . ' MXN con Stripe.',
+                'url' => route('client.customers.show', $paymentLink->customer),
+                'data' => [
+                    'customer_id' => $paymentLink->customer_id,
+                    'payment_id' => $payment->id,
+                    'customer_payment_link_id' => $paymentLink->id,
+                    'stripe_checkout_session_id' => $session->id,
+                ],
+            ]);
+        });
     }
 
     private function handleCustomerNoteCheckoutCompleted($session): void

@@ -20,6 +20,19 @@
             ✓ {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-3 rounded-2xl text-xs font-bold">{{ session('error') }}</div>
+    @endif
+    @if(session('customer_payment_link_url') || session('payment_link_url'))
+        @php $generatedPaymentUrl = session('customer_payment_link_url') ?? session('payment_link_url'); @endphp
+        <div x-data="{ copied: false, url: @js($generatedPaymentUrl) }" class="bg-[#F4F3FF] border border-[#DAD7FE] rounded-2xl p-5">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[#635BFF]">Link Stripe generado</p>
+            <div class="flex gap-3 mt-3">
+                <input readonly :value="url" class="flex-1 bg-white border border-[#DAD7FE] rounded-xl px-4 py-2.5 text-xs font-semibold">
+                <button type="button" @click="navigator.clipboard.writeText(url); copied = true; setTimeout(() => copied = false, 1800)" class="bg-[#635BFF] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase"><span x-text="copied ? 'Copiado' : 'Copiar'"></span></button>
+            </div>
+        </div>
+    @endif
 
    {{-- KPIs --}}
 <div x-data="{ ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="grid grid-cols-3 gap-4">
@@ -122,7 +135,7 @@
                 </div>
 
                 {{-- Formulario --}}
-                <form method="POST" action="{{ route('client.customers.payments.store', $customer) }}">
+                <form method="POST" :action="isCard ? @js(route('client.customers.stripe-payment-link', $customer)) : @js(route('client.customers.payments.store', $customer))">
                     @csrf
                     <div class="px-6 py-5 space-y-4">
 
@@ -154,18 +167,21 @@
                             </label>
                             <select
                                 name="payment_method_id"
+                                x-model="paymentMethodId"
+                                @change="isCard = $event.target.selectedOptions[0]?.dataset.card === '1'"
                                 class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:border-[#38B2AC] focus:ring-2 focus:ring-[#38B2AC]/20 transition-all bg-white"
                                 required
                             >
                                 <option value="">Seleccionar...</option>
                                 @foreach($paymentMethods as $method)
-                                    <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                    @php $isCardMethod = str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarjeta') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'card') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'stripe'); @endphp
+                                    <option value="{{ $method->id }}" data-card="{{ $isCardMethod ? '1' : '0' }}">{{ $method->name }}</option>
                                 @endforeach
                             </select>
                         </div>
 
                         {{-- Referencia (opcional) --}}
-                        <div>
+                        <div x-show="!isCard">
                             <label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5">
                                 Referencia <span class="text-slate-300 normal-case font-normal">(opcional)</span>
                             </label>
@@ -228,10 +244,10 @@
                         </button>
                         <button
                             type="submit"
-                            :disabled="!amount || amount <= 0"
+                            :disabled="!amount || amount <= 0 || !paymentMethodId"
                             class="flex-1 py-3 bg-[#38B2AC] hover:bg-[#2C9A94] disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl text-xs font-black transition-all"
                         >
-                            Confirmar Pago
+                            <span x-text="isCard ? 'Generar link' : 'Confirmar Pago'"></span>
                         </button>
                     </div>
                 </form>
@@ -271,24 +287,69 @@
                         <th class="pb-4">Fecha</th>
                         <th class="pb-4">Total</th>
                         <th class="pb-4">Saldo</th>
+                        <th class="pb-4">Estatus</th>
                         <th class="pb-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($customer->saleNotes as $note)
-                        <tr x-data="{ openNote: false }">
+                        <tr x-data="{ openNote: false, openPayment: false, paymentMethodId: '', isCard: false }">
                             <td class="py-4 text-xs font-bold">{{ $note->folio }}</td>
                             <td class="py-4 text-xs font-medium text-slate-600">{{ $note->date_at->format('d/m/Y') }}</td>
                             <td class="py-4 text-xs font-black">${{ number_format($note->total, 2) }}</td>
                             <td class="py-4 text-xs font-bold {{ $note->balance <= 0 ? 'text-emerald-500' : 'text-rose-600' }}">
                                 ${{ number_format($note->balance ?? 0, 2) }}
                             </td>
+                            <td class="py-4">
+                                <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $note->balance <= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">
+                                    {{ $note->balance <= 0 ? 'Pagada' : 'Pendiente' }}
+                                </span>
+                            </td>
                             <td class="py-4 text-right">
+                                @if($note->balance > 0)
+                                    <button type="button" @click="openPayment = true" class="inline-flex items-center justify-center bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm mr-2">Pagar</button>
+                                @endif
                                 <button type="button"
                                         @click="openNote = true"
                                         class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
                                     Ver nota
                                 </button>
+
+                                @if($note->balance > 0)
+                                    <div x-show="openPayment" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/70 backdrop-blur-sm p-4" @keydown.escape.window="openPayment = false">
+                                        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md p-6 text-left" @click.outside="openPayment = false">
+                                            <div class="flex justify-between items-start gap-4 mb-5">
+                                                <div>
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Cobrar nota</p>
+                                                    <h3 class="text-lg font-black mt-1">{{ $note->folio }}</h3>
+                                                    <p class="text-xs font-bold text-rose-500 mt-1">Saldo ${{ number_format($note->balance, 2) }}</p>
+                                                </div>
+                                                <button type="button" @click="openPayment = false" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 font-black">x</button>
+                                            </div>
+                                            <form method="POST" :action="isCard ? @js(route('client.ventas.stripe-payment-link', $note)) : @js(route('client.ventas.manual-payment', $note))" class="space-y-4">
+                                                @csrf
+                                                <input type="hidden" name="amount" value="{{ $note->balance }}">
+                                                <div>
+                                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Metodo de pago</label>
+                                                    <select name="payment_method_id" x-model="paymentMethodId" @change="isCard = $event.target.selectedOptions[0]?.dataset.card === '1'" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold bg-white">
+                                                        <option value="">Seleccionar...</option>
+                                                        @foreach($paymentMethods as $method)
+                                                            @php $noteCardMethod = str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarjeta') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'card') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'stripe'); @endphp
+                                                            <option value="{{ $method->id }}" data-card="{{ $noteCardMethod ? '1' : '0' }}">{{ $method->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div x-show="!isCard">
+                                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Referencia opcional</label>
+                                                    <input name="reference" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                                                </div>
+                                                <button type="submit" :disabled="!paymentMethodId" class="w-full bg-[#38B2AC] disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest">
+                                                    <span x-text="isCard ? 'Generar link' : 'Aplicar pago'"></span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div x-show="openNote"
                                      x-cloak
@@ -383,7 +444,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-4 text-xs text-slate-400">Sin notas registradas.</td>
+                            <td colspan="6" class="py-4 text-xs text-slate-400">Sin notas registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>

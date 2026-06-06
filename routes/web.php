@@ -16,6 +16,7 @@ use App\Http\Controllers\Auth\ActivationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\PublicNotePaymentController;
+use App\Http\Controllers\PublicCustomerPaymentController;
 
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\CustomerController;
@@ -89,6 +90,8 @@ Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 Route::get('/pagar/{token}', [PublicNotePaymentController::class, 'show'])->name('public.payments.show');
 Route::post('/pagar/{token}/stripe', [PublicNotePaymentController::class, 'checkout'])->name('public.payments.checkout');
+Route::get('/pagar-cuenta/{token}', [PublicCustomerPaymentController::class, 'show'])->name('public.customer-payments.show');
+Route::post('/pagar-cuenta/{token}/stripe', [PublicCustomerPaymentController::class, 'checkout'])->name('public.customer-payments.checkout');
 Route::get('/cartas-vacunacion/{vaccinationLetter}/pdf', [VaccinationLetterController::class, 'signedPrint'])
     ->name('public.vaccination-letters.print');
 
@@ -211,6 +214,7 @@ Route::middleware(['auth', 'role:super-admin'])
             //PAGOS A NMOTAS DE CLIENTES
             
             Route::post('customers/{customer}/payments', [PaymentController::class, 'store'])->name('customers.payments.store');
+            Route::post('customers/{customer}/stripe-payment-link', [PaymentController::class, 'createStripePaymentLink'])->name('customers.stripe-payment-link');
             Route::get('customers/{customer}/payments/preview', [PaymentController::class, 'preview'])->name('customers.payments.preview');
             Route::get('customers/{customer}/statement', [StatementController::class, 'generate'])->name('customers.statement.generate');
             Route::patch('customers/{customer}/account-settings', [CustomerController::class, 'updateAccountSettings'])->name('customers.account-settings.update');

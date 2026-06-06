@@ -69,6 +69,11 @@ public function payments()
     return $this->hasMany(Payment::class);
 }
 
+public function paymentLinks()
+{
+    return $this->hasMany(CustomerPaymentLink::class);
+}
+
 public function accountSetting()
 {
     return $this->hasOne(CustomerAccountSetting::class);

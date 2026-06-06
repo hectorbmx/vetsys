@@ -10,6 +10,8 @@ Alpine.data('pagoModal', (customerId) => ({
     loading: false,
     distribution: [],
     leftover: 0,
+    paymentMethodId: '',
+    isCard: false,
 
     fmt(val) {
         return parseFloat(val).toLocaleString('es-MX', {
