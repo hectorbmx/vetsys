@@ -38,6 +38,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('notes', NoteController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/notes/{note}/payment-links', [NoteController::class, 'createPaymentLink']);
+        Route::post('/notes/{note}/manual-payment', [NoteController::class, 'storeManualPayment']);
         Route::get('/customers/{customer}/payments/preview', [PaymentController::class, 'preview']);
         Route::apiResource('payments', PaymentController::class)
             ->only(['index', 'store', 'show']);

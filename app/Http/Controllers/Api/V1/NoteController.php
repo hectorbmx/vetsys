@@ -180,6 +180,64 @@ class NoteController extends Controller
         ], 201);
     }
 
+    public function storeManualPayment(Request $request, Note $note)
+    {
+        abort_if($note->tenant_id !== $request->user()->tenant_id, 404);
+
+        if ($note->balance <= 0) {
+            return response()->json([
+                'message' => 'Esta nota ya no tiene saldo pendiente.',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'client_uuid' => ['nullable', 'uuid'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_method_id' => [
+                'required',
+                'integer',
+                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $request->user()->tenant_id)
+                    ->where('is_active', true)),
+            ],
+            'reference' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($request, $note, $data) {
+            $note->refresh();
+            $amountToApply = min((float) $data['amount'], max((float) $note->balance, 0));
+
+            if ($amountToApply <= 0) {
+                return;
+            }
+
+            $payment = $request->user()->tenant->clientPayments()->create([
+                'client_uuid' => $data['client_uuid'] ?? null,
+                'synced_from_mobile' => true,
+                'customer_id' => $note->customer_id,
+                'payment_method_id' => $data['payment_method_id'],
+                'amount' => $amountToApply,
+                'reference' => $data['reference'] ?? 'Pago manual aplicado a nota ' . $note->folio,
+                'provider' => 'manual',
+                'status' => 'paid',
+            ]);
+
+            $note->payments()->attach($payment->id, [
+                'amount_applied' => $amountToApply,
+            ]);
+
+            $note->refresh();
+
+            if ($note->balance <= 0) {
+                $note->update(['status' => 'PAGADA']);
+            }
+        });
+
+        return response()->json([
+            'data' => $this->serializeNote($note->fresh()->load(['customer', 'details.catalogItem', 'details.animal', 'payments.paymentMethod'])),
+        ]);
+    }
+
     private function validatedData(Request $request, int $tenantId): array
     {
         return $request->validate([
