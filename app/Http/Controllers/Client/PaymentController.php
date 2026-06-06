@@ -125,6 +125,7 @@ class PaymentController extends Controller
         $value = str($method->slug . ' ' . $method->name)->lower()->ascii()->toString();
 
         return str_contains($value, 'tarjeta')
+            || str_contains($value, 'tarteja')
             || str_contains($value, 'card')
             || str_contains($value, 'stripe');
     }

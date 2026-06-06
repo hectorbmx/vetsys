@@ -45,7 +45,7 @@ class CustomerPaymentService
                 'amount_applied' => $apply,
             ]);
 
-            if (($note->balance - $apply) <= 0) {
+            if ($note->balance <= 0) {
                 $note->update(['status' => 'PAGADA']);
             }
 

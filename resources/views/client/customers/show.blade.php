@@ -174,7 +174,7 @@
                             >
                                 <option value="">Seleccionar...</option>
                                 @foreach($paymentMethods as $method)
-                                    @php $isCardMethod = str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarjeta') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'card') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'stripe'); @endphp
+                                    @php $isCardMethod = str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarjeta') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarteja') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'card') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'stripe'); @endphp
                                     <option value="{{ $method->id }}" data-card="{{ $isCardMethod ? '1' : '0' }}">{{ $method->name }}</option>
                                 @endforeach
                             </select>
@@ -334,7 +334,7 @@
                                                     <select name="payment_method_id" x-model="paymentMethodId" @change="isCard = $event.target.selectedOptions[0]?.dataset.card === '1'" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold bg-white">
                                                         <option value="">Seleccionar...</option>
                                                         @foreach($paymentMethods as $method)
-                                                            @php $noteCardMethod = str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarjeta') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'card') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'stripe'); @endphp
+                                                            @php $noteCardMethod = str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarjeta') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'tarteja') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'card') || str_contains(str($method->slug . ' ' . $method->name)->lower()->ascii()->toString(), 'stripe'); @endphp
                                                             <option value="{{ $method->id }}" data-card="{{ $noteCardMethod ? '1' : '0' }}">{{ $method->name }}</option>
                                                         @endforeach
                                                     </select>
