@@ -301,7 +301,7 @@ public function storeManualPayment(Request $request, Note $note)
 
     abort_if($note->tenant_id !== $tenant->id, 403);
 
-    $request->validate([
+    $data = $request->validate([
         'amount' => ['required', 'numeric', 'min:0.01'],
         'payment_method_id' => [
             'required',
@@ -314,6 +314,22 @@ public function storeManualPayment(Request $request, Note $note)
 
     if ($note->balance <= 0) {
         return back()->with('error', 'Esta nota ya no tiene saldo pendiente.');
+    }
+
+    $paymentMethod = PaymentMethod::findOrFail($data['payment_method_id']);
+
+    if ($this->isCardPaymentMethod($paymentMethod)) {
+        try {
+            $paymentLink = app(StripeNotePaymentService::class)->createLink($note, $paymentMethod->id);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'No se pudo generar el link Stripe: ' . $exception->getMessage());
+        }
+
+        return back()
+            ->with('success', 'Link Stripe generado correctamente.')
+            ->with('payment_link_url', route('public.payments.show', $paymentLink->token));
     }
 
     DB::transaction(function () use ($request, $tenant, $note) {

@@ -27,7 +27,7 @@ class PublicCustomerPaymentController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'No se pudo abrir Stripe Checkout. Intenta de nuevo.');
+            return back()->with('error', 'No se pudo abrir Stripe Checkout: ' . $exception->getMessage());
         }
 
         return redirect($session->url);

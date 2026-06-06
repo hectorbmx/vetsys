@@ -135,7 +135,7 @@
                 </div>
 
                 {{-- Formulario --}}
-                <form method="POST" :action="isCard ? @js(route('client.customers.stripe-payment-link', $customer)) : @js(route('client.customers.payments.store', $customer))">
+                <form method="POST" action="{{ route('client.customers.payments.store', $customer) }}">
                     @csrf
                     <div class="px-6 py-5 space-y-4">
 
@@ -244,10 +244,9 @@
                         </button>
                         <button
                             type="submit"
-                            :disabled="!amount || amount <= 0 || !paymentMethodId"
                             class="flex-1 py-3 bg-[#38B2AC] hover:bg-[#2C9A94] disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl text-xs font-black transition-all"
                         >
-                            <span x-text="isCard ? 'Generar link' : 'Confirmar Pago'"></span>
+                            Registrar pago / Generar link
                         </button>
                     </div>
                 </form>
@@ -326,7 +325,7 @@
                                                 </div>
                                                 <button type="button" @click="openPayment = false" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 font-black">x</button>
                                             </div>
-                                            <form method="POST" :action="isCard ? @js(route('client.ventas.stripe-payment-link', $note)) : @js(route('client.ventas.manual-payment', $note))" class="space-y-4">
+                                            <form method="POST" action="{{ route('client.ventas.manual-payment', $note) }}" class="space-y-4">
                                                 @csrf
                                                 <input type="hidden" name="amount" value="{{ $note->balance }}">
                                                 <div>
@@ -343,8 +342,8 @@
                                                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Referencia opcional</label>
                                                     <input name="reference" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
                                                 </div>
-                                                <button type="submit" :disabled="!paymentMethodId" class="w-full bg-[#38B2AC] disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest">
-                                                    <span x-text="isCard ? 'Generar link' : 'Aplicar pago'"></span>
+                                                <button type="submit" class="w-full bg-[#38B2AC] disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest">
+                                                    Aplicar pago / Generar link
                                                 </button>
                                             </form>
                                         </div>

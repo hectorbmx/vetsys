@@ -24,8 +24,8 @@ class StripeCustomerPaymentService
 
     public function createLink(Customer $customer, int $paymentMethodId, float $amount): CustomerPaymentLink
     {
-        if ($amount <= 0) {
-            throw new \RuntimeException('El monto debe ser mayor a cero.');
+        if ($amount < 10) {
+            throw new \RuntimeException('Stripe requiere un monto minimo de $10.00 MXN para generar el link.');
         }
 
         return CustomerPaymentLink::create([
@@ -46,6 +46,10 @@ class StripeCustomerPaymentService
 
         if (!$paymentLink->is_payable) {
             throw new \RuntimeException('Este link de pago ya no esta disponible.');
+        }
+
+        if ((float) $paymentLink->amount < 10) {
+            throw new \RuntimeException('Stripe requiere un monto minimo de $10.00 MXN para abrir el checkout.');
         }
 
         $payload = [

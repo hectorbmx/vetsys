@@ -33,6 +33,8 @@
 
             @if($paymentLink->status === 'paid')
                 <div class="bg-emerald-50 text-emerald-700 rounded-xl p-4 text-center text-sm font-black">Pago confirmado</div>
+            @elseif((float) $paymentLink->amount < 10)
+                <div class="bg-amber-50 border border-amber-100 text-amber-700 rounded-xl p-4 text-center text-sm font-black">Stripe requiere un monto minimo de $10.00 MXN. Solicita otro metodo de pago.</div>
             @elseif($paymentLink->is_payable)
                 <form method="POST" action="{{ route('public.customer-payments.checkout', $paymentLink->token) }}">
                     @csrf

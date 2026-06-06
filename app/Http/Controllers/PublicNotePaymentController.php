@@ -37,7 +37,7 @@ class PublicNotePaymentController extends Controller
 
             return redirect()
                 ->route('public.payments.show', $paymentLink->token)
-                ->with('error', 'No se pudo abrir Stripe Checkout. Intenta de nuevo.');
+                ->with('error', 'No se pudo abrir Stripe Checkout: ' . $exception->getMessage());
         }
 
         return redirect($session->url);

@@ -77,6 +77,11 @@
                         <p class="text-sm font-black text-emerald-700">Pago confirmado</p>
                         <p class="text-xs text-emerald-600 font-semibold mt-1">Esta nota ya fue marcada como pagada.</p>
                     </div>
+                @elseif((float) $paymentLink->amount < 10)
+                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
+                        <p class="text-sm font-black text-amber-700">Monto menor al minimo de Stripe</p>
+                        <p class="text-xs text-amber-600 font-semibold mt-1">Stripe requiere al menos $10.00 MXN. Solicita a la clinica otro metodo de pago.</p>
+                    </div>
                 @elseif($paymentLink->is_payable)
                     <form method="POST" action="{{ route('public.payments.checkout', $paymentLink->token) }}">
                         @csrf

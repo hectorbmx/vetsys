@@ -62,7 +62,7 @@ class PaymentController extends Controller
         $method = PaymentMethod::findOrFail($data['payment_method_id']);
 
         if ($this->isCardMethod($method)) {
-            return back()->with('error', 'Los pagos con tarjeta deben generar un link Stripe.');
+            return $this->generateStripeLink($customer, $method, (float) $data['amount']);
         }
 
         DB::transaction(fn () => app(CustomerPaymentService::class)->apply(
@@ -89,21 +89,7 @@ class PaymentController extends Controller
         $method = PaymentMethod::findOrFail($data['payment_method_id']);
         abort_unless($this->isCardMethod($method), 422, 'Selecciona un metodo de pago con tarjeta.');
 
-        try {
-            $paymentLink = app(StripeCustomerPaymentService::class)->createLink(
-                $customer,
-                $method->id,
-                (float) $data['amount']
-            );
-        } catch (\Throwable $exception) {
-            report($exception);
-
-            return back()->with('error', 'No se pudo generar el link Stripe: ' . $exception->getMessage());
-        }
-
-        return back()
-            ->with('success', 'Link de pago general generado correctamente.')
-            ->with('customer_payment_link_url', route('public.customer-payments.show', $paymentLink->token));
+        return $this->generateStripeLink($customer, $method, (float) $data['amount']);
     }
 
     private function validatePayment(Request $request, int $tenantId): array
@@ -128,5 +114,24 @@ class PaymentController extends Controller
             || str_contains($value, 'tarteja')
             || str_contains($value, 'card')
             || str_contains($value, 'stripe');
+    }
+
+    private function generateStripeLink(Customer $customer, PaymentMethod $method, float $amount)
+    {
+        try {
+            $paymentLink = app(StripeCustomerPaymentService::class)->createLink(
+                $customer,
+                $method->id,
+                $amount
+            );
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'No se pudo generar el link Stripe: ' . $exception->getMessage());
+        }
+
+        return back()
+            ->with('success', 'Link de pago general generado correctamente.')
+            ->with('customer_payment_link_url', route('public.customer-payments.show', $paymentLink->token));
     }
 }

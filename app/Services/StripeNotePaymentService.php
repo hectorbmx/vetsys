@@ -31,6 +31,10 @@ class StripeNotePaymentService
             throw new \RuntimeException('La nota no tiene saldo pendiente.');
         }
 
+        if ($balance < 10) {
+            throw new \RuntimeException('Stripe requiere un monto minimo de $10.00 MXN para generar el link.');
+        }
+
         if (!$paymentMethodId) {
             throw new \RuntimeException('No hay un metodo de pago tipo tarjeta activo para registrar el cobro.');
         }
@@ -54,6 +58,10 @@ class StripeNotePaymentService
 
         if (!$paymentLink->is_payable) {
             throw new \RuntimeException('Este link de pago ya no esta disponible.');
+        }
+
+        if ((float) $paymentLink->amount < 10) {
+            throw new \RuntimeException('Stripe requiere un monto minimo de $10.00 MXN para abrir el checkout.');
         }
 
         $amount = (int) round(((float) $paymentLink->amount) * 100);
