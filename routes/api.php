@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AnimalController;
 use App\Http\Controllers\Api\V1\AnimalTypeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogItemController;
+use App\Http\Controllers\Api\V1\ClubController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\MobileBootstrapController;
 use App\Http\Controllers\Api\V1\NoteController;
@@ -35,6 +36,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('animals', AnimalController::class)
             ->except(['destroy']);
         Route::get('/animal-types', [AnimalTypeController::class, 'index']);
+        Route::get('/clubs', [ClubController::class, 'index']);
         Route::apiResource('catalog-items', CatalogItemController::class)
             ->only(['index', 'store', 'show']);
         Route::apiResource('notes', NoteController::class)
