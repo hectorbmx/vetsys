@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Note;
-use App\Models\NotePayment;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
+use App\Services\CustomerPaymentService;
+use App\Services\StripeCustomerPaymentService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -77,48 +79,19 @@ class PaymentController extends Controller
             }
         }
 
-        $payment = DB::transaction(function () use ($tenantId, $data) {
-            $payment = Payment::create([
-                'tenant_id' => $tenantId,
+        $customer = Customer::where('tenant_id', $tenantId)->findOrFail($data['customer_id']);
+        $payment = DB::transaction(fn () => app(CustomerPaymentService::class)->apply(
+            $customer,
+            (int) $data['payment_method_id'],
+            (float) $data['amount'],
+            [
                 'client_uuid' => $data['client_uuid'] ?? null,
                 'synced_from_mobile' => true,
-                'customer_id' => $data['customer_id'],
-                'payment_method_id' => $data['payment_method_id'],
-                'amount' => $data['amount'],
                 'reference' => $data['reference'] ?? null,
-            ]);
-
-            $remaining = (float) $data['amount'];
-            $pending = Note::where('tenant_id', $tenantId)
-                ->where('customer_id', $data['customer_id'])
-                ->where('status', '!=', 'CANCELADA')
-                ->orderBy('date_at')
-                ->orderBy('id')
-                ->get()
-                ->filter(fn (Note $note) => $note->balance > 0);
-
-            foreach ($pending as $note) {
-                if ($remaining <= 0) {
-                    break;
-                }
-
-                $amountApplied = min($remaining, $note->balance);
-
-                NotePayment::create([
-                    'note_id' => $note->id,
-                    'payment_id' => $payment->id,
-                    'amount_applied' => $amountApplied,
-                ]);
-
-                if (($note->balance - $amountApplied) <= 0) {
-                    $note->update(['status' => 'PAGADA']);
-                }
-
-                $remaining -= $amountApplied;
-            }
-
-            return $payment;
-        });
+                'provider' => 'manual',
+                'status' => 'paid',
+            ],
+        ));
 
         return response()->json([
             'data' => $this->serializePayment($payment->load(['customer', 'paymentMethod', 'notes'])),
@@ -146,6 +119,48 @@ class PaymentController extends Controller
         return response()->json([
             'distribution' => $this->previewDistribution($customer, (float) $data['amount']),
         ]);
+    }
+
+    public function createPaymentLink(Request $request, Customer $customer)
+    {
+        abort_if($customer->tenant_id !== $request->user()->tenant_id, 404);
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_method_id' => [
+                'required',
+                'integer',
+                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $request->user()->tenant_id)
+                    ->where('is_active', true)),
+            ],
+        ]);
+
+        $method = PaymentMethod::where('tenant_id', $request->user()->tenant_id)
+            ->findOrFail($data['payment_method_id']);
+
+        abort_unless($this->isCardMethod($method), 422, 'Selecciona un metodo de pago con tarjeta.');
+
+        try {
+            $paymentLink = app(StripeCustomerPaymentService::class)->createLink(
+                $customer,
+                $method->id,
+                (float) $data['amount'],
+            );
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $paymentLink->id,
+                'public_url' => route('public.customer-payments.show', $paymentLink->token),
+                'amount' => $paymentLink->amount,
+                'expires_at' => $paymentLink->expires_at?->toISOString(),
+            ],
+        ], 201);
     }
 
     private function previewDistribution(Customer $customer, float $amount)
@@ -198,6 +213,8 @@ class PaymentController extends Controller
             'provider' => $payment->provider,
             'status' => $payment->status,
             'amount' => $payment->amount,
+            'amount_applied' => $payment->amount_applied,
+            'unapplied_amount' => $payment->unapplied_amount,
             'reference' => $payment->reference,
             'synced_from_mobile' => $payment->synced_from_mobile,
             'applications' => $payment->notes->map(fn (Note $note) => [
@@ -208,5 +225,15 @@ class PaymentController extends Controller
             'created_at' => $payment->created_at?->toISOString(),
             'updated_at' => $payment->updated_at?->toISOString(),
         ];
+    }
+
+    private function isCardMethod(PaymentMethod $method): bool
+    {
+        $value = str($method->slug . ' ' . $method->name)->lower()->ascii()->toString();
+
+        return str_contains($value, 'tarjeta')
+            || str_contains($value, 'tarteja')
+            || str_contains($value, 'card')
+            || str_contains($value, 'stripe');
     }
 }

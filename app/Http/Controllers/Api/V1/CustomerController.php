@@ -169,6 +169,7 @@ class CustomerController extends Controller
                 ->where('status', 'PENDIENTE')
                 ->get()
                 ->sum(fn ($note) => $note->balance);
+            $data['credit_balance'] = $customer->credit_balance;
         }
 
         return $data;

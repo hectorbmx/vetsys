@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::get('/customers/{customer}/payments/preview', [PaymentController::class, 'preview']);
+        Route::post('/customers/{customer}/payment-links', [PaymentController::class, 'createPaymentLink']);
         Route::apiResource('payments', PaymentController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/sync/push', [SyncController::class, 'push']);
