@@ -99,4 +99,17 @@ public function statements()
 {
     return $this->hasMany(CustomerStatement::class);
 }
+public function taxProfiles()
+{
+    return $this->hasMany(CustomerTaxProfile::class);
+}
+
+public function defaultTaxProfile()
+{
+    return $this->hasOne(CustomerTaxProfile::class)->where('is_default', true);
+}
+public function invoices()
+{
+    return $this->hasMany(Invoice::class);
+}
 }

@@ -14,4 +14,9 @@ class NoteDetail extends Model
     public function note() { return $this->belongsTo(Note::class); }
     public function catalogItem() { return $this->belongsTo(CatalogItem::class); }
     public function animal() { return $this->belongsTo(Animal::class); }
+
+    public function invoiceItems()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
 }

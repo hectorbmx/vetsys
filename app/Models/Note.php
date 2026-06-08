@@ -59,4 +59,13 @@ public function payments()
     {
         return (float) ($this->total - $this->amount_paid);
     }
+    public function invoice()
+{
+    return $this->hasOne(Invoice::class);
+}
+
+public function invoices()
+{
+    return $this->hasMany(Invoice::class);
+}
 }

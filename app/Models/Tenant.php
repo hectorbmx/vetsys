@@ -146,4 +146,15 @@ public function radiologyImages()
 {
     return $this->hasMany(RadiologyImage::class);
 }
+/**
+ * Configuración fiscal del tenant.
+ */
+public function billingProfile()
+{
+    return $this->hasOne(TenantBillingProfile::class);
+}
+public function invoices()
+{
+    return $this->hasMany(Invoice::class);
+}
 }

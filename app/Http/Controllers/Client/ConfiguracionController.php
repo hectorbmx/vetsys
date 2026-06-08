@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Mail\TenantUserInvitationMail;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
 
 use App\Models\AnimalType;
 use App\Models\AnimalTypeField;
@@ -28,6 +31,7 @@ use Illuminate\Validation\ValidationException;
 use Exception;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
+use App\Models\TenantBillingProfile;
 
 class ConfiguracionController extends Controller
 {
@@ -42,7 +46,7 @@ class ConfiguracionController extends Controller
     $user = auth()->user();
     $tenantId = $user->tenant_id;
     $tenant = $user->tenant()->with('plan')->first();
-
+    $billingProfile = $tenant?->billingProfile;
     $animalTypes = AnimalType::where('tenant_id', $tenantId)
         ->latest()
         ->get();
@@ -91,6 +95,7 @@ class ConfiguracionController extends Controller
     return view('client.mi-configuracion.index', compact(
         'animalTypes',
         'tenant',
+        'billingProfile',
         'teamUsers',
         'maxUsers',
         'usersUsed',
@@ -977,5 +982,139 @@ public function stripeCheckout(Request $request)
     }
 
     return redirect($session->url);
+}
+public function guardarFacturacion(Request $request)
+{
+        
+
+    $tenant = auth()->user()->tenant;
+
+    $validated = $request->validate([
+        'legal_name'         => 'required|string|max:255',
+        'tax_id'             => 'required|string|max:13',
+        'tax_system'         => 'required|string|max:3',
+        'zip'                => 'required|string|size:5',
+        'email'              => 'nullable|email|max:255',
+
+        'facturapi_api_key'  => 'nullable|string|max:500',
+
+        'csd_password'       => 'nullable|string|max:255',
+
+        // 'csd_cer'            => 'nullable|file|mimes:cer|max:2048',
+        // 'csd_key'            => 'nullable|file|mimes:key|max:2048',
+        'csd_cer' => 'nullable|file|max:4096',
+        'csd_key' => 'nullable|file|max:4096',
+    ]);
+if ($request->hasFile('csd_cer')) {
+
+    $extension = strtolower(
+        $request->file('csd_cer')->getClientOriginalExtension()
+    );
+
+    if ($extension !== 'cer') {
+        return back()
+            ->withErrors([
+                'csd_cer' => 'El archivo debe tener extensión .cer'
+            ])
+            ->withInput();
+    }
+}
+
+if ($request->hasFile('csd_key')) {
+
+    $extension = strtolower(
+        $request->file('csd_key')->getClientOriginalExtension()
+    );
+
+    if ($extension !== 'key') {
+        return back()
+            ->withErrors([
+                'csd_key' => 'El archivo debe tener extensión .key'
+            ])
+            ->withInput();
+    }
+}
+    $billingProfile = TenantBillingProfile::firstOrNew([
+        'tenant_id' => $tenant->id,
+    ]);
+
+    $billingProfile->fill([
+        'legal_name'        => strtoupper($validated['legal_name']),
+        'tax_id'            => strtoupper($validated['tax_id']),
+        'tax_system'        => $validated['tax_system'],
+        'zip'               => $validated['zip'],
+        'email'             => $validated['email'] ?? null,
+        'facturapi_api_key' => $validated['facturapi_api_key']
+                                ?? $billingProfile->facturapi_api_key,
+        'csd_password'      => $validated['csd_password']
+                                ?? $billingProfile->csd_password,
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subir certificado .CER
+    |--------------------------------------------------------------------------
+    */
+    if ($request->hasFile('csd_cer')) {
+
+        // Eliminar anterior
+        if (
+            $billingProfile->csd_cer_path &&
+            Storage::disk('public')->exists($billingProfile->csd_cer_path)
+        ) {
+            Storage::disk('public')->delete($billingProfile->csd_cer_path);
+        }
+
+        $billingProfile->csd_cer_path = $request->file('csd_cer')
+            ->store(
+                "tenants/{$tenant->id}/facturacion",
+                'public'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subir certificado .KEY
+    |--------------------------------------------------------------------------
+    */
+    if ($request->hasFile('csd_key')) {
+
+        if (
+            $billingProfile->csd_key_path &&
+            Storage::disk('public')->exists($billingProfile->csd_key_path)
+        ) {
+            Storage::disk('public')->delete($billingProfile->csd_key_path);
+        }
+
+        $billingProfile->csd_key_path = $request->file('csd_key')
+            ->store(
+                "tenants/{$tenant->id}/facturacion",
+                'public'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Estado configuración
+    |--------------------------------------------------------------------------
+    */
+    $billingProfile->csd_uploaded =
+        !empty($billingProfile->csd_cer_path) &&
+        !empty($billingProfile->csd_key_path);
+
+    $billingProfile->is_active =
+        !empty($billingProfile->tax_id) &&
+        !empty($billingProfile->tax_system) &&
+        !empty($billingProfile->zip) &&
+        !empty($billingProfile->facturapi_api_key);
+
+    $billingProfile->save();
+
+    return redirect()
+        ->back()
+        ->with(
+            'success',
+            'Configuración fiscal guardada correctamente.'
+        );
 }
 }

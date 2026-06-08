@@ -35,6 +35,7 @@ use App\Http\Controllers\Client\AnimalVideoController;
 use App\Http\Controllers\Client\RadiologyController;
 use App\Http\Controllers\Client\TelemedicineController;
 use App\Http\Controllers\Client\NotificationController;
+use App\Http\Controllers\Client\FacturacionController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -179,6 +180,13 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::post('mi-configuracion/importar-servicios', [ClientConfiguracionController::class, 'importServices'])->name('mi-configuracion.import-services');
             Route::post('mi-configuracion/importar-caballos', [ClientConfiguracionController::class, 'importHorses'])->name('mi-configuracion.import-horses');
             Route::post('mi-configuracion/plan/stripe-checkout', [ClientConfiguracionController::class, 'stripeCheckout']) ->name('mi-configuracion.plan.stripe-checkout');
+            
+            /*
+a           |--------------------------------------------------------------------------
+            | MI CONFIGURACION > facturacion
+            */
+            Route::post('mi-configuracion/facturacion', [ClientConfiguracionController::class, 'guardarFacturacion'])->name('mi-configuracion.facturacion.store');
+            
             /*
             |--------------------------------------------------------------------------
             | MI CONFIGURACION > FIELDS (CAMPOS DINÁMICOS)
@@ -220,4 +228,22 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::patch('customers/{customer}/account-settings', [CustomerController::class, 'updateAccountSettings'])->name('customers.account-settings.update');
             Route::post('customers/{customer}/statements', [StatementController::class, 'storeGenerated'])->name('customers.statements.store');
             Route::get('customers/{customer}/statements/{statement}/pdf', [StatementController::class, 'showStored'])->name('customers.statements.pdf');
-        });
+        
+            
+        /*
+            |--------------------------------------------------------------------------
+            | FACTURACIÓN
+            |--------------------------------------------------------------------------
+            */
+            Route::prefix('facturacion')
+                ->name('facturacion.')
+                ->group(function () {
+                    Route::get('/', [FacturacionController::class, 'index'])->name('index');
+                    Route::get('/notas', [FacturacionController::class, 'notas'])->name('notas');
+                    Route::get('/notas/{note}/facturar', [FacturacionController::class, 'create'])->name('create');
+                    Route::post('/notas/{note}/facturar', [FacturacionController::class, 'store'])->name('store');
+                    Route::get('/facturas/{invoice}', [FacturacionController::class, 'show'])->name('show');
+                });
+        
+            });
+require __DIR__.'/auth.php';

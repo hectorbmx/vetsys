@@ -21,18 +21,47 @@
             </div>
         @endif
 
-        @if(session('error') || $errors->any())
-            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition class="bg-white border-l-4 border-red-500 rounded-xl shadow-xl p-4 flex items-center justify-between border border-slate-100">
-                <div class="flex items-center gap-3">
-                    <span class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-sm font-bold">✕</span>
-                    <div>
-                        <p class="text-xs font-black text-[#0F172A] uppercase tracking-wider">Error de Ajuste</p>
-                        <p class="text-[11px] text-slate-500 font-semibold mt-0.5">Por favor, revisa los datos del catálogo.</p>
-                    </div>
-                </div>
-                <button @click="show = false" class="text-slate-400 hover:text-slate-600 text-xs ml-4">✕</button>
+      @if(session('error') || $errors->any())
+    <div x-data="{ show: true }"
+         x-show="show"
+         x-init="setTimeout(() => show = false, 8000)"
+         x-transition
+         class="bg-white border-l-4 border-red-500 rounded-xl shadow-xl p-4 flex items-start justify-between border border-slate-100">
+
+        <div class="flex items-start gap-3">
+            <span class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-sm font-bold">
+                ✕
+            </span>
+
+            <div>
+                <p class="text-xs font-black text-[#0F172A] uppercase tracking-wider">
+                    Error de validación
+                </p>
+
+                @if(session('error'))
+                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5">
+                        {{ session('error') }}
+                    </p>
+                @endif
+
+                @if($errors->any())
+                    <ul class="mt-1 space-y-0.5">
+                        @foreach($errors->all() as $error)
+                            <li class="text-[11px] text-slate-500 font-semibold">
+                                • {{ $error }}
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
-        @endif
+        </div>
+
+        <button @click="show = false"
+                class="text-slate-400 hover:text-slate-600 text-xs ml-4">
+            ✕
+        </button>
+    </div>
+@endif
     </div>
 
     {{-- HEADER --}}
@@ -78,6 +107,12 @@
                 :class="currentTab === 'importar' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             ⬆️ Importar Catalogos
+        </button>
+
+        <button @click="currentTab = 'facturar'"
+                :class="currentTab === 'facturar' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+              💰  facturacion
         </button>
     </div>
 
@@ -631,7 +666,225 @@
             </div>
         </div>
     </div>
+{{-- TAB: FACTURACIÓN --}}
+<div x-show="currentTab === 'facturar'"
+     x-transition:enter="transition duration-200"
+     class="space-y-6">
 
+    <form method="POST"
+          action="{{ route('client.mi-configuracion.facturacion.store') }}"
+          enctype="multipart/form-data">
+
+        @csrf
+
+        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+
+            {{-- Header --}}
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">
+                    Configuración Fiscal
+                </h3>
+
+                <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                    Configura la información necesaria para emitir CFDI mediante Facturapi.
+                </p>
+            </div>
+
+            {{-- Formulario --}}
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {{-- Razón Social --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Razón Social
+                    </label>
+
+                    <input type="text"
+                           name="legal_name"
+                           value="{{ old('legal_name', $billingProfile?->legal_name) }}"
+                           class="w-full rounded-xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                           required>
+                </div>
+
+                {{-- RFC --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        RFC
+                    </label>
+
+                    <input type="text"
+                           name="tax_id"
+                           value="{{ old('tax_id', $billingProfile?->tax_id) }}"
+                           maxlength="13"
+                           class="w-full rounded-xl border-slate-200 uppercase focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                           required>
+                </div>
+
+                {{-- Régimen Fiscal --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Régimen Fiscal
+                    </label>
+
+                    <select name="tax_system"
+                            class="w-full rounded-xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                            required>
+
+                        <option value="">Seleccionar...</option>
+
+                        <option value="601" @selected(old('tax_system', $billingProfile?->tax_system) == '601')>
+                            601 - General de Ley Personas Morales
+                        </option>
+
+                        <option value="612" @selected(old('tax_system', $billingProfile?->tax_system) == '612')>
+                            612 - Personas Físicas con Actividades Empresariales
+                        </option>
+
+                        <option value="626" @selected(old('tax_system', $billingProfile?->tax_system) == '626')>
+                            626 - Régimen Simplificado de Confianza
+                        </option>
+
+                    </select>
+                </div>
+
+                {{-- Código Postal --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Código Postal Fiscal
+                    </label>
+
+                    <input type="text"
+                           name="zip"
+                           value="{{ old('zip', $billingProfile?->zip) }}"
+                           maxlength="5"
+                           class="w-full rounded-xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                           required>
+                </div>
+
+                {{-- Correo --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Correo Fiscal
+                    </label>
+
+                    <input type="email"
+                           name="email"
+                           value="{{ old('email', $billingProfile?->email) }}"
+                           class="w-full rounded-xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]">
+                </div>
+
+                {{-- API KEY --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        API Key Facturapi
+                    </label>
+
+                    <input type="password"
+                           name="facturapi_api_key"
+                           class="w-full rounded-xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]">
+
+                    <p class="mt-1 text-[10px] text-slate-400">
+                        Se almacenará de forma segura.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        {{-- CSD --}}
+        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">
+                    Certificados Digitales (CSD)
+                </h3>
+
+                <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                    Archivos emitidos por el SAT para timbrar CFDI.
+                </p>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {{-- CER --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Archivo .CER
+                    </label>
+
+                    <input type="file"
+                           name="csd_cer"
+                           accept=".cer"
+                           class="w-full text-sm">
+                </div>
+
+                {{-- KEY --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Archivo .KEY
+                    </label>
+
+                    <input type="file"
+                           name="csd_key"
+                           accept=".key"
+                           class="w-full text-sm">
+                </div>
+
+                {{-- PASSWORD --}}
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Contraseña CSD
+                    </label>
+
+                    <input type="password"
+                           name="csd_password"
+                           class="w-full rounded-xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]">
+                </div>
+
+            </div>
+        </div>
+
+        {{-- ESTADO --}}
+        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">
+                        Estado del Servicio
+                    </h3>
+
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Verifica que toda la configuración esté completa.
+                    </p>
+                </div>
+
+                @if($billingProfile?->is_active)
+                    <span class="inline-flex text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full">
+                        🟢 Configurado
+                    </span>
+                @else
+                    <span class="inline-flex text-[10px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-2 rounded-full">
+                        🟡 Pendiente
+                    </span>
+                @endif
+
+            </div>
+
+        </div>
+
+        {{-- BOTÓN --}}
+        <div class="flex justify-end">
+            <button type="submit"
+                    class="bg-[#0F172A] hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all">
+                Guardar Configuración Fiscal
+            </button>
+        </div>
+
+    </form>
+
+</div>
     {{-- MODAL INTERNO: NUEVO ANIMAL TYPE --}}
     <div x-show="typeModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" x-data="{ loading: false }" x-transition>
         <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
