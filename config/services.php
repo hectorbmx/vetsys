@@ -40,5 +40,8 @@ return [
     'ffmpeg' => [
         'path' => env('FFMPEG_PATH', 'ffmpeg'),
     ],
+    'resend' => [
+    'key' => env('RESEND_KEY'),
+],
 
 ];
