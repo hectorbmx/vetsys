@@ -389,6 +389,3 @@ private function cardPaymentMethodForTenant(int $tenantId): ?PaymentMethod
         ->first(fn (PaymentMethod $method) => $this->isCardPaymentMethod($method));
 }
 }
-PaymentMethod($method));
-}
-}

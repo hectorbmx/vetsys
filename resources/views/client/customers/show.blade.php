@@ -631,44 +631,87 @@
             </button>
         </div>
 
-        {{-- Grid de mascotas --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @forelse($customer->animals as $animal)
-             <a href="{{ route('client.animals.edit', $animal) }}"
-       class="block bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-[#38B2AC] transition-colors">
-                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-[#38B2AC] transition-colors">
-                    <div class="flex items-start gap-4">
-                        <div class="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-black text-xl border-4 border-white shadow-sm">
-                            {{ substr($animal->name, 0, 1) }}
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="text-sm font-black text-[#0F172A]">{{ $animal->name }}</h4>
-                            <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                {{ $animal->sex }} • {{ $animal->birthdate ? \Carbon\Carbon::parse($animal->birthdate)->age . ' años' : 'Edad desconocida' }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-slate-200 grid grid-cols-2 gap-2 text-[10px]">
-                        <div>
-                            <span class="block text-slate-400 uppercase font-bold">Color</span>
-                            <span class="font-semibold text-slate-700">{{ $animal->color ?? 'N/A' }}</span>
-                        </div>
-                        <div>
-                            <span class="block text-slate-400 uppercase font-bold">Peso</span>
-                            <span class="font-semibold text-slate-700">{{ $animal->weight }} kg</span>
-                        </div>
-                        <div class="col-span-2">
-                            <span class="block text-slate-400 uppercase font-bold">Microchip</span>
-                            <span class="font-mono text-slate-600">{{ $animal->microchip ?? 'No registrado' }}</span>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-span-2 py-10 text-center space-y-3">
-                    <p class="text-xs text-slate-400 italic">No hay mascotas registradas para este cliente.</p>
-                </div>
-            @endforelse
-            </a>
+        {{-- Tabla de mascotas --}}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
+                        <th class="px-4 py-3 pb-4">Nombre</th>
+                        <th class="px-4 py-3 pb-4">Especie / Raza</th>
+                        <th class="px-4 py-3 pb-4">Sexo</th>
+                        <th class="px-4 py-3 pb-4">Edad</th>
+                        <th class="px-4 py-3 pb-4">Club</th>
+                        <th class="px-4 py-3 pb-4">Peso</th>
+                        <th class="px-4 py-3 pb-4">Estatus</th>
+                        <th class="px-4 py-3 pb-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @forelse($customer->animals as $animal)
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-4 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-[#38B2AC]/10 text-[#38B2AC] flex items-center justify-center font-black text-xs">
+                                        {{ substr($animal->name, 0, 1) }}
+                                    </div>
+                                    <span class="text-xs font-bold text-[#0F172A]">{{ $animal->name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4">
+                                <span class="text-xs font-semibold text-slate-600">{{ $animal->animalType->name ?? 'N/A' }}</span>
+                                <span class="block text-[10px] text-slate-400">{{ $animal->color ?? 'Sin color' }}</span>
+                            </td>
+                            <td class="px-4 py-4">
+                                <span class="text-xs font-medium text-slate-600">
+                                    {{ $animal->sex === 'male' ? 'Macho' : ($animal->sex === 'female' ? 'Hembra' : 'N/A') }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4">
+                                <span class="text-xs font-medium text-slate-600">
+                                    {{ $animal->birthdate ? \Carbon\Carbon::parse($animal->birthdate)->age . ' años' : 'N/A' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4">
+                                @if($animal->club)
+                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-[#38B2AC] bg-teal-50 px-2.5 py-1 rounded-full">
+                                        {{ $animal->club->name }}
+                                    </span>
+                                @else
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase">Sin club</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4 text-xs font-bold text-slate-700">
+                                {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
+                            </td>
+                            <td class="px-4 py-4">
+                                <form action="{{ route('client.animals.toggle', $animal->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="flex items-center gap-2 group focus:outline-none">
+                                        <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $animal->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                                            <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $animal->status === 'active' ? 'translate-x-3' : 'translate-x-0' }}"></div>
+                                        </div>
+                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $animal->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                            {{ $animal->status === 'active' ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                                    Detalles
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="py-10 text-center text-xs font-semibold text-slate-400">
+                                No hay mascotas registradas para este cliente.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
