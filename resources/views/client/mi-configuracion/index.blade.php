@@ -310,10 +310,41 @@
 
     {{-- TAB 3: BANCOS (MAQUETA) --}}
     <div x-show="currentTab === 'bancos'" x-transition:enter="transition duration-200" class="space-y-6" style="display: none;">
-        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-8 text-center">
-            <div class="w-16 h-16 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">💳</div>
-            <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Cuentas e Ingresos</h3>
-            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Próximamente configurarás tus cuentas de banco para vincularlas a los pagos de las consultas y venta de productos.</p>
+        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-8 text-center max-w-2xl mx-auto">
+            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">💳</div>
+            <h3 class="text-lg font-black text-[#0F172A] uppercase tracking-widest">Cobros con Stripe Connect</h3>
+            <p class="text-sm text-slate-500 mt-2 mb-8 px-4">
+                Configura tu cuenta de Stripe para recibir los pagos de tus clientes directamente en tu cuenta bancaria. 
+                Nuestra integración te permite procesar tarjetas y gestionar cobros de forma segura.
+            </p>
+
+            @if($tenant->stripe_onboarding_completed)
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex flex-col items-center">
+                    <div class="flex items-center gap-2 text-emerald-600 mb-2">
+                        <span class="text-xl">✅</span>
+                        <p class="text-xs font-black uppercase tracking-widest">Cuenta Conectada</p>
+                    </div>
+                    <p class="text-xs text-emerald-700 font-semibold mb-6">Tu clínica ya está habilitada para recibir pagos con Stripe.</p>
+                    
+                    <form action="{{ route('client.stripe-connect.connect') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="text-xs font-bold text-slate-500 hover:text-slate-800 underline">
+                            Ir al Dashboard de Stripe
+                        </button>
+                    </form>
+                </div>
+            @else
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-8">
+                    <form action="{{ route('client.stripe-connect.connect') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="bg-[#635BFF] hover:bg-[#5148d8] text-white px-8 py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-[#635BFF]/20 flex items-center gap-3 mx-auto">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M13.911 8.184c-.732 0-1.242.348-1.242.947 0 .584.773.834 1.517 1.014 1.139.27 2.628.618 2.628 2.384 0 1.901-1.554 2.879-3.411 2.879-1.305 0-2.529-.304-3.447-.742v-2.42c.864.507 2.181.822 3.105.822.684 0 1.224-.315 1.224-.877 0-.585-.81-.844-1.62-.99-1.206-.247-2.52-.63-2.52-2.317 0-1.631 1.431-2.812 3.231-2.812 1.107 0 2.214.236 3.015.63v2.34a5.55 5.55 0 0 0-2.481-.861zm-7.669 4.887c0 .619.468 1.091 1.091 1.091.611 0 1.08-.472 1.08-1.091 0-.611-.469-1.08-1.08-1.08-.623 0-1.091.469-1.091 1.08zm1.091-3.668c-1.395 0-2.541 1.151-2.541 2.587 0 1.444 1.146 2.595 2.541 2.595 1.404 0 2.559-1.151 2.559-2.595 0-1.436-1.155-2.587-2.559-2.587zm11.751 3.668c0 .619.468 1.091 1.091 1.091.611 0 1.08-.472 1.08-1.091 0-.611-.469-1.08-1.08-1.08-.623 0-1.091.469-1.091 1.08zm1.091-3.668c-1.395 0-2.541 1.151-2.541 2.587 0 1.444 1.146 2.595 2.541 2.595 1.404 0 2.559-1.151 2.559-2.595 0-1.436-1.155-2.587-2.559-2.587zM.164 12c0-6.537 5.3-11.837 11.836-11.837s11.836 5.3 11.836 11.837c0 6.536-5.3 11.836-11.836 11.836S.164 18.536.164 12z"/></svg>
+                            Conectar con Stripe
+                        </button>
+                    </form>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">Serás redirigido a Stripe para completar tu perfil.</p>
+                </div>
+            @endif
         </div>
     </div>
     @include('client.mi-configuracion.payment-methods.index')

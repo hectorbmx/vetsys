@@ -178,6 +178,9 @@ Route::middleware(['auth', 'role:super-admin'])
             |*/
             Route::get('mi-configuracion', [ClientConfiguracionController::class, 'index'])->name('mi-configuracion.index');
             Route::post('mi-configuracion', [ClientConfiguracionController::class, 'store'])->name('mi-configuracion.store');
+            Route::post('mi-configuracion/stripe-connect', [StripeConnectController::class, 'connect'])->name('stripe-connect.connect');
+            Route::get('mi-configuracion/stripe-connect/return', [StripeConnectController::class, 'return'])->name('stripe-connect.return');
+            Route::patch('mi-configuracion', [ClientConfiguracionController::class, 'update'])->name('mi-configuracion.update');
             Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
             Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
             Route::post('mi-configuracion/plan', [ClientConfiguracionController::class, 'requestPlanChange'])->name('mi-configuracion.plan.request');
