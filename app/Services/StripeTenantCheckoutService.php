@@ -32,6 +32,16 @@ class StripeTenantCheckoutService
 
         $customerId = $this->ensureStripeCustomer($tenant);
         [$startsAt, $endsAt] = $this->estimatedPeriod($tenant, $plan);
+        // Cancelar checkouts pendientes anteriores para este tenant
+        TenantPayment::where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
+            ->where('payment_method', 'stripe_checkout')
+            ->update(['status' => 'cancelled']);
+
+        TenantSubscription::where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
+            ->where('provider', 'stripe')
+            ->update(['status' => 'cancelled']);
 
         $subscription = TenantSubscription::create([
             'tenant_id' => $tenant->id,
@@ -99,24 +109,34 @@ class StripeTenantCheckoutService
         return $session;
     }
 
-    private function ensureStripeCustomer(Tenant $tenant): string
-    {
-        if ($tenant->stripe_customer_id) {
-            return $tenant->stripe_customer_id;
+private function ensureStripeCustomer(Tenant $tenant): string
+{
+    if ($tenant->stripe_customer_id) {
+        // Verificar que realmente existe en Stripe (puede ser de otro entorno)
+        try {
+            $customer = $this->stripe->customers->retrieve($tenant->stripe_customer_id);
+
+            if (!isset($customer->deleted) || !$customer->deleted) {
+                return $customer->id;
+            }
+        } catch (\Stripe\Exception\InvalidRequestException $e) {
+            // No existe en Stripe (ej: ID de entorno test en live), lo recreamos
+            $tenant->update(['stripe_customer_id' => null]);
         }
-
-        $customer = $this->stripe->customers->create([
-            'name' => $tenant->business_name ?: $tenant->name,
-            'email' => $tenant->email,
-            'metadata' => [
-                'tenant_id' => (string) $tenant->id,
-            ],
-        ]);
-
-        $tenant->update(['stripe_customer_id' => $customer->id]);
-
-        return $customer->id;
     }
+
+    $customer = $this->stripe->customers->create([
+        'name'     => $tenant->business_name ?: $tenant->name,
+        'email'    => $tenant->email,
+        'metadata' => [
+            'tenant_id' => (string) $tenant->id,
+        ],
+    ]);
+
+    $tenant->update(['stripe_customer_id' => $customer->id]);
+
+    return $customer->id;
+}
 
     private function estimatedPeriod(Tenant $tenant, Plan $plan): array
     {
