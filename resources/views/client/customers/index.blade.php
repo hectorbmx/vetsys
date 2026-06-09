@@ -61,41 +61,45 @@
         </div>
     </div>
 
-    {{-- CARDS / TRES KPIS SUPERIORES CON TOTALES REALES --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white border border-blue-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:border-blue-300 hover:shadow-md hover:shadow-blue-50/50">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Customers</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-[#0F172A] tracking-tight">{{ $customers->total() }}</span>
-                </div>
+    {{-- CARDS / TRES KPIS SUPERIORES CON COLORES Y DEGRADADOS --}}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    {{-- CARD 1: CUSTOMERS --}}
+    <div class="group bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Customers</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $customers->total() }}</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-blue-50/50 text-blue-500 flex items-center justify-center text-xl">👥</div>
         </div>
-
-        <div class="bg-white border border-emerald-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-50/50">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Página Actual</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-[#0F172A] tracking-tight">{{ $customers->count() }}</span>
-                    <span class="text-[10px] font-medium text-slate-400">registros aquí</span>
-                </div>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50/50 text-emerald-500 flex items-center justify-center text-xl">✓</div>
-        </div>
-
-        <div class="bg-white border border-teal-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:border-[#38B2AC]/40 hover:shadow-md hover:shadow-teal-50/50">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Último Registro</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-sm font-bold text-[#0F172A] truncate max-w-[140px]">
-                        {{ $customers->first()->name ?? 'Ninguno' }}
-                    </span>
-                </div>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-teal-50/50 text-[#38B2AC] flex items-center justify-center text-xl">🐾</div>
-        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
     </div>
+
+    {{-- CARD 2: PÁGINA ACTUAL --}}
+    <div class="group bg-gradient-to-br from-emerald-500 to-emerald-600 border border-emerald-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Página Actual</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $customers->count() }}</span>
+                <span class="text-[10px] font-medium text-emerald-100">registros aquí</span>
+            </div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✓</div>
+    </div>
+
+    {{-- CARD 3: ÚLTIMO REGISTRO --}}
+    <div class="group bg-gradient-to-br from-teal-500 to-cyan-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Último Registro</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-white truncate max-w-[140px]">
+                    {{ $customers->first()->name ?? 'Ninguno' }}
+                </span>
+            </div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
+    </div>
+</div>
 
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

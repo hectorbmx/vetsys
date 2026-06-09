@@ -351,9 +351,13 @@ public function stripeCheckoutLink(Request $request, Tenant $tenant)
         ],
     ]);
 
-    return back()
-        ->with('success', 'Link de Stripe generado correctamente. Puedes copiarlo y enviarlo al tenant.')
-        ->with('stripe_checkout_link', $session->url);
+    // return back()
+    //     ->with('success', 'Link de Stripe generado correctamente. Puedes copiarlo y enviarlo al tenant.')
+    //     ->with('stripe_checkout_link', $session->url);
+    return redirect()
+    ->route('admin.tenants.show', $tenant)
+    ->with('success', 'Link de Stripe generado correctamente.')
+    ->with('stripe_checkout_link', $session->url);
 }
 
 public function destroyPayment(Tenant $tenant, TenantPayment $payment)

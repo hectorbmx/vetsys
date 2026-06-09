@@ -35,31 +35,42 @@
         </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white border border-teal-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between">
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Clubes activos</p>
-                <p class="text-3xl font-black text-[#0F172A] mt-1">{{ $clubs->where('is_active', true)->count() }}</p>
+{{-- CARDS / TRES KPIS SUPERIORES CON DEGRADADOS DINÁMICOS --}}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    {{-- KPI 1: CLUBES ACTIVOS (TURQUESA) --}}
+    <div class="group bg-gradient-to-br from-teal-500 to-emerald-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Clubes activos</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $clubs->where('is_active', true)->count() }}</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-teal-50 text-[#38B2AC] flex items-center justify-center font-black">C</div>
         </div>
-
-        <div class="bg-white border border-purple-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between">
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Miembros asignados</p>
-                <p class="text-3xl font-black text-[#0F172A] mt-1">{{ $animals->whereNotNull('club_id')->count() }}</p>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center font-black">M</div>
-        </div>
-
-        <div class="bg-white border border-orange-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between">
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin club</p>
-                <p class="text-3xl font-black text-[#0F172A] mt-1">{{ $animals->whereNull('club_id')->count() }}</p>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center font-black">S</div>
-        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-lg font-black group-hover:scale-110 transition-transform">C</div>
     </div>
+
+    {{-- KPI 2: MIEMBROS ASIGNADOS (MORADO) --}}
+    <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Miembros asignados</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $animals->whereNotNull('club_id')->count() }}</span>
+            </div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-lg font-black group-hover:scale-110 transition-transform">M</div>
+    </div>
+
+    {{-- KPI 3: SIN CLUB (NARANJA) --}}
+    <div class="group bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest">Sin club</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $animals->whereNull('club_id')->count() }}</span>
+            </div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-lg font-black group-hover:scale-110 transition-transform">S</div>
+    </div>
+</div>
 
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
