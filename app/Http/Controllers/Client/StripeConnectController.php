@@ -18,37 +18,34 @@ class StripeConnectController extends Controller
     /**
      * Inicia el proceso de conexión con Stripe Connect.
      */
-    public function connect()
-    {
-        $tenant = auth()->user()->tenant;
+public function connect()
+{
+    $tenant = auth()->user()->tenant;
 
-        // 1. Si no tiene cuenta, la creamos
-        if (!$tenant->stripe_connect_id) {
-            $account = $this->stripe->accounts->create([
-                'type' => 'standard', // 'standard' es más fácil de manejar para facturación y fiscalidad directa
-                'email' => $tenant->email,
-                'business_type' => 'individual', // O 'company', se puede ajustar después
-                'metadata' => [
-                    'tenant_id' => $tenant->id,
-                    'tenant_name' => $tenant->name,
-                ],
-            ]);
-
-            $tenant->update([
-                'stripe_connect_id' => $account->id,
-            ]);
-        }
-
-        // 2. Generar link de onboarding
-        $accountLink = $this->stripe->accountLinks->create([
-            'account' => $tenant->stripe_connect_id,
-            'refresh_url' => route('client.stripe-connect.connect'),
-            'return_url' => route('client.stripe-connect.return'),
-            'type' => 'account_onboarding',
+    if (!$tenant->stripe_connect_id) {
+        $account = $this->stripe->accounts->create([
+            'type'          => 'standard',
+            'email'         => $tenant->email,
+            'business_type' => 'individual',
+            'metadata'      => [
+                'tenant_id'   => $tenant->id,
+                'tenant_name' => $tenant->name,
+            ],
         ]);
 
-        return redirect($accountLink->url);
+        $tenant->update(['stripe_connect_id' => $account->id]);
+        $tenant->stripe_connect_id = $account->id; // ✅ actualiza en memoria
     }
+
+    $accountLink = $this->stripe->accountLinks->create([
+        'account'     => $tenant->stripe_connect_id, // ya no llega null
+        'refresh_url' => route('client.stripe-connect.connect'),
+        'return_url'  => route('client.stripe-connect.return'),
+        'type'        => 'account_onboarding',
+    ]);
+
+    return redirect($accountLink->url);
+}
 
     /**
      * Retorno después del onboarding de Stripe.

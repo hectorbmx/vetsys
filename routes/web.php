@@ -29,6 +29,7 @@ use App\Http\Controllers\Client\ProfileController;
 
 use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\Client\StatementController;
+use App\Http\Controllers\Client\StripeConnectController;
 use App\Http\Controllers\Client\ClubController;
 use App\Http\Controllers\Client\VaccinationLetterController;
 use App\Http\Controllers\Client\AnimalVideoController;
