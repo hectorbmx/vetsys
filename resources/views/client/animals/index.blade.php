@@ -59,43 +59,45 @@
     </div>
 
     {{-- CARDS / TRES KPIS SUPERIORES CON HOVER Y OUTLINES PASTEL --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {{-- KPI 1: Total Pacientes (Morado Pastel) --}}
-        <div class="bg-white border border-purple-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:border-purple-300 hover:shadow-md hover:shadow-purple-50/50">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Pacientes</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-[#0F172A] tracking-tight">{{ $animals->total() }}</span>
-                </div>
+    {{-- CARDS / TRES KPIS SUPERIORES CON DEGRADADOS DINÁMICOS --}}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    {{-- KPI 1: TOTAL PACIENTES (VIOLETA OSCURO) --}}
+    <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Total Pacientes</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $animals->total() }}</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-purple-50/50 text-purple-500 flex items-center justify-center text-xl">🐕</div>
         </div>
-
-        {{-- KPI 2: En Consulta / Activos (Naranja Pastel) --}}
-        <div class="bg-white border border-orange-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:border-orange-300 hover:shadow-md hover:shadow-orange-50/50">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros esta Página</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-[#0F172A] tracking-tight">{{ $animals->count() }}</span>
-                    <span class="text-[10px] font-medium text-slate-400">pacientes</span>
-                </div>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-orange-50/50 text-orange-500 flex items-center justify-center text-xl">⚡</div>
-        </div>
-
-        {{-- KPI 3: Última Mascota (Turquesa de la Marca) --}}
-        <div class="bg-white border border-teal-100 rounded-[24px] p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:border-[#38B2AC]/40 hover:shadow-md hover:shadow-teal-50/50">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Último Paciente</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-sm font-bold text-[#0F172A] truncate max-w-[140px]">
-                        {{ $animals->first()->name ?? 'Ninguno' }}
-                    </span>
-                </div>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-teal-50/50 text-[#38B2AC] flex items-center justify-center text-xl">🐾</div>
-        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐕</div>
     </div>
+
+    {{-- KPI 2: REGISTROS (AMBAR / NARANJA) --}}
+    <div class="group bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest">Registros esta Página</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white tracking-tight">{{ $animals->count() }}</span>
+                <span class="text-[10px] font-medium text-orange-100">pacientes</span>
+            </div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⚡</div>
+    </div>
+
+    {{-- KPI 3: ÚLTIMO PACIENTE (TURQUESA DE MARCA) --}}
+    <div class="group bg-gradient-to-br from-teal-500 to-emerald-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Último Paciente</p>
+            <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-white truncate max-w-[140px]">
+                    {{ $animals->first()->name ?? 'Ninguno' }}
+                </span>
+            </div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
+    </div>
+</div>
 
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
