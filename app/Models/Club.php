@@ -26,4 +26,9 @@ class Club extends Model
     {
         return $this->hasMany(Animal::class);
     }
+
+    public function coggins()
+    {
+        return $this->hasMany(Coggin::class);
+    }
 }

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -26,5 +29,43 @@ class ProfileController extends Controller
             ?? $tenant->payments->first();
 
         return view('client.profile.index', compact('tenant', 'currentSubscription', 'lastPayment'));
+    }
+
+    public function update(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $oldEmail = $user->email;
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        // Si el usuario es el que creó el tenant o tiene el mismo email que el tenant,
+        // actualizamos también el email del tenant para mantener consistencia.
+        $tenant = $user->tenant;
+        if ($tenant && $tenant->email === $oldEmail) {
+            $tenant->email = $user->email;
+            $tenant->name = $user->name; // Opcionalmente actualizar el nombre si coinciden
+            $tenant->save();
+        }
+
+        return back()->with('success', 'Perfil actualizado correctamente.');
     }
 }

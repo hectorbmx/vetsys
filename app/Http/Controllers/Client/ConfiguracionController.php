@@ -140,6 +140,7 @@ class ConfiguracionController extends Controller
             // CORRECCIÓN AQUÍ: Apuntar al nuevo nombre de la ruta
             return redirect()
                 ->route('client.mi-configuracion.index')
+                ->with('activeTab', 'animales')
                 ->with('success', '¡Tipo de animal agregado correctamente!');
         } catch (Exception $e) {
             return redirect()
@@ -179,6 +180,20 @@ class ConfiguracionController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function toggleStatus(AnimalType $animalType)
+    {
+        if ($animalType->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $animalType->is_active = !$animalType->is_active;
+        $animalType->save();
+
+        return back()
+            ->with('activeTab', 'animales')
+            ->with('success', 'Estado de la especie actualizado.');
     }
 
     public function fieldsIndex(AnimalType $animalType)

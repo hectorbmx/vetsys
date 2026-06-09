@@ -156,9 +156,17 @@
                                 <td class="px-6 py-4 text-xs font-mono text-slate-400">{{ $type->slug }}</td>
                                 <td class="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">{{ $type->description ?? 'Sin descripción añadida.' }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest {{ $type->is_active ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-100' }} px-2.5 py-1 rounded-full">
-                                        {{ $type->is_active ? 'Activo' : 'Inactivo' }}
-                                    </span>
+                                    <form action="{{ route('client.mi-configuracion.toggle', $type->id) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" 
+                                            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none {{ $type->is_active ? 'bg-[#38B2AC]' : 'bg-slate-200' }}">
+                                            <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $type->is_active ? 'translate-x-4' : 'translate-x-0' }}"></span>
+                                        </button>
+                                        <span class="ml-2 text-[9px] font-black uppercase tracking-widest {{ $type->is_active ? 'text-emerald-700' : 'text-slate-400' }}">
+                                            {{ $type->is_active ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </form>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <!-- <button class="p-1.5 text-slate-400 hover:text-[#0F172A] transition-colors" title="Editar Campos Dinámicos">⚙️ Campos</button> -->

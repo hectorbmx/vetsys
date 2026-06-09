@@ -1,7 +1,7 @@
 @extends('layouts.client')
 
 @section('content')
-<div x-data="{ tab: 'notas' }" class="p-6 max-w-7xl mx-auto space-y-6">
+<div x-data="{ tab: '{{ request('tab', 'notas') }}' }" class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- CABECERA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex justify-between items-center">
@@ -263,6 +263,7 @@
         <button @click="tab = 'notas'" :class="tab === 'notas' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Notas de Venta</button>
         <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Mascotas</button>
         <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Historial de Pagos</button>
+        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
         <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
     </div>
 
@@ -704,6 +705,83 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        {{-- TAB: DATOS --}}
+        <div x-show="tab === 'datos'" class="p-6" x-cloak>
+            <form action="{{ route('client.customers.update', $customer) }}" method="POST" class="space-y-6">
+                @csrf
+                @method('PATCH')
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Nombre --}}
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Nombre(s) *</label>
+                        <input type="text" name="name" value="{{ old('name', $customer->name) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                    </div>
+
+                    {{-- Apellidos --}}
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Apellidos</label>
+                        <input type="text" name="last_name" value="{{ old('last_name', $customer->last_name) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                    </div>
+
+                    {{-- Correo --}}
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Correo Electrónico</label>
+                        <input type="email" name="email" value="{{ old('email', $customer->email) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                    </div>
+
+                    {{-- Teléfono --}}
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Teléfono Principal</label>
+                        <input type="text" name="phone" value="{{ old('phone', $customer->phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                    </div>
+
+                    {{-- Teléfono Secundario --}}
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Teléfono Secundario</label>
+                        <input type="text" name="secondary_phone" value="{{ old('secondary_phone', $customer->secondary_phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                    </div>
+
+                    {{-- Dirección --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Dirección</label>
+                        <input type="text" name="address" value="{{ old('address', $customer->address) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                    </div>
+
+                    {{-- Notas --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Notas / Observaciones</label>
+                        <textarea name="notes" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC] resize-none">{{ old('notes', $customer->notes) }}</textarea>
+                    </div>
+                </div>
+
+                {{-- Status Toggle --}}
+                <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-6 py-4">
+                    <div>
+                        <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Estatus del Cliente</p>
+                        <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Define si el cliente está activo para realizar nuevas notas de venta.</p>
+                    </div>
+                    <div x-data="{ active: @js($customer->status === 'active') }" class="flex items-center">
+                        <input type="hidden" name="status" :value="active ? 'active' : 'inactive'">
+                        <button type="button" 
+                                @click="active = !active" 
+                                :class="active ? 'bg-emerald-500' : 'bg-slate-300'"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#38B2AC] focus:ring-offset-2">
+                            <span :class="active ? 'translate-x-5' : 'translate-x-0'"
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+                        <span class="ml-3 text-xs font-bold text-slate-600" x-text="active ? 'Activo' : 'Inactivo'"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
+                        Actualizar Datos
+                    </button>
+                </div>
+            </form>
         </div>
 
         {{-- TAB: CONFIGURACION CONTABLE --}}

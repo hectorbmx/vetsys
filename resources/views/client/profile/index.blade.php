@@ -4,6 +4,13 @@
 
 @section('content')
 <div class="space-y-8">
+    @if(session('success'))
+        <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 px-6 py-4 rounded-[20px] text-sm font-bold mb-6 flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
             <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Perfil de Veterinaria</p>
@@ -22,7 +29,7 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+        <div class="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden h-fit">
             <div class="h-28 bg-gradient-to-br from-[#38B2AC] via-emerald-400 to-cyan-400"></div>
             <div class="px-6 pb-6 -mt-10">
                 <div class="w-24 h-24 rounded-3xl bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
@@ -35,21 +42,69 @@
                     @endif
                 </div>
 
-                <h2 class="text-xl font-black text-[#0F172A] mt-4">{{ $tenant->business_name ?? $tenant->name }}</h2>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $tenant->name }}</p>
+                <div class="mt-4">
+                    <h2 class="text-xl font-black text-[#0F172A]">{{ $tenant->business_name ?? $tenant->name }}</h2>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $tenant->slug }}</p>
+                </div>
 
-                <div class="mt-6 space-y-3">
-                    <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Email</p>
-                        <p class="text-sm font-bold text-[#0F172A] mt-1">{{ $tenant->email ?? 'No configurado' }}</p>
+                <form action="{{ route('client.profile.update') }}" method="POST" class="mt-8 space-y-5">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="space-y-1.5">
+                        <label for="name" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nombre Completo</label>
+                        <input type="text" name="name" id="name" value="{{ old('name', auth()->user()->name) }}"
+                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('name') border-rose-500 @enderror">
+                        @error('name') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Telefono</p>
-                        <p class="text-sm font-bold text-[#0F172A] mt-1">{{ $tenant->phone ?? 'No configurado' }}</p>
+
+                    <div class="space-y-1.5">
+                        <label for="email" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email de Acceso</label>
+                        <input type="email" name="email" id="email" value="{{ old('email', auth()->user()->email) }}"
+                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('email') border-rose-500 @enderror">
+                        @error('email') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Slug</p>
-                        <p class="text-sm font-bold text-[#0F172A] mt-1">{{ $tenant->slug }}</p>
+
+                    <div class="pt-2">
+                        <div class="flex items-center gap-3 mb-4">
+                            <hr class="flex-1 border-slate-100">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Cambiar Contraseña</span>
+                            <hr class="flex-1 border-slate-100">
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="space-y-1.5">
+                                <label for="password" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nueva Contraseña</label>
+                                <input type="password" name="password" id="password" placeholder="••••••••"
+                                       class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('password') border-rose-500 @enderror">
+                                <p class="text-[9px] text-slate-400 font-semibold ml-1 italic">Dejar en blanco para no cambiar</p>
+                                @error('password') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label for="password_confirmation" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirmar Contraseña</label>
+                                <input type="password" name="password_confirmation" id="password_confirmation" placeholder="••••••••"
+                                       class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full mt-4 bg-[#0F172A] hover:bg-slate-800 text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-[0.98] text-[10px] uppercase tracking-[0.15em]">
+                        Actualizar mis datos
+                    </button>
+                </form>
+
+                <div class="mt-8 pt-6 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Informacion de Soporte</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-bold">
+                            <span class="text-slate-400">Telefono Registro</span>
+                            <span class="text-[#0F172A]">{{ $tenant->phone ?? '--' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] font-bold">
+                            <span class="text-slate-400">ID de Cliente</span>
+                            <span class="text-[#0F172A]">#{{ str_pad($tenant->id, 5, '0', STR_PAD_LEFT) }}</span>
+                        </div>
                     </div>
                 </div>
             </div>

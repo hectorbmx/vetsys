@@ -110,26 +110,10 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button type="button"
-                                            @click="editClub = {{ Js::from([
-                                                'id' => $club->id,
-                                                'name' => $club->name,
-                                                'description' => $club->description,
-                                                'is_active' => (bool) $club->is_active,
-                                                'action' => route('client.clubes.update', $club),
-                                            ]) }}"
-                                            class="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200">
-                                        Editar
-                                    </button>
-                                    <button type="button"
-                                            @click="membersClub = {{ Js::from([
-                                                'id' => $club->id,
-                                                'name' => $club->name,
-                                                'action' => route('client.clubes.members.update', $club),
-                                            ]) }}"
-                                            class="px-3 py-2 rounded-xl bg-[#0F172A] text-white text-[9px] font-black uppercase tracking-widest hover:bg-slate-800">
-                                        Miembros
-                                    </button>
+                                    <a href="{{ route('client.clubes.edit', $club) }}"
+                                       class="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200">
+                                        Administrar
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -168,89 +152,6 @@
                     <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
                         <button type="button" @click="clubModal = false" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
                         <button type="submit" class="bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800">Guardar club</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="editClub" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-[#0F172A]/80 backdrop-blur-sm" @click="editClub = null"></div>
-            <div class="relative inline-block w-full max-w-lg overflow-hidden text-left align-middle bg-white rounded-[24px] shadow-2xl border border-slate-100">
-                <form :action="editClub?.action" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="text-lg font-black text-[#0F172A] tracking-tighter">Editar club</h3>
-                        <button type="button" @click="editClub = null" class="text-slate-400 hover:text-red-500">x</button>
-                    </div>
-                    <div class="p-8 space-y-5">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Nombre *</label>
-                            <input type="text" name="name" x-model="editClub.name" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 outline-none">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Descripcion</label>
-                            <textarea name="description" rows="3" x-model="editClub.description" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 outline-none resize-none"></textarea>
-                        </div>
-                        <label class="flex items-center gap-3 text-xs font-black text-[#0F172A] uppercase tracking-widest">
-                            <input type="checkbox" name="is_active" value="1" x-model="editClub.is_active" class="rounded border-slate-300 text-[#38B2AC] focus:ring-[#38B2AC]">
-                            Club activo
-                        </label>
-                    </div>
-                    <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
-                        <button type="button" @click="editClub = null" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-                        <button type="submit" class="bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800">Guardar cambios</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="membersClub" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-[#0F172A]/80 backdrop-blur-sm" @click="membersClub = null"></div>
-            <div class="relative inline-block w-full max-w-3xl overflow-hidden text-left align-middle bg-white rounded-[24px] shadow-2xl border border-slate-100">
-                <form :action="membersClub?.action" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <div>
-                            <h3 class="text-lg font-black text-[#0F172A] tracking-tighter">Editar miembros</h3>
-                            <p class="text-xs font-semibold text-slate-400 mt-1" x-text="membersClub?.name"></p>
-                        </div>
-                        <button type="button" @click="membersClub = null" class="text-slate-400 hover:text-red-500">x</button>
-                    </div>
-                    <div class="p-8 max-h-[60vh] overflow-y-auto">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            @forelse($animals as $animal)
-                                <label class="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 transition-colors">
-                                    <input type="checkbox"
-                                           name="animal_ids[]"
-                                           value="{{ $animal->id }}"
-                                           :checked="membersClub && {{ $animal->club_id ?? 'null' }} === membersClub.id"
-                                           class="mt-1 rounded border-slate-300 text-[#38B2AC] focus:ring-[#38B2AC]">
-                                    <span class="min-w-0">
-                                        <span class="block text-xs font-black text-[#0F172A]">{{ $animal->name }}</span>
-                                        <span class="block text-[10px] font-semibold text-slate-400">
-                                            {{ $animal->animalType->name ?? 'Sin especie' }} · {{ $animal->customer->full_name ?? 'Sin propietario' }}
-                                        </span>
-                                        @if($animal->club)
-                                            <span class="block text-[10px] font-bold text-[#38B2AC] mt-1">Actual: {{ $animal->club->name }}</span>
-                                        @endif
-                                    </span>
-                                </label>
-                            @empty
-                                <div class="md:col-span-2 px-6 py-12 text-center text-sm font-bold text-slate-400">
-                                    No hay mascotas disponibles para asignar.
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                    <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
-                        <button type="button" @click="membersClub = null" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-                        <button type="submit" class="bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800">Guardar miembros</button>
                     </div>
                 </form>
             </div>

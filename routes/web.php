@@ -125,6 +125,7 @@ Route::middleware(['auth', 'role:super-admin'])
         ->group(function () {
             Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
             Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+            Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
             Route::get('/notificaciones/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
             Route::patch('/notificaciones/{notification}/leer', [NotificationController::class, 'markRead'])->name('notifications.mark-read');
@@ -153,7 +154,10 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('telemedicina/expedientes/{token}/videos/{animalVideo}', [TelemedicineController::class, 'video'])->name('telemedicine.animal-videos.show');
             Route::get('telemedicina/expedientes/{token}/radiologia/{radiologyImage}', [TelemedicineController::class, 'radiologyImage'])->name('telemedicine.radiology-images.show');
             Route::resource('animals', AnimalController::class);
+            Route::get('api/buscar-animales', [ClubController::class, 'searchAnimals'])->name('api.buscar-animales');
             Route::patch('clubes/{club}/members', [ClubController::class, 'updateMembers'])->name('clubes.members.update');
+            Route::post('clubes/{club}/coggins', [ClubController::class, 'storeCoggin'])->name('clubes.coggins.store');
+            Route::delete('clubes/{club}/coggins/{coggin}', [ClubController::class, 'destroyCoggin'])->name('clubes.coggins.destroy');
             Route::resource('clubes', ClubController::class);
 
             /*
@@ -174,6 +178,7 @@ Route::middleware(['auth', 'role:super-admin'])
             |*/
             Route::get('mi-configuracion', [ClientConfiguracionController::class, 'index'])->name('mi-configuracion.index');
             Route::post('mi-configuracion', [ClientConfiguracionController::class, 'store'])->name('mi-configuracion.store');
+            Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
             Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
             Route::post('mi-configuracion/plan', [ClientConfiguracionController::class, 'requestPlanChange'])->name('mi-configuracion.plan.request');
             Route::post('mi-configuracion/importar-clientes', [ClientConfiguracionController::class, 'importCustomers'])->name('mi-configuracion.import-customers');

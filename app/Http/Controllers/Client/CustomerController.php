@@ -201,7 +201,7 @@ public function show($id)
         $customer->update($data);
 
         return redirect()
-            ->route('client.customers.index')
+            ->route('client.customers.show', [$customer, 'tab' => 'datos'])
             ->with('success', 'Cliente actualizado correctamente.');
     }
 
