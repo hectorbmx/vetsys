@@ -116,7 +116,7 @@
             </div>
 
             {{-- Password --}}
-            <div>
+            <div x-data="{ show: false }">
                 <label for="password" class="block text-sm font-semibold text-slate-700 mb-1.5">
                     Contraseña
                 </label>
@@ -130,12 +130,21 @@
                     <input
                         id="password"
                         name="password"
-                        type="password"
+                        :type="show ? 'text' : 'password'"
                         autocomplete="current-password"
                         required
                         placeholder="••••••••"
-                        class="vet-input w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-all duration-200"
+                        class="vet-input w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-12 py-3 text-sm text-slate-800 placeholder-slate-400 transition-all duration-200"
                     >
+                    <button type="button" @click="show = !show" class="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.644C3.399 8.049 7.21 5 12 5c4.79 0 8.601 3.049 9.964 6.678.131.348.131.732 0 1.08C20.601 16.35 16.79 19.4 12 19.4s-8.601-3.05-9.964-6.678Z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                        </svg>
+                        <svg x-show="show" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12c1.363 3.678 5.174 6.723 9.963 6.723 1.288 0 2.508-.22 3.633-.623m4.433-4.433c.852-1.258 1.41-2.677 1.637-4.167-.13-.348-.13-.732 0-1.08C20.24 8.049 16.429 5 11.64 5c-1.288 0-2.508.22-3.633.623m11.833 11.833L3.98 8.223M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
