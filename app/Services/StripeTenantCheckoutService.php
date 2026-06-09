@@ -98,12 +98,19 @@ class StripeTenantCheckoutService
     }
 
     $session = $this->stripe->checkout->sessions->create($payload);
+    \Log::info('STRIPE SESSION CREATED', [
+    'session_id' => $session->id,
+    'session_url' => $session->url,
+    'payment_id' => $payment->id,
+]);
 
     $payment->update([
         'provider_payment_id' => $session->id,
         'payment_reference'   => $session->url,
     ]);
-
+\Log::info('PAYMENT UPDATED', [
+    'payment_reference' => $payment->fresh()->payment_reference,
+]);
     return $session;
 }
 
