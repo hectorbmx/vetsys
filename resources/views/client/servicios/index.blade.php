@@ -62,8 +62,12 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {{-- SKU / Código --}}
                 <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">SKU / Código de Barras (Opcional)</label>
-                    <input type="text" name="sku" placeholder="Ej: SERV-001 o 750102030405" value="{{ old('sku') }}" class="w-full text-xs font-mono text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">SKU / Código</label>
+                    <input type="text" name="sku" 
+                           :placeholder="type === 'service' ? 'Automático (SERV-00X)' : 'Automático (PROD-00X)'" 
+                           value="{{ old('sku') }}" 
+                           class="w-full text-xs font-mono text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <p class="text-[9px] text-slate-400 font-semibold mt-1">Si se deja vacío, se generará un folio autoincremental.</p>
                     @error('sku') <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                 </div>
 

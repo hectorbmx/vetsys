@@ -48,19 +48,22 @@ class CatalogItemController extends Controller
             'stock_minimo' => 'required_if:has_inventory,1|nullable|numeric|min:0',
         ]);
 
-        // Validar SKU único por Tenant de forma manual para personalizar el error
-        if ($request->sku && $tenant->catalogItems()->where('sku', $request->sku)->exists()) {
+        // Si viene el SKU vacío, lo dejamos nulo para que el modelo lo genere automáticamente
+        $sku = $request->filled('sku') ? $request->sku : null;
+
+        // Validar SKU único por Tenant solo si se proporcionó uno manualmente
+        if ($sku && $tenant->catalogItems()->where('sku', $sku)->exists()) {
             return back()->withErrors(['sku' => 'El SKU o código ya está en uso en esta clínica.'])->withInput();
         }
 
         // Ejecutamos en transacción para asegurar integridad total
-        DB::transaction(function () use ($request, $tenant) {
+        DB::transaction(function () use ($request, $tenant, $sku) {
             $hasInventory = $request->has('has_inventory');
 
             // 1. Crear el artículo base
             $item = $tenant->catalogItems()->create([
                 'name' => $request->name,
-                'sku' => $request->sku,
+                'sku' => $sku,
                 'type' => $request->type,
                 'description' => $request->description,
                 'has_inventory' => $hasInventory,

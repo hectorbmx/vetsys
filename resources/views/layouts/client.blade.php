@@ -48,7 +48,7 @@
                         ['route' => 'client.servicios.index', 'icon' => '⚙️', 'label' => 'Servicios'],
                         ['route' => 'client.mi-configuracion.index', 'icon' => '⚙️', 'label' => 'Configuración'],
                         ['route' => 'client.ventas.index', 'icon' => '🛒', 'label' => 'Ventas'],
-                        ['route' => 'client.facturacion.index', 'icon' => '🛒', 'label' => 'Facturación'],
+                        // ['route' => 'client.facturacion.index', 'icon' => '🛒', 'label' => 'Facturación'],
                         // Agrega tus futuras opciones aquí manteniendo la misma estructura
                     ];
                 @endphp
