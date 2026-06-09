@@ -154,9 +154,21 @@
     class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden"
 >
     <div class="px-8 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
-        <h2 class="font-black text-[11px] uppercase tracking-widest text-slate-500 underline decoration-[#38B2AC] decoration-2 underline-offset-4">
-            Historial de Pagos
-        </h2>
+        <div class="flex items-center gap-4">
+            <h2 class="font-black text-[11px] uppercase tracking-widest text-slate-500 underline decoration-[#38B2AC] decoration-2 underline-offset-4">
+                Historial de Pagos
+            </h2>
+
+            @if($payments->where('status', 'cancelled')->isNotEmpty())
+                <form action="{{ route('admin.tenants.payments.clear-cancelled', $tenant) }}" method="POST" onsubmit="return confirm('¿Eliminar todos los registros de pago cancelados?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline">
+                        Limpiar Cancelados
+                    </button>
+                </form>
+            @endif
+        </div>
 
         <button 
             type="button"
@@ -216,6 +228,7 @@
         <th class="px-8 py-4">Método</th>
         <th class="px-8 py-4">Status</th>
         <th class="px-8 py-4">Vence</th>
+        <th class="px-8 py-4 text-right">Accion</th>
     </tr>
 </thead>
 
@@ -260,10 +273,22 @@
             <td class="px-8 py-4 font-bold text-slate-600">
                 {{ $payment->period_ends_at?->format('d M, Y') ?? '—' }}
             </td>
+
+            <td class="px-8 py-4 text-right">
+                @if($payment->status === 'cancelled')
+                    <form action="{{ route('admin.tenants.payments.destroy', [$tenant, $payment]) }}" method="POST" onsubmit="return confirm('¿Eliminar este registro de pago cancelado?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-rose-500 hover:text-rose-700 transition" title="Eliminar registro cancelado">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </form>
+                @endif
+            </td>
         </tr>
     @empty
         <tr>
-            <td colspan="6" class="px-8 py-6 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest italic">
+            <td colspan="7" class="px-8 py-6 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest italic">
                 Sin pagos registrados
             </td>
         </tr>

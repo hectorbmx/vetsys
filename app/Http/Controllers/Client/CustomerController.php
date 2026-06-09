@@ -14,7 +14,7 @@ use Exception;
 
 class CustomerController extends Controller
 {
-   public function index(Request $request)
+    public function index(Request $request)
 {
     $tenantId = auth()->user()->tenant_id;
 
@@ -43,6 +43,19 @@ class CustomerController extends Controller
 
     return view('client.customers.index', compact('customers'));
 }
+
+    public function toggleStatus(Customer $customer)
+    {
+        if ($customer->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $customer->update([
+            'status' => $customer->status === 'active' ? 'inactive' : 'active'
+        ]);
+
+        return back()->with('success', 'El estatus del cliente ha sido actualizado.');
+    }
 
     // public function create()
     // {

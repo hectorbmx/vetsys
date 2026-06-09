@@ -173,14 +173,25 @@
                                 </div>
                             </td>
 
-                            {{-- Status Badge Dinámico --}}
-                            <td class="px-6 py-4">
-                                @if($customer->status === 'active')
-                                    <span class="inline-flex items-center text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">Active</span>
-                                @else
-                                    <span class="inline-flex items-center text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 px-2.5 py-1 rounded-full">Inactive</span>
-                                @endif
-                            </td>
+                            {{-- Status Toggle Dinámico --}}
+                  <td class="px-6 py-4">
+                    <form action="{{ route('client.customers.toggle', $customer->id) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" 
+                                class="flex items-center gap-2 group focus:outline-none"
+                                title="{{ $customer->status === 'active' ? 'Click para Inactivar' : 'Click para Activar' }}">
+                            
+                            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                                <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-4' : 'translate-x-0' }}"></div>
+                            </div>
+                            
+                            <span class="text-[10px] font-bold uppercase tracking-wider min-w-[50px] {{ $customer->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                {{ $customer->status === 'active' ? 'Active' : 'Inactive' }}
+                            </span>
+                        </button>
+                    </form>
+                </td>
 
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">

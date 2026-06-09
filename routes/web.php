@@ -117,7 +117,8 @@ Route::middleware(['auth', 'role:super-admin'])
         //asigna plan a tenant
         Route::post('/tenants/{tenant}/assign-plan', [TenantsController::class, 'assignPlan'])->name('tenants.assign-plan');
         Route::post('/tenants/{tenant}/stripe-checkout-link', [TenantsController::class, 'stripeCheckoutLink'])->name('tenants.stripe-checkout-link');
-
+        Route::delete('/tenants/{tenant}/payments/clear-cancelled', [TenantsController::class, 'clearCancelledPayments'])->name('tenants.payments.clear-cancelled');
+        Route::delete('/tenants/{tenant}/payments/{payment}', [TenantsController::class, 'destroyPayment'])->name('tenants.payments.destroy');
     });
 
     Route::middleware(['auth','tenant.plan', 'check.tenant.subscription'])
@@ -136,6 +137,7 @@ Route::middleware(['auth', 'role:super-admin'])
             |--------------------------------------------------------------------------
             |*/
             Route::resource('customers', CustomerController::class);
+            Route::patch('customers/{customer}/toggle', [CustomerController::class, 'toggleStatus'])->name('customers.toggle');
             Route::get('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'show'])->name('vaccination-letters.show');
             Route::get('vaccination-letters/{vaccinationLetter}/print', [VaccinationLetterController::class, 'print'])->name('vaccination-letters.print');
             Route::post('animals/{animal}/vaccination-letters', [VaccinationLetterController::class, 'store'])->name('animals.vaccination-letters.store');
@@ -155,6 +157,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('telemedicina/expedientes/{token}/videos/{animalVideo}', [TelemedicineController::class, 'video'])->name('telemedicine.animal-videos.show');
             Route::get('telemedicina/expedientes/{token}/radiologia/{radiologyImage}', [TelemedicineController::class, 'radiologyImage'])->name('telemedicine.radiology-images.show');
             Route::resource('animals', AnimalController::class);
+            Route::patch('animals/{animal}/toggle', [AnimalController::class, 'toggleStatus'])->name('animals.toggle');
             Route::get('api/buscar-animales', [ClubController::class, 'searchAnimals'])->name('api.buscar-animales');
             Route::patch('clubes/{club}/members', [ClubController::class, 'updateMembers'])->name('clubes.members.update');
             Route::post('clubes/{club}/coggins', [ClubController::class, 'storeCoggin'])->name('clubes.coggins.store');

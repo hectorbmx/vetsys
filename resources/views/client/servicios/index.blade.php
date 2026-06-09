@@ -175,12 +175,25 @@
                                 @endif
                             </td>
 
-                            {{-- Estado --}}
-                            <td class="px-6 py-4">
-                                <span class="inline-flex text-[9px] font-black uppercase tracking-widest {{ $item->is_active ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-100' }} px-2.5 py-1 rounded-full">
-                                    {{ $item->is_active ? 'Activo' : 'Inactivo' }}
-                                </span>
-                            </td>
+                            {{-- Estado (Toggle) --}}
+                         <td class="px-6 py-4">
+    <form action="{{ route('client.servicios.toggle', $item) }}" method="POST">
+        @csrf
+        @method('PATCH')
+        <button type="submit" 
+                class="flex items-center gap-2 group focus:outline-none"
+                title="{{ $item->is_active ? 'Click para Inhabilitar' : 'Click para Habilitar' }}">
+            
+            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $item->is_active ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $item->is_active ? 'translate-x-4' : 'translate-x-0' }}"></div>
+            </div>
+            
+            <span class="text-[10px] font-bold uppercase tracking-wider {{ $item->is_active ? 'text-emerald-600' : 'text-slate-400' }}">
+                {{ $item->is_active ? 'Activo' : 'Inactivo' }}
+            </span>
+        </button>
+    </form>
+</td>
 
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
@@ -190,14 +203,6 @@
                                             class="px-2.5 py-1.5 bg-[#38B2AC]/10 border border-[#38B2AC]/20 hover:border-[#38B2AC]/50 rounded-lg text-[11px] font-bold text-[#2C9691] transition-colors shadow-sm">
                                         Editar Precio
                                     </button>
-                                    {{-- Botón de cambiar estado rápido --}}
-                                    <form action="{{ route('client.servicios.toggle', $item) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg text-[11px] font-semibold text-slate-700 transition-colors shadow-sm">
-                                            {{ $item->is_active ? 'Inhabilitar' : 'Habilitar' }}
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>

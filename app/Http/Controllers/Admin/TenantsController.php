@@ -356,6 +356,30 @@ public function stripeCheckoutLink(Request $request, Tenant $tenant)
         ->with('stripe_checkout_link', $session->url);
 }
 
+public function destroyPayment(Tenant $tenant, TenantPayment $payment)
+{
+    if ((int) $payment->tenant_id !== (int) $tenant->id) {
+        abort(404);
+    }
+
+    if ($payment->status !== 'cancelled') {
+        return back()->with('error', 'Solo se pueden eliminar pagos con estatus cancelado.');
+    }
+
+    $payment->delete();
+
+    return back()->with('success', 'El registro de pago ha sido eliminado.');
+}
+
+public function clearCancelledPayments(Tenant $tenant)
+{
+    $count = $tenant->payments()
+        ->where('status', 'cancelled')
+        ->delete();
+
+    return back()->with('success', "Se han eliminado {$count} registros de pago cancelados.");
+}
+
 public function resendActivationCode(Tenant $tenant, User $user)
 {
     if ((int) $user->tenant_id !== (int) $tenant->id) {

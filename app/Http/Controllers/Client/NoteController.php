@@ -39,6 +39,7 @@ class NoteController extends Controller
 
         if ($request->filled('customer_id')) {
             $customer = $tenant->customers()
+                ->where('status', 'active')
                 ->whereKey($request->integer('customer_id'))
                 ->with(['animals' => function ($q) {
                     $q->select('id', 'customer_id', 'name')
@@ -70,6 +71,7 @@ class NoteController extends Controller
         }
 
         $customers = auth()->user()->tenant->customers()
+            ->where('status', 'active')
             ->where(function ($query) use ($search) {
                 $query->where('name', 'LIKE', "%{$search}%")
                     ->orWhere('last_name', 'LIKE', "%{$search}%")
@@ -385,5 +387,8 @@ private function cardPaymentMethodForTenant(int $tenantId): ?PaymentMethod
         ->where('is_active', true)
         ->get()
         ->first(fn (PaymentMethod $method) => $this->isCardPaymentMethod($method));
+}
+}
+PaymentMethod($method));
 }
 }

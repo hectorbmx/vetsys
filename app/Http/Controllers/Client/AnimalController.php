@@ -17,7 +17,7 @@ class AnimalController extends Controller
     /**
      * Display a listing of the resource.
      */
-   public function index(Request $request)
+    public function index(Request $request)
 {
     $tenantId = auth()->user()->tenant_id;
 
@@ -67,6 +67,19 @@ class AnimalController extends Controller
     return view('client.animals.index', compact('animals', 'customers', 'animalTypes', 'clubs'));
 }
 
+    public function toggleStatus(Animal $animal)
+    {
+        if ($animal->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $animal->update([
+            'status' => $animal->status === 'active' ? 'inactive' : 'active'
+        ]);
+
+        return back()->with('success', 'El estatus de la mascota ha sido actualizado.');
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -87,7 +100,9 @@ class AnimalController extends Controller
     $data = $request->validate([
         'customer_id'    => [
             'required',
-            Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            Rule::exists('customers', 'id')->where(fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->where('status', 'active')),
         ],
         'club_id' => [
             'nullable',
