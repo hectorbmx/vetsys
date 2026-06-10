@@ -285,6 +285,43 @@ public function show(Note $note)
     return view('client.ventas.show', compact('note', 'detailsByAnimal', 'paymentMethods'));
 }
 
+public function ticket(Note $note)
+{
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
+
+    $note->load([
+        'customer',
+        'details.catalogItem',
+        'details.animal',
+        'payments.paymentMethod',
+    ]);
+
+    // Agrupar detalles por animal
+    $detailsByAnimal = $note->details->groupBy('animal_id');
+
+    return view('client.ventas.ticket', compact('note', 'detailsByAnimal', 'tenant'));
+}
+
+public function publicTicket(string $token)
+{
+    $note = Note::where('public_token', $token)
+        ->with([
+            'tenant',
+            'customer',
+            'details.catalogItem',
+            'details.animal',
+            'payments.paymentMethod',
+        ])
+        ->firstOrFail();
+
+    $tenant = $note->tenant;
+    $detailsByAnimal = $note->details->groupBy('animal_id');
+
+    return view('client.ventas.ticket', compact('note', 'detailsByAnimal', 'tenant'))->with('isPublic', true);
+}
+
 public function createStripePaymentLink(Note $note)
 {
     abort_if($note->tenant_id !== auth()->user()->tenant->id, 403);

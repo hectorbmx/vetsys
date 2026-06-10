@@ -9,10 +9,16 @@
                 <h1 class="text-2xl font-black text-[#0F172A] tracking-tight">{{ $note->folio }}</h1>
                 <p class="text-sm text-slate-400 font-medium mt-0.5">{{ $note->date_at->format('d/m/Y') }}</p>
             </div>
-            <a href="{{ route('client.ventas.index') }}"
-               class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors">
-                ← Volver
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('client.ventas.ticket', $note) }}"
+                   class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    🖨️ Ver Ticket
+                </a>
+                <a href="{{ route('client.ventas.index') }}"
+                   class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors">
+                    ← Volver
+                </a>
+            </div>
         </div>
 
         @if(session('success'))

@@ -15,10 +15,22 @@ class Note extends Model
         'synced_from_mobile',
         'customer_id',
         'folio',
+        'public_token',
         'total',
         'status',
         'date_at',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($note) {
+            if (empty($note->public_token)) {
+                $note->public_token = \Illuminate\Support\Str::random(32) . uniqid();
+            }
+        });
+    }
 
     protected $casts = [
         'date_at' => 'date',

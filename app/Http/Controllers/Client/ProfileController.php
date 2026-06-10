@@ -44,6 +44,7 @@ class ProfileController extends Controller
                 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
+            'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -60,9 +61,14 @@ class ProfileController extends Controller
         // Si el usuario es el que creó el tenant o tiene el mismo email que el tenant,
         // actualizamos también el email del tenant para mantener consistencia.
         $tenant = $user->tenant;
-        if ($tenant && $tenant->email === $oldEmail) {
-            $tenant->email = $user->email;
-            $tenant->name = $user->name; // Opcionalmente actualizar el nombre si coinciden
+        if ($tenant) {
+            $tenant->phone = $request->phone;
+            
+            if ($tenant->email === $oldEmail) {
+                $tenant->email = $user->email;
+                $tenant->name = $user->name; // Opcionalmente actualizar el nombre si coinciden
+            }
+            
             $tenant->save();
         }
 

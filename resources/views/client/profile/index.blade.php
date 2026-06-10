@@ -47,6 +47,16 @@
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $tenant->slug }}</p>
                 </div>
 
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Información de Soporte</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-bold">
+                            <span class="text-slate-400">ID de Cliente</span>
+                            <span class="text-[#0F172A]">#{{ str_pad($tenant->id, 5, '0', STR_PAD_LEFT) }}</span>
+                        </div>
+                    </div>
+                </div>
+
                 <form action="{{ route('client.profile.update') }}" method="POST" class="mt-8 space-y-5">
                     @csrf
                     @method('PUT')
@@ -63,6 +73,13 @@
                         <input type="email" name="email" id="email" value="{{ old('email', auth()->user()->email) }}"
                                class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('email') border-rose-500 @enderror">
                         @error('email') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label for="phone" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Teléfono Registro</label>
+                        <input type="text" name="phone" id="phone" value="{{ old('phone', $tenant->phone) }}"
+                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('phone') border-rose-500 @enderror">
+                        @error('phone') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="pt-2">
@@ -93,20 +110,6 @@
                         Actualizar mis datos
                     </button>
                 </form>
-
-                <div class="mt-8 pt-6 border-t border-slate-100">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Informacion de Soporte</p>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between text-[11px] font-bold">
-                            <span class="text-slate-400">Telefono Registro</span>
-                            <span class="text-[#0F172A]">{{ $tenant->phone ?? '--' }}</span>
-                        </div>
-                        <div class="flex items-center justify-between text-[11px] font-bold">
-                            <span class="text-slate-400">ID de Cliente</span>
-                            <span class="text-[#0F172A]">#{{ str_pad($tenant->id, 5, '0', STR_PAD_LEFT) }}</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 

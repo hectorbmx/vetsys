@@ -91,6 +91,7 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 Route::get('/pagar/{token}', [PublicNotePaymentController::class, 'show'])->name('public.payments.show');
+Route::get('/ticket/{token}', [NoteController::class, 'publicTicket'])->name('public.ventas.ticket');
 Route::post('/pagar/{token}/stripe', [PublicNotePaymentController::class, 'checkout'])->name('public.payments.checkout');
 Route::get('/pagar-cuenta/{token}', [PublicCustomerPaymentController::class, 'show'])->name('public.customer-payments.show');
 Route::post('/pagar-cuenta/{token}/stripe', [PublicCustomerPaymentController::class, 'checkout'])->name('public.customer-payments.checkout');
@@ -224,6 +225,7 @@ a           |-------------------------------------------------------------------
             Route::get('ventas/crear', [NoteController::class, 'create'])->name('ventas.create');
             Route::post('ventas', [NoteController::class, 'store'])->name('ventas.store');
             Route::get('ventas/{note}', [NoteController::class, 'show'])->name('ventas.show');
+            Route::get('ventas/{note}/ticket', [NoteController::class, 'ticket'])->name('ventas.ticket');
             Route::post('ventas/{note}/stripe-payment-link', [NoteController::class, 'createStripePaymentLink'])->name('ventas.stripe-payment-link');
             Route::post('ventas/{note}/manual-payment', [NoteController::class, 'storeManualPayment'])->name('ventas.manual-payment');
 
