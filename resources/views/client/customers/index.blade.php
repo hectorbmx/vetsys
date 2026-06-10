@@ -39,7 +39,7 @@
     {{-- HEADER DE LA VISTA --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">Gestión de Customers</h1>
+            <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">Gestión de Clientes</h1>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus mascotas.</p>
         </div>
         
@@ -67,7 +67,7 @@
     {{-- CARD 1: CUSTOMERS --}}
     <div class="group bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Customers</p>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Clientes</p>
             <div class="flex items-baseline gap-2">
                 <span class="text-3xl font-black text-white tracking-tight">{{ $customers->total() }}</span>
             </div>
@@ -105,7 +105,7 @@
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
         <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Database de Clientes</h3>
+            <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Listado de Clientes</h3>
             @if(request()->filled('q') || request()->filled('status'))
                 <span class="text-[11px] font-bold text-slate-400">Filtros activos</span>
             @endif
@@ -116,9 +116,9 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/20">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer Name</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Info</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Primary Pets</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Animales</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>

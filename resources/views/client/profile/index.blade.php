@@ -29,6 +29,8 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {{-- COLUMNA IZQUIERDA --}}
         <div class="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden h-fit">
             <div class="h-28 bg-gradient-to-br from-[#38B2AC] via-emerald-400 to-cyan-400"></div>
             <div class="px-6 pb-6 -mt-10">
@@ -113,7 +115,10 @@
             </div>
         </div>
 
+        {{-- COLUMNA DERECHA --}}
         <div class="lg:col-span-2 space-y-6">
+
+            {{-- Plan + Suscripcion --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="relative overflow-hidden bg-[#0F172A] rounded-[24px] p-6 shadow-xl shadow-slate-200 min-h-[210px]">
                     <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-[#38B2AC]/30"></div>
@@ -165,6 +170,7 @@
                 </div>
             </div>
 
+            {{-- Stats --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white border border-slate-200 rounded-[20px] p-5">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Usuarios max.</p>
@@ -185,29 +191,96 @@
                 </div>
             </div>
 
+            {{-- Renovacion --}}
+            @php
+                $pendingCheckout = $tenant->payments
+                    ->where('status', 'pending')
+                    ->where('payment_method', 'stripe_checkout')
+                    ->first();
+                $canCheckout = $tenant->plan && $tenant->plan->stripe_price_id;
+            @endphp
+
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Renovacion</h3>
-                        <p class="text-[11px] font-semibold text-slate-400 mt-1">Fase 1 informativa. La renovacion en linea se activara mas adelante.</p>
+                        @if($pendingCheckout)
+                            <p class="text-[11px] font-semibold text-amber-500 mt-1">Tienes un pago pendiente de completar.</p>
+                        @elseif($canCheckout)
+                            <p class="text-[11px] font-semibold text-slate-400 mt-1">Renueva tu plan en linea con tarjeta via Stripe.</p>
+                        @else
+                            <p class="text-[11px] font-semibold text-slate-400 mt-1">La renovacion en linea se activara mas adelante.</p>
+                        @endif
                     </div>
-                    <button type="button" disabled class="bg-slate-100 text-slate-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
-                        Solicitar renovacion
-                    </button>
+
+                    @if($pendingCheckout && $pendingCheckout->payment_reference)
+                        <a href="{{ $pendingCheckout->payment_reference }}"
+                           target="_blank"
+                           class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                            Continuar pago
+                        </a>
+                    @elseif($canCheckout)
+                        <form action="{{ route('client.mi-configuracion.plan.stripe-checkout') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="plan_id" value="{{ $tenant->plan->id }}">
+                            <button type="submit"
+                                    class="bg-[#0F172A] hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                Renovar con Stripe
+                            </button>
+                        </form>
+                    @else
+                        <button type="button" disabled
+                                class="bg-slate-100 text-slate-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+                            Solicitar renovacion
+                        </button>
+                    @endif
                 </div>
 
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="rounded-2xl bg-amber-50 border border-amber-100 p-4">
-                        <p class="text-xs font-black text-amber-900">Renovacion asistida</p>
-                        <p class="text-[11px] font-semibold text-amber-700 mt-1">Por ahora el administrador registra pagos y cambios de plan manualmente.</p>
-                    </div>
-                    <div class="rounded-2xl bg-teal-50 border border-teal-100 p-4">
-                        <p class="text-xs font-black text-teal-900">Pago en linea futuro</p>
-                        <p class="text-[11px] font-semibold text-teal-700 mt-1">Esta seccion queda preparada para conectar checkout y webhooks despues.</p>
-                    </div>
+                    @if($pendingCheckout)
+                        <div class="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+                            <p class="text-xs font-black text-amber-900">Pago pendiente</p>
+                            <p class="text-[11px] font-semibold text-amber-700 mt-1">
+                                Se genero un checkout de ${{ number_format($pendingCheckout->amount, 2) }} {{ $pendingCheckout->currency }}
+                                el {{ $pendingCheckout->created_at->format('d/m/Y') }}. Haz clic en "Continuar pago" para completarlo.
+                            </p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <p class="text-xs font-black text-slate-700">Plan</p>
+                            <p class="text-[11px] font-semibold text-slate-500 mt-1">
+                                {{ $pendingCheckout->plan->name ?? $tenant->plan->name ?? 'N/A' }}
+                                — ${{ number_format($pendingCheckout->amount, 2) }} {{ $pendingCheckout->currency }}
+                            </p>
+                        </div>
+                    @elseif($canCheckout)
+                        <div class="rounded-2xl bg-teal-50 border border-teal-100 p-4">
+                            <p class="text-xs font-black text-teal-900">Pago en linea activo</p>
+                            <p class="text-[11px] font-semibold text-teal-700 mt-1">
+                                Puedes renovar tu plan "{{ $tenant->plan->name }}" por
+                                ${{ number_format($tenant->plan->price, 2) }} {{ $tenant->plan->currency }}
+                                directamente con tarjeta.
+                            </p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <p class="text-xs font-black text-slate-700">Vencimiento actual</p>
+                            <p class="text-[11px] font-semibold text-slate-500 mt-1">
+                                {{ optional($tenant->subscription_ends_at)->format('d/m/Y') ?? 'Sin fecha registrada' }}
+                            </p>
+                        </div>
+                    @else
+                        <div class="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+                            <p class="text-xs font-black text-amber-900">Renovacion asistida</p>
+                            <p class="text-[11px] font-semibold text-amber-700 mt-1">Por ahora el administrador registra pagos y cambios de plan manualmente.</p>
+                        </div>
+                        <div class="rounded-2xl bg-teal-50 border border-teal-100 p-4">
+                            <p class="text-xs font-black text-teal-900">Pago en linea futuro</p>
+                            <p class="text-[11px] font-semibold text-teal-700 mt-1">Esta seccion queda preparada para conectar checkout y webhooks despues.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
 
+            {{-- Tabla de pagos --}}
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100">
                     <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Pagos de suscripcion</h3>
@@ -223,7 +296,8 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                        @forelse($tenant->payments->take(5) as $payment)
+                        @forelse($tenant->payments->where('status', '!=', 'cancelled')->take(5) as $payment)
+
                             <tr>
                                 <td class="px-6 py-4 text-xs font-bold text-slate-600">{{ optional($payment->paid_at)->format('d/m/Y') ?? $payment->created_at->format('d/m/Y') }}</td>
                                 <td class="px-6 py-4 text-xs font-bold text-[#0F172A]">{{ $payment->plan->name ?? 'N/A' }}</td>
@@ -241,7 +315,8 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-</div>
+
+        </div>{{-- fin lg:col-span-2 --}}
+    </div>{{-- fin grid cols-3 --}}
+</div>{{-- fin space-y-8 --}}
 @endsection
