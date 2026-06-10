@@ -197,9 +197,10 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     
-                                    <a href="{{ route('client.animals.edit', $animal) }}" class="p-1.5 text-slate-400 hover:text-[#0F172A] transition-colors" title="Editar">Detalles</a>
+                                    <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">Detalles</a>
                                 </div>
                             </td>
+                             
                         </tr>
                     @empty
                         <tr>

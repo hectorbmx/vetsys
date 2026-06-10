@@ -21,33 +21,40 @@
         class="sidebar-transition bg-[#0F172A] flex flex-col fixed inset-y-0 left-0 z-50 shadow-2xl">
         
         {{-- Logo Section --}}
-        <div class="px-4 py-5 border-b border-white/5 flex items-center overflow-hidden bg-[#0F172A]">
-            <div class="flex items-center gap-3 min-w-[200px]">
-                {{-- Color de acento corporativo (#38B2AC) --}}
-                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-[#38B2AC] text-[#0F172A] flex items-center justify-center font-black shadow-lg shadow-[#38B2AC]/20">
-                    {{ substr(auth()->user()->tenant->name ?? 'V', 0, 1) }}
-                </div>
-                <div x-show="sidebarOpen" x-transition.opacity>
-                    <h1 class="font-bold text-lg leading-none text-white tracking-tight truncate max-w-[140px]">
-                        {{ auth()->user()->tenant->name ?? 'VetSys' }}
-                    </h1>
-                    <p class="text-[10px] uppercase tracking-widest text-[#38B2AC] mt-1 font-black">Panel Cliente</p>
-                </div>
+    <a href="{{ route('client.profile.index') }}" class="block">
+    <div class="px-4 py-5 border-b border-white/5 flex items-center overflow-hidden bg-[#0F172A] hover:bg-slate-800 transition-colors cursor-pointer">
+        <div class="flex items-center gap-3 min-w-[200px]">
+            {{-- Color de acento corporativo (#38B2AC) --}}
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-[#38B2AC] text-[#0F172A] flex items-center justify-center font-black shadow-lg shadow-[#38B2AC]/20">
+                {{ substr(auth()->user()->tenant->name ?? 'V', 0, 1) }}
+            </div>
+
+            <div x-show="sidebarOpen" x-transition.opacity>
+                <h1 class="font-bold text-lg leading-none text-white tracking-tight truncate max-w-[140px]">
+                    {{ auth()->user()->tenant->name ?? 'VetSys' }}
+                </h1>
+
+                <p class="text-[10px] uppercase tracking-widest text-[#38B2AC] mt-1 font-black">
+                    Panel Cliente
+                </p>
             </div>
         </div>
+    </div>
+</a>
 
         {{-- Nav Links --}}
         <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
                 @php
                     $links = [
                         ['route' => 'client.dashboard', 'icon' => '▦', 'label' => 'Dashboard'],
-                        ['route' => 'client.profile.index', 'icon' => '◎', 'label' => 'Perfil'],
+                        // ['route' => 'client.profile.index', 'icon' => '◎', 'label' => 'Perfil'],
                         ['route' => 'client.customers.index', 'icon' => '👥', 'label' => 'Clientes'],
                         ['route' => 'client.animals.index', 'icon' => '🐕', 'label' => 'Mascotas'],
                         ['route' => 'client.clubes.index', 'icon' => '🏇', 'label' => 'Clubes'],
-                        ['route' => 'client.servicios.index', 'icon' => '⚙️', 'label' => 'Servicios'],
-                        ['route' => 'client.mi-configuracion.index', 'icon' => '⚙️', 'label' => 'Configuración'],
                         ['route' => 'client.ventas.index', 'icon' => '🛒', 'label' => 'Ventas'],
+                        ['route' => 'client.servicios.index', 'icon' => '⚙️', 'label' => 'Servicios'],
+                        ['route' => 'client.mi-configuracion.index', 'icon' => '🔧', 'label' => 'Configuración'],
+
                         // ['route' => 'client.facturacion.index', 'icon' => '🛒', 'label' => 'Facturación'],
                         // Agrega tus futuras opciones aquí manteniendo la misma estructura
                     ];

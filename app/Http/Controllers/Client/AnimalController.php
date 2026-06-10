@@ -198,7 +198,7 @@ class AnimalController extends Controller
 
         $serviceHistory = $animal->noteDetails()
             ->where('tenant_id', $tenantId)
-            ->with(['note', 'catalogItem'])
+            ->with(['note.customer', 'catalogItem'])
             ->latest()
             ->get();
 
