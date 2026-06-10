@@ -12,7 +12,18 @@
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900" x-data="{ sidebarOpen: true }">
-
+{{-- Toast de Notificación Global --}}
+@if(session('success'))
+    <div x-data="{ show: true }" 
+         x-init="setTimeout(() => show = false, 3000)" 
+         x-show="show" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:leave="transition ease-in duration-200"
+         class="fixed bottom-5 right-5 z-[100] bg-[#0F172A] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <span class="text-xl">✅</span>
+        <p class="text-[10px] font-black uppercase tracking-widest">{{ session('success') }}</p>
+    </div>
+@endif
 <div class="min-h-screen flex">
 
     {{-- Sidebar Estilo Premium Admin --}}
