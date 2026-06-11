@@ -1,6 +1,9 @@
 @extends('layouts.client')
 
 @section('content')
+<script>
+    localStorage.removeItem('vet_pos_backup');
+</script>
     <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
         {{-- ENCABEZADO --}}

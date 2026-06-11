@@ -145,6 +145,7 @@ class MobileBootstrapController extends Controller
                 'current_price' => $item->current_price,
                 'stock_actual' => $item->inventory?->stock_actual,
                 'stock_minimo' => $item->inventory?->stock_minimo,
+                'allow_negative_stock' => $item->inventory?->allow_negative_stock ?? false,
                 'created_at' => $item->created_at?->toISOString(),
                 'updated_at' => $item->updated_at?->toISOString(),
                 'deleted_at' => $item->deleted_at?->toISOString(),

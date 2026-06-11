@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\CatalogItem;
 use App\Models\Note;
 use App\Models\NotePaymentLink;
 use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
+use App\Services\InventoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -102,6 +102,13 @@ class NoteController extends Controller
                 'date_at' => $data['date_at'],
             ]);
 
+            app(InventoryService::class)->consumeForSale(
+                $tenant,
+                $data['items'],
+                $animalIds->count(),
+                $note
+            );
+
             foreach ($animalIds as $animalId) {
                 foreach ($data['items'] as $itemData) {
                     $quantity = (float) $itemData['quantity'];
@@ -118,10 +125,6 @@ class NoteController extends Controller
                         'subtotal' => $subtotal,
                     ]);
 
-                    $catalogItem = CatalogItem::where('tenant_id', $tenant->id)->find($itemData['id']);
-                    if ($catalogItem?->has_inventory && $catalogItem->inventory) {
-                        $catalogItem->inventory->decrement('stock_actual', $quantity);
-                    }
                 }
             }
 

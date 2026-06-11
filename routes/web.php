@@ -175,6 +175,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::put('servicios/{catalogItem}', [CatalogItemController::class, 'update'])->name('servicios.update');
             Route::patch('servicios/{catalogItem}/price', [CatalogItemController::class, 'updatePrice'])->name('servicios.update-price');
             Route::patch('servicios/{catalogItem}/toggle', [CatalogItemController::class, 'toggleStatus'])->name('servicios.toggle');
+            Route::patch('servicios/{catalogItem}/negative-stock', [CatalogItemController::class, 'toggleNegativeStock'])->name('servicios.toggle-negative-stock');
 
             /*
             |--------------------------------------------------------------------------

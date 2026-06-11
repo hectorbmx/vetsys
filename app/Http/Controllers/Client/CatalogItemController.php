@@ -46,6 +46,7 @@ class CatalogItemController extends Controller
             'has_inventory' => 'nullable|boolean',
             'stock_actual' => 'required_if:has_inventory,1|nullable|numeric|min:0',
             'stock_minimo' => 'required_if:has_inventory,1|nullable|numeric|min:0',
+            'allow_negative_stock' => 'nullable|boolean',
         ]);
 
         // Si viene el SKU vacío, lo dejamos nulo para que el modelo lo genere automáticamente
@@ -58,7 +59,7 @@ class CatalogItemController extends Controller
 
         // Ejecutamos en transacción para asegurar integridad total
         DB::transaction(function () use ($request, $tenant, $sku) {
-            $hasInventory = $request->has('has_inventory');
+            $hasInventory = $request->type === 'product' && $request->boolean('has_inventory');
 
             // 1. Crear el artículo base
             $item = $tenant->catalogItems()->create([
@@ -85,6 +86,7 @@ class CatalogItemController extends Controller
                     'tenant_id' => $tenant->id,
                     'stock_actual' => $request->stock_actual ?? 0,
                     'stock_minimo' => $request->stock_minimo ?? 0,
+                    'allow_negative_stock' => $request->boolean('allow_negative_stock'),
                 ]);
             }
         });
@@ -168,6 +170,26 @@ class CatalogItemController extends Controller
         ]);
 
         return back()->with('success', 'El estado del artículo fue modificado.');
+    }
+
+    /**
+     * Alterna si un producto inventariable puede venderse sin existencias.
+     */
+    public function toggleNegativeStock(CatalogItem $catalogItem)
+    {
+        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) { abort(403); }
+
+        if (!$catalogItem->has_inventory || !$catalogItem->inventory) {
+            return back()->withErrors([
+                'inventory' => 'Solo los productos que controlan inventario pueden cambiar esta política.',
+            ]);
+        }
+
+        $catalogItem->inventory->update([
+            'allow_negative_stock' => !$catalogItem->inventory->allow_negative_stock,
+        ]);
+
+        return back()->with('success', 'Política de venta sin existencias actualizada.');
     }
 
     /**

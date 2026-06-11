@@ -9,6 +9,7 @@ use App\Models\Note;
 use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
 use App\Services\CustomerPaymentService;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -139,6 +140,7 @@ class NoteController extends Controller
                     ->orWhere('sku', 'LIKE', "%{$search}%");
             })
             ->take(10)
+            ->with('inventory')
             ->get()
             ->map(function ($item) {
                 return [
@@ -146,6 +148,10 @@ class NoteController extends Controller
                     'name' => $item->name,
                     'type' => $item->type,
                     'price' => $item->current_price,
+                    'has_inventory' => $item->has_inventory,
+                    'stock_actual' => $item->inventory?->stock_actual,
+                    'stock_minimo' => $item->inventory?->stock_minimo,
+                    'allow_negative_stock' => $item->inventory?->allow_negative_stock ?? false,
                 ];
             });
 
@@ -229,6 +235,13 @@ class NoteController extends Controller
                 'date_at' => $request->date_at,
             ]);
 
+            app(InventoryService::class)->consumeForSale(
+                $tenant,
+                $request->items,
+                $animalIds->count(),
+                $note
+            );
+
             foreach ($animalIds as $animalId) {
                 foreach ($request->items as $itemData) {
                     $subtotal = $itemData['quantity'] * $itemData['price'];
@@ -242,10 +255,6 @@ class NoteController extends Controller
                         'subtotal' => $subtotal,
                     ]);
 
-                    $catalogItem = $tenant->catalogItems()->find($itemData['id']);
-                    if ($catalogItem->has_inventory && $catalogItem->inventory) {
-                        $catalogItem->inventory->decrement('stock_actual', $itemData['quantity']);
-                    }
                 }
             }
 

@@ -186,6 +186,8 @@ per_page
 ```
 
 Returns active price as `current_price` and inventory values when available.
+Inventoried products also include `allow_negative_stock`, which indicates whether
+a note may consume more units than the current stock.
 
 ## Notes
 

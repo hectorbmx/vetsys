@@ -62,6 +62,7 @@ Estas operaciones seguiran requiriendo conexion:
 - Desactivar clientes, mascotas o servicios.
 - Crear o modificar servicios del catalogo.
 - Crear notas con productos o servicios que manejen inventario.
+- Respetar `allow_negative_stock` al sincronizar ventas de productos inventariables.
 - Videos, radiografias y otros archivos clinicos.
 - Compartir expedientes.
 
@@ -201,4 +202,3 @@ La estimacion debe revisarse despues de definir:
 - Definir si varios usuarios compartiran un dispositivo.
 - Definir cuanto tiempo conservar operaciones sincronizadas en la cola local.
 - Definir si el cierre de sesion elimina inmediatamente toda la base local.
-

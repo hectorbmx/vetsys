@@ -33,7 +33,7 @@
         </a>
     </div>
 
-    <form :action="storeRoute" method="POST" @submit="clearBackupOnSubmit()">
+    <form :action="storeRoute" method="POST" @submit="handleSubmit($event)">
         @csrf
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -154,6 +154,10 @@
                                         {{-- Nombre e Inputs Ocultos del Renglón para Laravel --}}
                                         <td class="px-4 py-3">
                                             <span class="text-xs font-bold text-[#0F172A] block" x-text="row.name"></span>
+                                            <span x-show="row.has_inventory" class="text-[10px] text-slate-400 font-semibold block" x-text="'Disponible: ' + parseFloat(row.stock_actual).toFixed(2)"></span>
+                                            <span x-show="stockMessage(row)" class="text-[10px] font-bold block mt-1"
+                                                  :class="stockState(row) === 'blocked' || stockState(row) === 'negative' ? 'text-rose-600' : 'text-amber-600'"
+                                                  x-text="stockMessage(row)"></span>
                                             <input type="hidden" :name="'items['+index+'][id]'" :value="row.id">
                                         </td>
                                         
@@ -278,7 +282,7 @@
 </div>
 
                     {{-- BOTÓN PRINCIPAL DE ENVÍO --}}
-                    <button type="submit" class="w-full bg-[#0F172A] hover:bg-slate-800 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0">
+                    <button type="submit" class="w-full bg-[#0F172A] hover:bg-slate-800 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
                         <span x-text="isStripeCardPayment() ? 'Guardar nota y generar link Stripe' : '🛒 Procesar y Guardar Nota'"></span>
                     </button>
                 </div>
@@ -396,11 +400,15 @@ function salesPOS() {
             if (existing) {
                 existing.quantity += 1;
             } else {
-                this.basket.push({
-                    id: item.id,
-                    name: item.name,
-                    quantity: 1,
-                    price: parseFloat(item.price)
+                    this.basket.push({
+                        id: item.id,
+                        name: item.name,
+                        quantity: 1,
+                        price: parseFloat(item.price),
+                        has_inventory: Boolean(item.has_inventory),
+                        stock_actual: parseFloat(item.stock_actual ?? 0),
+                        stock_minimo: parseFloat(item.stock_minimo ?? 0),
+                        allow_negative_stock: Boolean(item.allow_negative_stock)
                 });
             }
             this.itemQuery = '';
@@ -423,6 +431,50 @@ function salesPOS() {
             this.basketSubtotal = runningTotal;
             this.noteTotal = runningTotal * this.selectedAnimalIds.length;
             this.saveToLocalStorage();
+        },
+
+        requiredQuantity(row) {
+            return parseFloat(row.quantity || 0) * this.selectedAnimalIds.length;
+        },
+
+        stockState(row) {
+            if (!row.has_inventory || this.selectedAnimalIds.length === 0) {
+                return 'normal';
+            }
+
+            const resultingStock = parseFloat(row.stock_actual || 0) - this.requiredQuantity(row);
+            if (resultingStock < 0) {
+                return row.allow_negative_stock ? 'negative' : 'blocked';
+            }
+
+            if (resultingStock <= parseFloat(row.stock_minimo || 0)) {
+                return 'low';
+            }
+
+            return 'normal';
+        },
+
+        stockMessage(row) {
+            const state = this.stockState(row);
+            const resultingStock = parseFloat(row.stock_actual || 0) - this.requiredQuantity(row);
+
+            if (state === 'blocked') {
+                return `Existencias insuficientes. La venta requiere ${this.requiredQuantity(row).toFixed(2)} y quedaría en ${resultingStock.toFixed(2)}.`;
+            }
+
+            if (state === 'negative') {
+                return `Advertencia: esta venta dejará el inventario en ${resultingStock.toFixed(2)}.`;
+            }
+
+            if (state === 'low') {
+                return `El inventario quedará en ${resultingStock.toFixed(2)}, igual o debajo del mínimo.`;
+            }
+
+            return '';
+        },
+
+        hasBlockingStock() {
+            return this.basket.some(row => this.stockState(row) === 'blocked');
         },
 
         // Persistencia local (Guarda el progreso de la sesión ante apagones/accidentes)
@@ -481,8 +533,10 @@ function salesPOS() {
         },
 
         // Limpieza de seguridad al procesar exitosamente la venta
-        clearBackupOnSubmit() {
-            localStorage.removeItem('vet_pos_backup');
+        handleSubmit(event) {
+            if (this.hasBlockingStock()) {
+                event.preventDefault();
+            }
         }
     }
 }

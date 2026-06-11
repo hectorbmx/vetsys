@@ -89,7 +89,7 @@
             </div>
 
             {{-- Bloque de Existencias (Se despliega dinámicamente si hasInventory es true) --}}
-            <div x-show="hasInventory" x-collapse class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+            <div x-show="hasInventory" x-collapse class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Stock Inicial Actual</label>
                     <input type="number" step="0.01" name="stock_actual" placeholder="0.00" :required="hasInventory" value="{{ old('stock_actual', '0') }}" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
@@ -97,6 +97,13 @@
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Stock Mínimo (Alerta de escasez)</label>
                     <input type="number" step="0.01" name="stock_minimo" placeholder="0.00" :required="hasInventory" value="{{ old('stock_minimo', '0') }}" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                </div>
+                <div class="flex items-center">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="allow_negative_stock" value="1" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+                        <span class="ml-3 text-xs font-black uppercase tracking-widest text-slate-500">Permitir venta sin existencias</span>
+                    </label>
                 </div>
             </div>
 
@@ -126,6 +133,7 @@
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Precio Vigente</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Existencias</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Venta sin Stock</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
                     </tr>
@@ -175,6 +183,30 @@
                                 @endif
                             </td>
 
+                            {{-- Venta sin Stock (Toggle) --}}
+                            <td class="px-6 py-4">
+                                @if($item->has_inventory && $item->inventory)
+                                    <form action="{{ route('client.servicios.toggle-negative-stock', $item) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" 
+                                                class="flex items-center gap-2 group focus:outline-none"
+                                                title="{{ $item->inventory->allow_negative_stock ? 'Click para Bloquear' : 'Click para Permitir' }}">
+                                            
+                                            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $item->inventory->allow_negative_stock ? 'bg-rose-500' : 'bg-slate-300' }}">
+                                                <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $item->inventory->allow_negative_stock ? 'translate-x-4' : 'translate-x-0' }}"></div>
+                                            </div>
+                                            
+                                            <span class="text-[10px] font-bold uppercase tracking-wider {{ $item->inventory->allow_negative_stock ? 'text-rose-600' : 'text-slate-400' }}">
+                                                {{ $item->inventory->allow_negative_stock ? 'Permitida' : 'Bloqueada' }}
+                                            </span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-slate-300 italic text-[11px]">---</span>
+                                @endif
+                            </td>
+
                             {{-- Estado (Toggle) --}}
                          <td class="px-6 py-4">
     <form action="{{ route('client.servicios.toggle', $item) }}" method="POST">
@@ -208,7 +240,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
+                            <td colspan="8" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
                                 Tu catálogo está vacío. Haz clic en "+ Agregar al Catálogo" para inicializar tus servicios.
                             </td>
                         </tr>

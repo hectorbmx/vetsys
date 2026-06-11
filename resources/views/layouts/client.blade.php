@@ -24,6 +24,18 @@
         <p class="text-[10px] font-black uppercase tracking-widest">{{ session('success') }}</p>
     </div>
 @endif
+@if(session('error') || $errors->any())
+    <div x-data="{ show: true }"
+         x-show="show"
+         class="fixed bottom-5 right-5 z-[100] max-w-md bg-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-start gap-3 border border-rose-500">
+        <span class="text-xl">!</span>
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-widest">No se pudo completar la operación</p>
+            <p class="text-xs font-semibold mt-1">{{ session('error') ?: $errors->first() }}</p>
+        </div>
+        <button type="button" @click="show = false" class="ml-2 text-white/80 hover:text-white font-black">×</button>
+    </div>
+@endif
 <div class="min-h-screen flex">
 
     {{-- Sidebar Estilo Premium Admin --}}
