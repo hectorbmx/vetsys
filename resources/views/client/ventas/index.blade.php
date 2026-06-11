@@ -14,6 +14,55 @@
         </a>
     </div>
 
+    {{-- CARDS / TRES KPIS SUPERIORES --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {{-- KPI 1: VENTAS DEL MES (VIOLETA) --}}
+        <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Ventas del Mes</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">${{ number_format($totalSalesMonth, 2) }}</span>
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💰</div>
+        </div>
+
+        {{-- KPI 2: NOTAS GENERADAS (AMBAR) --}}
+        <div class="group bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest">Notas Generadas</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $totalNotesMonth }}</span>
+                    <span class="text-[10px] font-medium text-orange-100">este mes</span>
+                </div>
+                <div class="flex gap-3 mt-2">
+                    <div class="flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="text-[9px] font-bold text-white uppercase">{{ $paidNotesMonth }} Pagadas</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                        <span class="text-[9px] font-bold text-white uppercase">{{ $pendingNotesMonth }} Pendientes</span>
+                    </div>
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📄</div>
+        </div>
+
+        {{-- KPI 3: PACIENTES ATENDIDOS (TURQUESA) --}}
+        <div class="group bg-gradient-to-br from-teal-500 to-emerald-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Pacientes Atendidos</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $animalsAttendedMonth }}</span>
+                    <span class="text-[10px] font-medium text-teal-100">animales</span>
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
+        </div>
+    </div>
+
     {{-- TABLA HISTÓRICA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -90,10 +139,10 @@
 
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
-                                <a href="{{ route('client.ventas.show', $note->id) }}"
-                                    class="px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg text-[11px] font-bold text-slate-700 transition-colors shadow-sm">
-                                        Ver Detalle
-                                    </a>
+                              
+                                       <a href="{{ route('client.ventas.show', $note->id) }}"
+                                        class="p-1.5 text-slate-400 hover:text-[#38B2AC] transition-colors" 
+                                        title="Ver ficha">🔍</a>
                             </td>
                         </tr>
                     @empty

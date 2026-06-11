@@ -114,13 +114,13 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/20">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pet Name</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Specie / Breed</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Owner (Customer)</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Specie</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dueño</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Club</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Weight</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Peso</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -197,7 +197,10 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     
-                                    <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">Detalles</a>
+                                    <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">🔍</a> -->
+                                    <a href="{{ route('client.animals.edit',$animal) }}" 
+                                        class="p-1.5 text-slate-400 hover:text-[#38B2AC] transition-colors" 
+                                        title="Ver ficha">🔍</a>
                                 </div>
                             </td>
                              

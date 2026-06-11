@@ -20,12 +20,39 @@ class NoteController extends Controller
      */
     public function index()
     {
-        $notes = auth()->user()->tenant->notes()
+        $tenant = auth()->user()->tenant;
+
+        $notes = $tenant->notes()
             ->with('customer')
             ->latest()
             ->get();
 
-        return view('client.ventas.index', compact('notes'));
+        // KPIs del mes actual
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        $monthNotes = $tenant->notes()
+            ->whereBetween('date_at', [$startOfMonth, $endOfMonth])
+            ->get();
+
+        $totalSalesMonth = $monthNotes->sum('total');
+        $totalNotesMonth = $monthNotes->count();
+        $paidNotesMonth = $monthNotes->where('status', 'PAGADA')->count();
+        $pendingNotesMonth = $monthNotes->where('status', 'PENDIENTE')->count();
+
+        // Pacientes atendidos (animales únicos en las notas del mes)
+        $animalsAttendedMonth = \App\Models\NoteDetail::whereIn('note_id', $monthNotes->pluck('id'))
+            ->distinct('animal_id')
+            ->count('animal_id');
+
+        return view('client.ventas.index', compact(
+            'notes',
+            'totalSalesMonth',
+            'totalNotesMonth',
+            'paidNotesMonth',
+            'pendingNotesMonth',
+            'animalsAttendedMonth'
+        ));
     }
 
     /**

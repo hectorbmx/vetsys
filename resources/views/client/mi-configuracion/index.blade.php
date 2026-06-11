@@ -98,22 +98,22 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             🧾 Plan y Pagos
         </button>
-         <button @click="currentTab = 'roles'"
+         <!-- <button @click="currentTab = 'roles'"
                 :class="currentTab === 'roles' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             🧾 Roles
-        </button>
+        </button> -->
         <button @click="currentTab = 'importar'"
                 :class="currentTab === 'importar' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             ⬆️ Importar Catalogos
         </button>
 
-        <button @click="currentTab = 'facturar'"
+        <!-- <button @click="currentTab = 'facturar'"
                 :class="currentTab === 'facturar' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
               💰  facturacion
-        </button>
+        </button> -->
     </div>
 
     {{-- CONTENIDO DE LAS PESTAÑAS --}}
