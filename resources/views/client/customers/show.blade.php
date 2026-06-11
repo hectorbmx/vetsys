@@ -1,17 +1,25 @@
 @extends('layouts.client')
 
 @section('content')
-<div x-data="{ tab: '{{ request('tab', 'notas') }}' }" class="p-6 max-w-7xl mx-auto space-y-6">
+<div x-data="{ tab: '{{ request('tab', 'notas') }}', ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- CABECERA --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex justify-between items-center">
+    <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-2xl font-black text-[#0F172A]">{{ $customer->full_name }}</h1>
             <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
                 {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin teléfono' }}
             </p>
         </div>
-        <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">← Volver</a>
+        <div class="flex items-center gap-3">
+             <button @click="open = true" class="bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                + Registrar Pago
+            </button>
+            <button @click="openStatementModal = true" class="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                Ver Estado
+            </button>
+            <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">← Volver</a>
+        </div>
     </div>
 
     {{-- FLASH --}}
@@ -35,55 +43,57 @@
     @endif
 
    {{-- KPIs --}}
-<div x-data="{ ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-    {{-- Adeudo General --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] p-6">
-        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Adeudo General</p>
-        <p class="text-3xl font-black text-rose-500">
-            ${{ number_format($customer->outstanding_balance, 2) }}
-        </p>
-        <p class="text-[10px] text-slate-400 mt-1">
-            {{ $customer->saleNotes->filter(fn ($note) => $note->balance > 0)->count() }} nota(s) pendiente(s)
-        </p>
-        @if($customer->credit_balance > 0)
-            <p class="text-[10px] font-black text-emerald-600 mt-2">Saldo a favor: ${{ number_format($customer->credit_balance, 2) }}</p>
-        @endif
-    </div>
-
-    {{-- Último Pago --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] p-6">
-        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Último Pago</p>
-        @php $lastPayment = $customer->payments->sortByDesc('created_at')->first(); @endphp
-        @if($lastPayment)
-            <p class="text-3xl font-black text-emerald-500">
-                ${{ number_format($lastPayment->amount, 2) }}
-            </p>
-            <p class="text-[10px] text-slate-400 mt-1">
-                {{ $lastPayment->created_at->format('d/m/Y') }} · {{ $lastPayment->paymentMethod->name ?? 'N/A' }}
-            </p>
-        @else
-            <p class="text-3xl font-black text-slate-300">$0.00</p>
-            <p class="text-[10px] text-slate-400 mt-1">Sin pagos registrados</p>
-        @endif
-    </div>
-
-    {{-- ACCIONES (Pago y Reportes) --}}
-    <div class="grid grid-cols-2 gap-4">
-        {{-- Registrar Pago --}}
-        <div class="bg-white border border-[#38B2AC]/40 rounded-[24px] p-6 flex flex-col items-center justify-center gap-3 hover:border-[#38B2AC] transition-colors">
-            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pago</p>
-            <button @click="open = true" class="bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
-                + Agregar
-            </button>
+        {{-- KPI 1: Adeudo General (ROSE) --}}
+        <div class="group bg-gradient-to-br from-rose-500 to-red-600 border border-rose-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl text-white">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-rose-100 uppercase tracking-widest">Adeudo General</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black tracking-tight">${{ number_format($customer->outstanding_balance, 2) }}</span>
+                </div>
+                <p class="text-[10px] text-rose-100 font-medium">
+                    {{ $customer->saleNotes->filter(fn ($note) => $note->balance > 0)->count() }} nota(s) pendiente(s)
+                </p>
+                @if($customer->credit_balance > 0)
+                    <p class="text-[10px] font-black text-rose-100 mt-2">Saldo a favor: ${{ number_format($customer->credit_balance, 2) }}</p>
+                @endif
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⚠️</div>
         </div>
 
-        {{-- Reportes --}}
-        <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col items-center justify-center gap-3 hover:border-slate-300 transition-colors">
-            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Reportes</p>
-            <button @click="openStatementModal = true" class="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
-                Ver Estado
-            </button>
+        {{-- KPI 2: Último Pago (EMERALD) --}}
+        <div class="group bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl text-white">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Último Pago</p>
+                @php $lastPayment = $customer->payments->sortByDesc('created_at')->first(); @endphp
+                @if($lastPayment)
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-black tracking-tight">${{ number_format($lastPayment->amount, 2) }}</span>
+                    </div>
+                    <p class="text-[10px] text-emerald-100 font-medium">
+                        {{ $lastPayment->created_at->format('d/m/Y') }} · {{ $lastPayment->paymentMethod->name ?? 'N/A' }}
+                    </p>
+                @else
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-black tracking-tight">$0.00</span>
+                    </div>
+                    <p class="text-[10px] text-emerald-100 font-medium">Sin pagos registrados</p>
+                @endif
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💸</div>
+        </div>
+
+        {{-- KPI 3: Mascotas (INDIGO) --}}
+        <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl text-white">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Pacientes Registrados</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black tracking-tight">{{ $customer->animals->count() }}</span>
+                    <span class="text-[10px] font-medium text-indigo-100">paciente(s)</span>
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
         </div>
     </div>
     
@@ -254,11 +264,9 @@
                     </div>
                 </form>
             </div>
-        </div>
+            </div>
 
-    </div>{{-- fin x-data pagoModal --}}
-
-    {{-- NAVEGACIÓN DE TABS --}}
+            {{-- NAVEGACIÓN DE TABS --}}
     <div class="flex gap-2 border-b border-slate-200">
         <button @click="tab = 'notas'" :class="tab === 'notas' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Notas de Venta</button>
         <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Mascotas</button>
