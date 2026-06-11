@@ -56,7 +56,7 @@
             </form>
             <button @click="customerModal = true" class="inline-flex items-center justify-center gap-2 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
                 <span class="text-sm transition-transform group-hover:scale-125">+</span>
-                Nuevo Customer
+                Nuevo Cliente
             </button>
         </div>
     </div>
@@ -115,18 +115,18 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/20">
+                    <tr class="border-b border-slate-100 bg-slate-50/20 text-center">
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Animales</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($customers as $customer)
-                        <tr class="hover:bg-slate-50/60 transition-colors">
+                        <tr class="hover:bg-slate-50/60 transition-colors text-center">
                             {{-- Nombre Completo usando el Accessor de tu Modelo --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
@@ -202,7 +202,7 @@
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('client.customers.show', $customer->id) }}" 
                                         class="p-1.5 text-slate-400 hover:text-[#38B2AC] transition-colors" 
-                                        title="Ver ficha">👁</a>
+                                        title="Ver ficha">🔍</a>
                                     <!-- <button class="p-1.5 text-slate-400 hover:text-[#0F172A] transition-colors" title="Editar">✏️</button> -->
                                 </div>
                             </td>
