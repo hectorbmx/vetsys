@@ -122,7 +122,7 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::delete('/tenants/{tenant}/payments/{payment}', [TenantsController::class, 'destroyPayment'])->name('tenants.payments.destroy');
     });
 
-    Route::middleware(['auth','tenant.plan', 'check.tenant.subscription'])
+    Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscription'])
         ->prefix('client')
         ->name('client.')
         ->group(function () {

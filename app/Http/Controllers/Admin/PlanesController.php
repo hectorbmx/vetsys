@@ -7,8 +7,7 @@ use App\Models\Plan;
 use App\Services\StripePlanSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\Tenant;
-
+use Illuminate\Validation\ValidationException;
 
 class PlanesController extends Controller
 {
@@ -23,41 +22,99 @@ class PlanesController extends Controller
     {
         return view('admin.planes.create');
     }
+
+    public function edit(Plan $plane)
+    {
+        return view('admin.planes.edit', ['plan' => $plane]);
+    }
+
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'slug' => ['nullable', 'string', 'max:255', 'unique:plans,slug'],
-        'description' => ['nullable', 'string'],
+    {
+        $validated = $this->validatedPlan($request);
 
-        'price' => ['required', 'numeric', 'min:0'],
-        'currency' => ['required', 'string', 'max:3'],
+        $validated['slug'] = $validated['slug']
+            ? Str::slug($validated['slug'])
+            : Str::slug($validated['name']);
 
-        'billing_period' => [
-            'required',
-            'in:monthly,yearly,one_time,free'
-        ],
+        $validated = $this->withBooleanCapabilities($request, $validated);
 
-        'max_users' => ['nullable', 'integer', 'min:1'],
-        'max_clients' => ['nullable', 'integer', 'min:1'],
-        'trial_days' => ['nullable', 'integer', 'min:0'],
+        Plan::create($validated);
 
-        'stripe_product_id' => ['nullable', 'string'],
-        'stripe_price_id' => ['nullable', 'string'],
-    ]);
+        return redirect()
+            ->route('admin.planes.index')
+            ->with('success', 'Plan creado correctamente.');
+    }
 
-    $validated['slug'] = $validated['slug']
-        ? Str::slug($validated['slug'])
-        : Str::slug($validated['name']);
+    public function update(Request $request, Plan $plane)
+    {
+        $validated = $this->validatedPlan($request, $plane);
+        $validated['slug'] = $validated['slug']
+            ? Str::slug($validated['slug'])
+            : Str::slug($validated['name']);
+        $validated = $this->withBooleanCapabilities($request, $validated);
 
-    $validated['is_active'] = $request->boolean('is_active');
+        $plane->update($validated);
 
-    Plan::create($validated);
+        return redirect()
+            ->route('admin.planes.index')
+            ->with('success', 'Plan actualizado correctamente.');
+    }
 
-    return redirect()
-        ->route('admin.planes.index')
-        ->with('success', 'Plan creado correctamente.');
-}
+    private function validatedPlan(Request $request, ?Plan $plan = null): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:plans,slug'.($plan ? ','.$plan->id : '')],
+            'description' => ['nullable', 'string'],
+
+            'price' => ['required', 'numeric', 'min:0'],
+            'currency' => ['required', 'string', 'max:3'],
+
+            'billing_period' => [
+                'required',
+                'in:monthly,yearly,one_time,free',
+            ],
+
+            'max_users' => ['nullable', 'integer', 'min:1'],
+            'max_clients' => ['nullable', 'integer', 'min:1'],
+            'max_web_sessions_per_user' => ['required', 'integer', 'min:0'],
+            'max_mobile_sessions_per_user' => ['required', 'integer', 'min:0'],
+            'trial_days' => ['nullable', 'integer', 'min:0'],
+
+            'stripe_product_id' => ['nullable', 'string'],
+            'stripe_price_id' => ['nullable', 'string'],
+        ]);
+    }
+
+    private function withBooleanCapabilities(Request $request, array $validated): array
+    {
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['web_access'] = $request->boolean('web_access');
+        $validated['mobile_access'] = $request->boolean('mobile_access');
+        $validated['allow_cross_platform_sessions'] = $request->boolean('allow_cross_platform_sessions');
+
+        if ($validated['web_access'] && (int) $validated['max_web_sessions_per_user'] < 1) {
+            throw ValidationException::withMessages([
+                'max_web_sessions_per_user' => 'Un plan con acceso web debe permitir al menos un navegador por usuario.',
+            ]);
+        }
+
+        if ($validated['mobile_access'] && (int) $validated['max_mobile_sessions_per_user'] < 1) {
+            throw ValidationException::withMessages([
+                'max_mobile_sessions_per_user' => 'Un plan con acceso movil debe permitir al menos un dispositivo por usuario.',
+            ]);
+        }
+
+        if (! $validated['web_access']) {
+            $validated['max_web_sessions_per_user'] = 0;
+        }
+
+        if (! $validated['mobile_access']) {
+            $validated['max_mobile_sessions_per_user'] = 0;
+        }
+
+        return $validated;
+    }
 
     public function syncStripe(Plan $plan)
     {
@@ -67,7 +124,7 @@ class PlanesController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'No se pudo sincronizar con Stripe: ' . $exception->getMessage());
+            return back()->with('error', 'No se pudo sincronizar con Stripe: '.$exception->getMessage());
         }
 
         return back()->with('success', 'Plan sincronizado con Stripe correctamente.');

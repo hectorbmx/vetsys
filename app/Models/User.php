@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Tenant;
-
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable,HasRoles;
+    use HasApiTokens, HasFactory, HasRoles,Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -59,6 +57,7 @@ class User extends Authenticatable
         'invitation_expires_at' => 'datetime',
         'invitation_accepted_at' => 'datetime',
     ];
+
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
@@ -74,8 +73,13 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'created_by');
     }
 
+    public function accessSessions()
+    {
+        return $this->hasMany(UserAccessSession::class);
+    }
+
     public static function activationCodeHash(string $code): string
     {
-        return hash('sha256', 'activation-code:' . $code);
+        return hash('sha256', 'activation-code:'.$code);
     }
 }

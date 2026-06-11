@@ -98,6 +98,9 @@
                                             Clientes: <span class="text-[#0F172A] font-black">{{ $plan->max_clients ?? 'Ilimitados' }}</span>
                                         </p>
                                     </div>
+                                    <p class="text-[10px] font-bold text-slate-500">Web: {{ $plan->web_access ? $plan->max_web_sessions_per_user . ' por usuario' : 'No' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-500">Movil: {{ $plan->mobile_access ? $plan->max_mobile_sessions_per_user . ' por usuario' : 'No' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-500">Simultaneas: {{ $plan->allow_cross_platform_sessions ? 'Web + movil' : 'Una plataforma' }}</p>
                                 </div>
                             </td>
 
@@ -148,7 +151,7 @@
                                         </button>
                                     </form>
 
-                                    <a href="#"
+                                    <a href="{{ route('admin.planes.edit', $plan) }}"
                                        class="inline-flex items-center justify-center px-4 py-2 rounded-xl border-2 border-slate-100 text-[10px] font-black text-[#0F172A] uppercase tracking-widest hover:bg-[#0F172A] hover:text-white hover:border-[#0F172A] transition-all">
                                         Editar
                                     </a>

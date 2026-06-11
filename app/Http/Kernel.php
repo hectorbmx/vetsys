@@ -69,5 +69,7 @@ class Kernel extends HttpKernel
         'tenant.plan' => \App\Http\Middleware\EnsureTenantHasActivePlan::class,
         'check.tenant.subscription' => \App\Http\Middleware\CheckTenantSubscription::class,
         'api.tenant' => \App\Http\Middleware\EnsureApiTenantAccess::class,
+        'access.web' => \App\Http\Middleware\EnsureValidWebAccessSession::class,
+        'access.mobile' => \App\Http\Middleware\EnsureValidMobileAccessSession::class,
     ];
 }

@@ -3,82 +3,87 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Auth\TenantSessionGuard;
+use App\Services\Auth\UserAccessSessionManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\Auth\TenantSessionGuard;
-
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
-   public function store(Request $request)
-{
-    $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required'],
-    ]);
+    public function store(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-    if (Auth::attempt($credentials, $request->boolean('remember'))) {
-
-        $request->session()->regenerate();
+        if (! Auth::attempt($credentials, false)) {
+            return back()->withErrors(['email' => 'Credenciales incorrectas.'])->onlyInput('email');
+        }
 
         $user = Auth::user();
 
-        if (!$user->is_active) {
-            Auth::logout();
+        if (! $user->is_active) {
+            $this->logoutCurrentDevice($request);
 
-            return back()
-                ->withErrors([
-                    'email' => 'Tu usuario todavía no está activo.',
-                ])
-                ->onlyInput('email');
+            return back()->withErrors(['email' => 'Tu usuario todavia no esta activo.'])->onlyInput('email');
         }
 
         if ($user->hasRole('super-admin')) {
+            $request->session()->regenerate();
+
             return redirect()->route('admin.dashboard');
         }
 
-        if ($user->tenant_id) {
-            $access = app(TenantSessionGuard::class)->canLogin($user);
+        if (! $user->tenant_id) {
+            $this->logoutCurrentDevice($request);
 
-            if (!$access['allowed']) {
-                Auth::logout();
-
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return back()
-                    ->withErrors([
-                        'email' => $access['message'],
-                    ])
-                    ->onlyInput('email');
-            }
-
-            return redirect()->route('client.dashboard');
+            return back()->withErrors(['email' => 'Tu usuario no tiene un perfil valido para acceder.'])->onlyInput('email');
         }
 
-        Auth::logout();
+        $access = app(TenantSessionGuard::class)->canLogin($user);
 
-        return back()
-            ->withErrors([
-                'email' => 'Tu usuario no tiene un perfil válido para acceder.',
-            ])
-            ->onlyInput('email');
+        if (! $access['allowed']) {
+            $this->logoutCurrentDevice($request);
+
+            return back()->withErrors(['email' => $access['message']])->onlyInput('email');
+        }
+
+        $accessManager = app(UserAccessSessionManager::class);
+
+        if (! $accessManager->planAllows($user, 'web')) {
+            $this->logoutCurrentDevice($request);
+
+            return back()->withErrors(['email' => 'Tu plan no incluye acceso web.'])->onlyInput('email');
+        }
+
+        // Prevent an older "remember me" cookie from reviving a replaced session.
+        $user->forceFill([
+            'remember_token' => Str::random(60),
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ])->save();
+
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+        $accessManager->registerWeb($user, $request);
+
+        return redirect()->route('client.dashboard');
     }
 
-    return back()
-        ->withErrors([
-            'email' => 'Credenciales incorrectas.',
-        ])
-        ->onlyInput('email');
-}
-public function destroy(Request $request)
-{
-    Auth::logout();
+    public function destroy(Request $request)
+    {
+        app(UserAccessSessionManager::class)->revokeCurrentWeb($request);
+        $this->logoutCurrentDevice($request);
 
-    $request->session()->invalidate();
+        return redirect()->route('login');
+    }
 
-    $request->session()->regenerateToken();
-
-    return redirect()->route('login');
-}
+    private function logoutCurrentDevice(Request $request): void
+    {
+        Auth::guard('web')->logoutCurrentDevice();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
 }

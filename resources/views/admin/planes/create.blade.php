@@ -143,6 +143,34 @@
             </div>
         </div>
 
+        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+            <div class="px-8 py-5 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-black text-[11px] uppercase tracking-widest text-[#38B2AC]">Acceso por Plataforma</h2>
+            </div>
+            <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
+                    <input type="checkbox" name="web_access" value="1" @checked(old('web_access', true))>
+                    <span class="text-sm font-bold">Permitir acceso web</span>
+                </label>
+                <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
+                    <input type="checkbox" name="mobile_access" value="1" @checked(old('mobile_access', false))>
+                    <span class="text-sm font-bold">Permitir app movil</span>
+                </label>
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-black uppercase tracking-wider">Navegadores por usuario</label>
+                    <input type="number" min="0" name="max_web_sessions_per_user" value="{{ old('max_web_sessions_per_user', 1) }}" class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-black uppercase tracking-wider">Moviles por usuario</label>
+                    <input type="number" min="0" name="max_mobile_sessions_per_user" value="{{ old('max_mobile_sessions_per_user', 0) }}" class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium">
+                </div>
+                <label class="md:col-span-2 flex items-center gap-3 rounded-xl border border-slate-200 p-4">
+                    <input type="checkbox" name="allow_cross_platform_sessions" value="1" @checked(old('allow_cross_platform_sessions', false))>
+                    <span class="text-sm font-bold">Permitir web y movil activos al mismo tiempo</span>
+                </label>
+            </div>
+        </div>
+
         {{-- Action Bar --}}
         <div class="flex items-center justify-between bg-[#0F172A] p-3 rounded-[24px] shadow-2xl">
             <div class="px-6">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\TenantSessionGuard;
+use App\Services\Auth\UserAccessSessionManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -21,13 +22,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Credenciales incorrectas.'],
             ]);
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return response()->json([
                 'message' => 'Tu usuario todavia no esta activo.',
             ], 403);
@@ -39,7 +40,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        if (!$user->tenant_id) {
+        if (! $user->tenant_id) {
             return response()->json([
                 'message' => 'Tu usuario no tiene una empresa asignada.',
             ], 403);
@@ -47,9 +48,17 @@ class AuthController extends Controller
 
         $access = app(TenantSessionGuard::class)->canLogin($user);
 
-        if (!$access['allowed']) {
+        if (! $access['allowed']) {
             return response()->json([
                 'message' => $access['message'],
+            ], 403);
+        }
+
+        $accessManager = app(UserAccessSessionManager::class);
+
+        if (! $accessManager->planAllows($user, 'mobile')) {
+            return response()->json([
+                'message' => 'Tu plan no incluye acceso a la app movil.',
             ], 403);
         }
 
@@ -58,11 +67,12 @@ class AuthController extends Controller
             'last_login_ip' => $request->ip(),
         ])->save();
 
-        $token = $user->createToken($credentials['device_name'] ?? 'mobile-app')->plainTextToken;
+        $newToken = $user->createToken($credentials['device_name'] ?? 'mobile-app');
+        $accessManager->registerMobile($user, $newToken->accessToken->id, $request);
 
         return response()->json([
             'token_type' => 'Bearer',
-            'token' => $token,
+            'token' => $newToken->plainTextToken,
             'user' => $this->serializeUser($user->fresh(['tenant.plan'])),
         ]);
     }
@@ -76,7 +86,9 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()?->delete();
+        $token = $request->user()->currentAccessToken();
+        app(UserAccessSessionManager::class)->revokeCurrentMobile($token?->id);
+        $token?->delete();
 
         return response()->json([
             'message' => 'Sesion cerrada correctamente.',
