@@ -24,6 +24,14 @@
                 <div class="flex items-baseline gap-2">
                     <span class="text-3xl font-black text-white tracking-tight">${{ number_format($totalSalesMonth, 2) }}</span>
                 </div>
+                @if($totalPending > 0)
+                    <div class="flex items-center gap-1.5 mt-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
+                        <p class="text-[10px] font-bold text-indigo-100 uppercase">Adeudo total pendiente: ${{ number_format($totalPending, 2) }}</p>
+                    </div>
+                @else
+                    <p class="text-[10px] font-bold text-emerald-300 uppercase mt-2">✓ Cartera al día</p>
+                @endif
             </div>
             <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💰</div>
         </div>
@@ -53,10 +61,10 @@
         {{-- KPI 3: PACIENTES ATENDIDOS (TURQUESA) --}}
         <div class="group bg-gradient-to-br from-teal-500 to-emerald-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
             <div class="space-y-1">
-                <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Pacientes Atendidos</p>
+                <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Pacientes Atendidos Este Mes</p>
                 <div class="flex items-baseline gap-2">
                     <span class="text-3xl font-black text-white tracking-tight">{{ $animalsAttendedMonth }}</span>
-                    <span class="text-[10px] font-medium text-teal-100">animales</span>
+                    <span class="text-[10px] font-medium text-teal-100">animales únicos</span>
                 </div>
             </div>
             <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>

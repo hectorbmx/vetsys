@@ -34,6 +34,7 @@ class NoteController extends Controller
 
         $monthNotes = $tenant->notes()
             ->whereBetween('date_at', [$startOfMonth, $endOfMonth])
+            ->where('status', '!=', 'CANCELADA')
             ->get();
 
         $totalSalesMonth = $monthNotes->sum('total');
@@ -41,14 +42,23 @@ class NoteController extends Controller
         $paidNotesMonth = $monthNotes->where('status', 'PAGADA')->count();
         $pendingNotesMonth = $monthNotes->where('status', 'PENDIENTE')->count();
 
+        $monthNoteIds = $monthNotes->pluck('id');
+
+        // Adeudo general: saldo real de todas las notas que siguen pendientes.
+        $totalPending = $tenant->notes()
+            ->where('status', 'PENDIENTE')
+            ->get()
+            ->sum(fn (Note $note) => max(0, $note->balance));
+
         // Pacientes atendidos (animales únicos en las notas del mes)
-        $animalsAttendedMonth = \App\Models\NoteDetail::whereIn('note_id', $monthNotes->pluck('id'))
+        $animalsAttendedMonth = \App\Models\NoteDetail::whereIn('note_id', $monthNoteIds)
             ->distinct('animal_id')
             ->count('animal_id');
 
         return view('client.ventas.index', compact(
             'notes',
             'totalSalesMonth',
+            'totalPending',
             'totalNotesMonth',
             'paidNotesMonth',
             'pendingNotesMonth',
