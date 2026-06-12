@@ -7,7 +7,6 @@ use App\Models\AnimalType;
 use App\Models\CatalogItem;
 use App\Models\Customer;
 use App\Models\Note;
-use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Tenant;
 use App\Models\TenantOnboardingStep;
@@ -33,11 +32,11 @@ class TenantOnboardingServiceTest extends TestCase
         $this->assertNull($status['next_step']);
         $this->assertSame(6, $tenant->onboardingSteps()->count());
 
-        $paidStep = $tenant->onboardingSteps()
-            ->where('step', TenantOnboardingStep::FIRST_NOTE_PAID)
+        $saleStep = $tenant->onboardingSteps()
+            ->where('step', TenantOnboardingStep::FIRST_NOTE_CREATED)
             ->firstOrFail();
 
-        $this->assertTrue($paidStep->evidence->is($scenario['note']));
+        $this->assertTrue($saleStep->evidence->is($scenario['note']));
     }
 
     public function test_it_ignores_inactive_empty_cancelled_and_unpaid_data(): void
@@ -73,7 +72,7 @@ class TenantOnboardingServiceTest extends TestCase
             'customer_id' => $customer->id,
             'folio' => 'VT-IGNORED-'.str()->random(5),
             'total' => 0,
-            'status' => 'PAGADA',
+            'status' => 'PENDIENTE',
             'date_at' => now()->toDateString(),
         ]);
         $note->details()->create([
@@ -89,34 +88,36 @@ class TenantOnboardingServiceTest extends TestCase
 
         $this->assertSame(0, $status['completed']);
         $this->assertSame(0, $status['percentage']);
-        $this->assertSame(TenantOnboardingStep::CLINIC_CONFIGURED, $status['next_step']);
+        $this->assertSame(TenantOnboardingStep::FIRST_ANIMAL_TYPE_CREATED, $status['next_step']);
     }
 
-    public function test_a_paid_note_requires_a_real_paid_payment_application(): void
+    public function test_configuration_requirements_are_completed_independently(): void
     {
-        $tenant = $this->tenant('payment');
-        $scenario = $this->completeScenario($tenant, false);
+        $tenant = $this->tenant('configuration');
+        AnimalType::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Dog',
+            'slug' => 'dog-'.str()->random(6),
+            'is_active' => true,
+        ]);
 
         $service = app(TenantOnboardingService::class);
         $status = $service->reconcile($tenant);
 
-        $this->assertSame(5, $status['completed']);
-        $this->assertSame(TenantOnboardingStep::FIRST_NOTE_PAID, $status['next_step']);
+        $this->assertSame(1, $status['completed']);
+        $this->assertSame(TenantOnboardingStep::FIRST_PAYMENT_METHOD_CREATED, $status['next_step']);
 
-        $payment = Payment::create([
+        PaymentMethod::create([
             'tenant_id' => $tenant->id,
-            'customer_id' => $scenario['customer']->id,
-            'payment_method_id' => $scenario['paymentMethod']->id,
-            'amount' => 100,
-            'provider' => 'manual',
-            'status' => 'paid',
+            'name' => 'Cash',
+            'slug' => 'cash-'.str()->random(6),
+            'is_active' => true,
         ]);
-        $scenario['note']->payments()->attach($payment->id, ['amount_applied' => 100]);
 
         $status = $service->reconcile($tenant);
 
-        $this->assertSame(6, $status['completed']);
-        $this->assertTrue($status['is_completed']);
+        $this->assertSame(2, $status['completed']);
+        $this->assertSame(TenantOnboardingStep::FIRST_SERVICE_CREATED, $status['next_step']);
     }
 
     public function test_completed_steps_do_not_regress_when_evidence_is_removed(): void
@@ -184,10 +185,10 @@ class TenantOnboardingServiceTest extends TestCase
 
         $this->assertNotNull($status);
         $this->assertSame(0, $status['completed']);
-        $this->assertSame(TenantOnboardingStep::CLINIC_CONFIGURED, $status['next_step']);
+        $this->assertSame(TenantOnboardingStep::FIRST_ANIMAL_TYPE_CREATED, $status['next_step']);
     }
 
-    private function completeScenario(Tenant $tenant, bool $withPayment = true): array
+    private function completeScenario(Tenant $tenant): array
     {
         $animalType = AnimalType::create([
             'tenant_id' => $tenant->id,
@@ -225,7 +226,7 @@ class TenantOnboardingServiceTest extends TestCase
             'customer_id' => $customer->id,
             'folio' => 'VT-ONBOARDING-'.str()->random(5),
             'total' => 100,
-            'status' => 'PAGADA',
+            'status' => 'PENDIENTE',
             'date_at' => now()->toDateString(),
         ]);
         $note->details()->create([
@@ -237,18 +238,6 @@ class TenantOnboardingServiceTest extends TestCase
             'tax_at_sale' => 0,
             'subtotal' => 100,
         ]);
-
-        if ($withPayment) {
-            $payment = Payment::create([
-                'tenant_id' => $tenant->id,
-                'customer_id' => $customer->id,
-                'payment_method_id' => $paymentMethod->id,
-                'amount' => 100,
-                'provider' => 'manual',
-                'status' => 'paid',
-            ]);
-            $note->payments()->attach($payment->id, ['amount_applied' => 100]);
-        }
 
         return compact('animalType', 'paymentMethod', 'item', 'customer', 'animal', 'note');
     }

@@ -31,10 +31,10 @@
                         <div class="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-violet-500/15"></div>
 
                         <div class="relative z-10">
-                            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Configuracion inicial</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Ruta hacia tu primera venta</p>
                             <h2 class="mt-3 text-2xl font-black tracking-tight">{{ $onboarding['completed'] }} de {{ $onboarding['total'] }} completados</h2>
                             <p class="mt-2 text-xs font-semibold leading-5 text-slate-300">
-                                Completa estos pasos para preparar la operacion diaria de tu clinica.
+                                Completa el camino minimo para registrar tu primera venta.
                             </p>
 
                             <div class="mt-6 h-3 overflow-hidden rounded-full bg-white/10">
@@ -99,8 +99,8 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">Configuracion inicial completa</p>
-                        <h2 class="mt-1 text-sm font-black text-[#0F172A]">Tu clinica ya completo el primer ciclo operativo.</h2>
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">Ruta inicial completa</p>
+                        <h2 class="mt-1 text-sm font-black text-[#0F172A]">Tu clinica ya esta lista para continuar vendiendo.</h2>
                     </div>
                 </div>
                 <span class="text-xs font-black text-emerald-700">6 de 6 completados</span>

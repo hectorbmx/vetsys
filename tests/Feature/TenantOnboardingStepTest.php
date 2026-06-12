@@ -70,7 +70,7 @@ class TenantOnboardingStepTest extends TestCase
     {
         $tenant = $this->tenant('cascade');
         $step = $tenant->onboardingSteps()->create([
-            'step' => TenantOnboardingStep::CLINIC_CONFIGURED,
+            'step' => TenantOnboardingStep::FIRST_ANIMAL_TYPE_CREATED,
             'completed_at' => now(),
         ]);
 
@@ -82,7 +82,7 @@ class TenantOnboardingStepTest extends TestCase
     public function test_it_exposes_the_supported_steps(): void
     {
         $this->assertCount(6, TenantOnboardingStep::STEPS);
-        $this->assertTrue(TenantOnboardingStep::isValidStep(TenantOnboardingStep::FIRST_NOTE_PAID));
+        $this->assertTrue(TenantOnboardingStep::isValidStep(TenantOnboardingStep::FIRST_NOTE_CREATED));
         $this->assertFalse(TenantOnboardingStep::isValidStep('unsupported_step'));
     }
 

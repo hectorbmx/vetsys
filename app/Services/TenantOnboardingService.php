@@ -99,7 +99,16 @@ class TenantOnboardingService
     private function detectEvidence(Tenant $tenant, string $step): ?Model
     {
         return match ($step) {
-            TenantOnboardingStep::CLINIC_CONFIGURED => $this->clinicConfigurationEvidence($tenant),
+            TenantOnboardingStep::FIRST_ANIMAL_TYPE_CREATED => AnimalType::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->oldest('id')
+                ->first(),
+            TenantOnboardingStep::FIRST_PAYMENT_METHOD_CREATED => PaymentMethod::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->oldest('id')
+                ->first(),
             TenantOnboardingStep::FIRST_SERVICE_CREATED => CatalogItem::query()
                 ->where('tenant_id', $tenant->id)
                 ->where('type', 'service')
@@ -122,30 +131,8 @@ class TenantOnboardingService
             TenantOnboardingStep::FIRST_NOTE_CREATED => $this->eligibleNotes($tenant)
                 ->oldest('notes.id')
                 ->first(),
-            TenantOnboardingStep::FIRST_NOTE_PAID => $this->eligibleNotes($tenant)
-                ->where('status', 'PAGADA')
-                ->whereHas('payments', fn ($query) => $query
-                    ->where('payments.tenant_id', $tenant->id)
-                    ->where('payments.status', 'paid')
-                    ->where('note_payments.amount_applied', '>', 0))
-                ->oldest('notes.id')
-                ->first(),
             default => null,
         };
-    }
-
-    private function clinicConfigurationEvidence(Tenant $tenant): ?Tenant
-    {
-        $hasAnimalType = AnimalType::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('is_active', true)
-            ->exists();
-        $hasPaymentMethod = PaymentMethod::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('is_active', true)
-            ->exists();
-
-        return $hasAnimalType && $hasPaymentMethod ? $tenant : null;
     }
 
     private function eligibleNotes(Tenant $tenant)

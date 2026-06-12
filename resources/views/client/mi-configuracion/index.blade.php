@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración General')
 
+@section('contextual-tour', 'configuration')
+
 @section('content')
 {{-- Centralizamos el estado de las pestañas y del modal de especies con Alpine --}}
-<div class="space-y-8" x-data="{ currentTab: @js(session('activeTab', 'animales')), typeModal: false }">
+<div class="space-y-8" x-data="{ currentTab: @js(request('tab', session('activeTab', 'animales'))), typeModal: false }">
     
     {{-- SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -65,14 +67,14 @@
     </div>
 
     {{-- HEADER --}}
-    <div>
+    <div data-tour="configuration-header">
         <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">Panel de Configuración</h1>
         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Inicializa los catálogos primarios, usuarios y finanzas de tu clínica.</p>
     </div>
 
     {{-- TABS DE CONTROL --}}
     <div class="flex border-b border-slate-200 gap-2 overflow-x-auto">
-        <button @click="currentTab = 'animales'" 
+        <button data-tour="animal-type-tab" @click="currentTab = 'animales'"
                 :class="currentTab === 'animales' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             🐕 Tipos de Animales
@@ -88,7 +90,7 @@
             💳 Cuentas Bancarias
         </button>
         {{-- Nuevo Tab para Métodos de Pago --}}
-        <button @click="currentTab = 'pagos'" 
+        <button data-tour="payment-method-tab" @click="currentTab = 'pagos'"
                 :class="currentTab === 'pagos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             💰 Métodos de Pago
@@ -126,7 +128,7 @@
                     <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Especies Clínicas Habilitadas</h3>
                     <p class="text-[11px] text-slate-400 font-medium mt-0.5">Registra los tipos de animales que tu personal puede atender en las fichas médicas.</p>
                 </div>
-                <button @click="typeModal = true" class="bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all">
+                <button data-tour="add-animal-type" @click="typeModal = true" class="bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all">
                     + Agregar Tipo
                 </button>
             </div>

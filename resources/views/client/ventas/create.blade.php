@@ -1,5 +1,8 @@
 @extends('layouts.client')
 
+@section('title', 'Primera Venta')
+@section('contextual-tour', 'first-sale')
+
 @section('content')
 <div x-data="salesPOS()" x-init="initPOS()" class="p-6 max-w-7xl mx-auto space-y-6">
 
@@ -42,7 +45,7 @@
             <div class="lg:col-span-2 space-y-6">
                 
                 {{-- PASO 1: BÚSQUEDA DEL CLIENTE Y FECHA --}}
-                <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div data-tour="sale-customer" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                     
                     {{-- Buscador de Cliente con Autocomplete --}}
                     <div class="md:col-span-2 relative">
@@ -85,7 +88,7 @@
 
                 {{-- PASO 3: BUSCADOR DE ARTICULOS (Habilitado solo si ya elegiste cliente y pacientes) --}}
                 {{-- PASO 2: SELECCIONAR MASCOTAS A LAS QUE SE APLICARA LA NOTA --}}
-                <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null}">
+                <div data-tour="sale-animals" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null}">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">2. Seleccionar Pacientes</label>
@@ -117,7 +120,7 @@
                     </template>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null || selectedAnimalIds.length === 0}">
+                <div data-tour="sale-items" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null || selectedAnimalIds.length === 0}">
                     <div class="relative">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">3. Anadir Productos o Servicios al Detalle</label>
                         <input type="text" x-model="itemQuery" @input.debounce.300ms="searchItems()" placeholder="Escribe el nombre del servicio o escanea el SKU del producto..." class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
@@ -204,7 +207,7 @@
 
             {{-- SECCIÓN DERECHA: CAJA FINANCIERA Y ACCIONES (1/3) --}}
             <div class="space-y-6">
-                <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-6">
+                <div data-tour="sale-checkout" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-6">
                     
                     {{-- TOTALES DE LA COMPRA --}}
                     <div>

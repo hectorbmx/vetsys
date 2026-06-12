@@ -30,10 +30,10 @@ class DashboardOnboardingTest extends TestCase
         $onboarding = $view->getData()['onboarding'];
 
         $this->assertSame(1, $onboarding['completed']);
-        $this->assertSame(TenantOnboardingStep::CLINIC_CONFIGURED, $onboarding['next_step']);
-        $this->assertSame('Configura tu clinica', $onboarding['steps'][0]['label']);
+        $this->assertSame(TenantOnboardingStep::FIRST_ANIMAL_TYPE_CREATED, $onboarding['next_step']);
+        $this->assertSame('Crea una raza o tipo de animal', $onboarding['steps'][0]['label']);
         $this->assertTrue($onboarding['steps'][0]['is_next']);
-        $this->assertTrue($onboarding['steps'][2]['completed']);
+        $this->assertTrue($onboarding['steps'][3]['completed']);
         $this->assertDatabaseHas('tenant_onboarding_steps', [
             'tenant_id' => $tenant->id,
             'step' => TenantOnboardingStep::FIRST_CUSTOMER_CREATED,
@@ -41,9 +41,9 @@ class DashboardOnboardingTest extends TestCase
 
         $html = $view->render();
 
-        $this->assertStringContainsString('Configuracion inicial', $html);
+        $this->assertStringContainsString('Ruta hacia tu primera venta', $html);
         $this->assertStringContainsString('1 de 6 completados', $html);
-        $this->assertStringContainsString('Ir a configuracion', $html);
+        $this->assertStringContainsString('Crear tipo de animal', $html);
     }
 
     public function test_dashboard_shows_compact_state_when_onboarding_is_complete(): void
@@ -64,9 +64,9 @@ class DashboardOnboardingTest extends TestCase
         $html = $view->render();
 
         $this->assertTrue($view->getData()['onboarding']['is_completed']);
-        $this->assertStringContainsString('Configuracion inicial completa', $html);
+        $this->assertStringContainsString('Ruta inicial completa', $html);
         $this->assertStringContainsString('6 de 6 completados', $html);
-        $this->assertStringNotContainsString('Ir a configuracion', $html);
+        $this->assertStringNotContainsString('Crear tipo de animal', $html);
     }
 
     private function tenantUser(string $suffix): array

@@ -6,20 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class TenantOnboardingStep extends Model
 {
-    public const CLINIC_CONFIGURED = 'clinic_configured';
+    public const FIRST_ANIMAL_TYPE_CREATED = 'first_animal_type_created';
+    public const FIRST_PAYMENT_METHOD_CREATED = 'first_payment_method_created';
     public const FIRST_SERVICE_CREATED = 'first_service_created';
     public const FIRST_CUSTOMER_CREATED = 'first_customer_created';
     public const FIRST_PET_CREATED = 'first_pet_created';
     public const FIRST_NOTE_CREATED = 'first_note_created';
-    public const FIRST_NOTE_PAID = 'first_note_paid';
 
     public const STEPS = [
-        self::CLINIC_CONFIGURED,
+        self::FIRST_ANIMAL_TYPE_CREATED,
+        self::FIRST_PAYMENT_METHOD_CREATED,
         self::FIRST_SERVICE_CREATED,
         self::FIRST_CUSTOMER_CREATED,
         self::FIRST_PET_CREATED,
         self::FIRST_NOTE_CREATED,
-        self::FIRST_NOTE_PAID,
     ];
 
     protected $fillable = [

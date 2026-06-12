@@ -2,11 +2,13 @@
 
 @section('title', 'Configuración General')
 
+@section('contextual-tour', 'services')
+
 @section('content')
 <div x-data="{ openForm: false, type: 'service', hasInventory: false, priceModal: false, editingItem: { name: '', price: '', url: '' } }" class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div data-tour="services-header" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-xl font-black text-[#0F172A] uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">Administra los servicios clínicos, estéticos y productos comerciales de tu veterinaria.</p>
@@ -25,7 +27,7 @@
                 @endif
             </form>
 
-            <button @click="openForm = !openForm" class="bg-[#0F172A] hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+            <button data-tour="add-service" @click="openForm = !openForm" class="bg-[#0F172A] hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
                 <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
             </button>
         </div>
@@ -123,7 +125,7 @@
     </div>
 
     {{-- LISTADO EN TABLA --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+    <div data-tour="services-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>

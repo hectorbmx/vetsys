@@ -408,25 +408,25 @@ Estado: propuesta | en desarrollo | activo
 ### Decisiones y pendientes
 ```
 
-## 11. Feature propuesto: onboarding operativo
+## 11. Ruta guiada hacia la primera venta
 
 **Estado:** en desarrollo; persistencia base implementada
 
 ### Objetivo
 
-Medir y guiar a cada clinica hasta completar el primer ciclo de valor real. No
-reemplaza la activacion de cuenta ni debe bloquear el acceso general.
+Medir y guiar a cada clinica por el camino minimo necesario para registrar su
+primera venta. No reemplaza la activacion de cuenta ni bloquea el acceso general.
 
 ### Pasos propuestos
 
 | Clave | Condicion |
 |---|---|
-| `clinic_configured` | Existe al menos un tipo de mascota activo y un metodo de pago activo |
+| `first_animal_type_created` | Existe al menos un tipo de mascota activo |
+| `first_payment_method_created` | Existe al menos un metodo de pago activo |
 | `first_service_created` | Existe un `catalog_item` activo con `type = service` |
 | `first_customer_created` | Existe al menos un cliente activo |
 | `first_pet_created` | Existe una mascota activa asignada a un cliente del tenant |
 | `first_note_created` | Existe una nota no cancelada, con detalles y total mayor a cero |
-| `first_note_paid` | Existe una nota con total mayor a cero y un pago real aplicado |
 
 ### Diseno recomendado
 
@@ -448,11 +448,11 @@ reemplaza la activacion de cuenta ni debe bloquear el acceso general.
 - borrado en cascada al eliminar el tenant;
 - `TenantOnboardingService` para reconciliar datos reales, registrar pasos de forma
   idempotente y calcular progreso;
-- integracion web no bloqueante despues de crear o reactivar configuracion, servicios,
-  clientes y mascotas, y despues de crear notas o aplicar pagos;
-- integracion con pagos Stripe confirmados mediante checkout y payment intent;
+- integracion web no bloqueante despues de crear o reactivar tipos de animal, metodos
+  de pago, servicios, clientes y mascotas, y despues de crear notas;
 - tarjeta de onboarding en el dashboard web con progreso, checklist, siguiente paso
   destacado y enlaces a cada accion;
+- tours contextuales independientes y repetibles para cada pantalla de la ruta;
 - estado compacto de finalizacion cuando la clinica completa los seis pasos;
 - pruebas de modelo, persistencia y reglas de deteccion.
 
@@ -467,7 +467,7 @@ presentado desde `Client\DashboardController`.
 
 Comportamiento:
 
-- mientras falten pasos, muestra una tarjeta de configuracion inicial;
+- mientras falten pasos, muestra una tarjeta de ruta hacia la primera venta;
 - presenta cantidad completada, porcentaje y barra de progreso;
 - muestra los seis pasos en el orden operativo definido;
 - destaca el siguiente paso recomendado;
@@ -479,12 +479,12 @@ Rutas utilizadas por la tarjeta:
 
 | Paso | Ruta web |
 |---|---|
-| Configurar clinica | `client.mi-configuracion.index` |
+| Crear tipo de animal | `client.mi-configuracion.index` |
+| Crear metodo de pago | `client.mi-configuracion.index?tab=pagos` |
 | Crear servicio | `client.servicios.index` |
 | Crear cliente | `client.customers.index` |
 | Crear mascota | `client.animals.index` |
-| Crear nota | `client.ventas.create` |
-| Cobrar nota | `client.ventas.index` |
+| Crear primera venta | `client.ventas.create` |
 
 ### Dependencia pendiente
 

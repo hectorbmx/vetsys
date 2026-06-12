@@ -73,6 +73,184 @@ const tours = {
             },
         ],
     },
+    configuration: {
+        version: 1,
+        steps: [
+            {
+                element: '[data-tour="configuration-header"]',
+                popover: {
+                    title: 'Prepara lo indispensable',
+                    description: 'Para realizar tu primera venta necesitas un tipo de animal y al menos un metodo de pago activo.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="animal-type-tab"]',
+                popover: {
+                    title: 'Primero: tipo de animal',
+                    description: 'Registra la raza, especie o tipo que usaras para clasificar a tu primera mascota.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="add-animal-type"]',
+                popover: {
+                    title: 'Agrega un tipo',
+                    description: 'Abre el formulario y registra un tipo activo. Con nombre es suficiente para esta ruta inicial.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="payment-method-tab"]',
+                popover: {
+                    title: 'Despues: metodo de pago',
+                    description: 'Entra a Metodos de Pago y agrega una opcion activa, por ejemplo Efectivo.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+        ],
+    },
+    services: {
+        version: 1,
+        steps: [
+            {
+                element: '[data-tour="services-header"]',
+                popover: {
+                    title: 'Crea tu primer servicio',
+                    description: 'La venta necesita al menos un servicio activo con precio vigente.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="add-service"]',
+                popover: {
+                    title: 'Agregar al catalogo',
+                    description: 'Abre el formulario, conserva el tipo Servicio y captura nombre y precio.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="services-list"]',
+                popover: {
+                    title: 'Catalogo disponible',
+                    description: 'Aqui confirmas que el servicio quedo activo y listo para venderse.',
+                    side: 'top',
+                    align: 'start',
+                },
+            },
+        ],
+    },
+    customers: {
+        version: 1,
+        steps: [
+            {
+                element: '[data-tour="customers-header"]',
+                popover: {
+                    title: 'Registra al propietario',
+                    description: 'Toda mascota y venta debe estar relacionada con un cliente.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="add-customer"]',
+                popover: {
+                    title: 'Nuevo cliente',
+                    description: 'Abre el formulario y captura los datos obligatorios del primer propietario.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="customers-list"]',
+                popover: {
+                    title: 'Clientes registrados',
+                    description: 'Desde este listado puedes consultar al cliente y administrar sus mascotas.',
+                    side: 'top',
+                    align: 'start',
+                },
+            },
+        ],
+    },
+    animals: {
+        version: 1,
+        steps: [
+            {
+                element: '[data-tour="animals-header"]',
+                popover: {
+                    title: 'Relaciona una mascota',
+                    description: 'La primera venta requiere una mascota activa asociada a un cliente.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="add-animal"]',
+                popover: {
+                    title: 'Nueva mascota',
+                    description: 'Selecciona el propietario, asigna el tipo de animal y captura los datos indispensables.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="animals-list"]',
+                popover: {
+                    title: 'Pacientes registrados',
+                    description: 'Confirma aqui que la mascota aparece activa y vinculada con su propietario.',
+                    side: 'top',
+                    align: 'start',
+                },
+            },
+        ],
+    },
+    'first-sale': {
+        version: 1,
+        steps: [
+            {
+                element: '[data-tour="sale-customer"]',
+                popover: {
+                    title: '1. Selecciona al cliente',
+                    description: 'Busca al propietario registrado. Al seleccionarlo apareceran sus mascotas.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="sale-animals"]',
+                popover: {
+                    title: '2. Selecciona la mascota',
+                    description: 'Elige al paciente relacionado con esta venta.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="sale-items"]',
+                popover: {
+                    title: '3. Agrega el servicio',
+                    description: 'Busca el servicio que creaste y agregalo al detalle de la nota.',
+                    side: 'top',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="sale-checkout"]',
+                popover: {
+                    title: '4. Revisa y guarda',
+                    description: 'Puedes registrar la venta a credito o de contado. Guardar la nota completa la ruta.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+        ],
+    },
 };
 
 function storageKey(tourName, version) {

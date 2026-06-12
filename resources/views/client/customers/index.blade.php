@@ -2,6 +2,8 @@
 
 @section('title', 'Clientes')
 
+@section('contextual-tour', 'customers')
+
 @section('content')
 <div class="space-y-8" x-data="{ customerModal: false }">
     
@@ -37,7 +39,7 @@
     </div>
     
     {{-- HEADER DE LA VISTA --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div data-tour="customers-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">Gestión de Clientes</h1>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus mascotas.</p>
@@ -54,7 +56,7 @@
                     <a href="{{ route('client.customers.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                 @endif
             </form>
-            <button @click="customerModal = true" class="inline-flex items-center justify-center gap-2 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
+            <button data-tour="add-customer" @click="customerModal = true" class="inline-flex items-center justify-center gap-2 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
                 <span class="text-sm transition-transform group-hover:scale-125">+</span>
                 Nuevo Cliente
             </button>
@@ -102,7 +104,7 @@
 </div>
 
     {{-- CONTENEDOR DE BASE DE DATOS --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+    <div data-tour="customers-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
         <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
             <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Listado de Clientes</h3>

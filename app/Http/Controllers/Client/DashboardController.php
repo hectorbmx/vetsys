@@ -65,11 +65,17 @@ class DashboardController extends Controller
     private function onboardingStepPresentation(): array
     {
         return [
-            TenantOnboardingStep::CLINIC_CONFIGURED => [
-                'label' => 'Configura tu clinica',
-                'description' => 'Agrega una especie y un metodo de pago activos.',
-                'action_label' => 'Ir a configuracion',
+            TenantOnboardingStep::FIRST_ANIMAL_TYPE_CREATED => [
+                'label' => 'Crea una raza o tipo de animal',
+                'description' => 'Registra al menos un tipo de animal activo para clasificar pacientes.',
+                'action_label' => 'Crear tipo de animal',
                 'action_url' => route('client.mi-configuracion.index'),
+            ],
+            TenantOnboardingStep::FIRST_PAYMENT_METHOD_CREATED => [
+                'label' => 'Agrega un metodo de pago',
+                'description' => 'Define al menos una forma de pago activa para tus ventas.',
+                'action_label' => 'Configurar pagos',
+                'action_url' => route('client.mi-configuracion.index', ['tab' => 'pagos']),
             ],
             TenantOnboardingStep::FIRST_SERVICE_CREATED => [
                 'label' => 'Agrega tu primer servicio',
@@ -90,16 +96,10 @@ class DashboardController extends Controller
                 'action_url' => route('client.animals.index'),
             ],
             TenantOnboardingStep::FIRST_NOTE_CREATED => [
-                'label' => 'Crea tu primera nota',
-                'description' => 'Registra una venta con mascota y servicios.',
-                'action_label' => 'Crear nota',
+                'label' => 'Concreta tu primera venta',
+                'description' => 'Registra una nota con cliente, mascota y servicio.',
+                'action_label' => 'Crear primera venta',
                 'action_url' => route('client.ventas.create'),
-            ],
-            TenantOnboardingStep::FIRST_NOTE_PAID => [
-                'label' => 'Cobra tu primera nota',
-                'description' => 'Liquida una nota mediante un pago real aplicado.',
-                'action_label' => 'Ir a ventas',
-                'action_url' => route('client.ventas.index'),
             ],
         ];
     }
