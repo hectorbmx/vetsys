@@ -14,6 +14,7 @@ use App\Models\TenantSubscription;
 use App\Models\AdminNotification;
 use App\Services\CustomerPaymentService;
 use App\Services\CustomerStripePaymentProcessor;
+use App\Services\TenantOnboardingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -127,11 +128,15 @@ class StripeWebhookController extends Controller
         }
 
         if (is_string($session->payment_intent ?? null)) {
-            app(CustomerStripePaymentProcessor::class)->process(
+            $payment = app(CustomerStripePaymentProcessor::class)->process(
                 $paymentLink,
                 $session->payment_intent,
                 $session->id
             );
+
+            if ($payment && $paymentLink->tenant) {
+                app(TenantOnboardingService::class)->reconcileSafely($paymentLink->tenant);
+            }
         }
     }
 
@@ -233,6 +238,10 @@ class StripeWebhookController extends Controller
                 ],
             ]);
         });
+
+        if ($paymentLink->tenant) {
+            app(TenantOnboardingService::class)->reconcileSafely($paymentLink->tenant);
+        }
     }
 
     private function handleInvoicePaid($invoice): void
@@ -464,7 +473,11 @@ private function handlePaymentIntentSucceeded($paymentIntent): void
         $paymentLink = CustomerPaymentLink::find($paymentIntent->metadata->customer_payment_link_id ?? null);
 
         if ($paymentLink) {
-            app(CustomerStripePaymentProcessor::class)->process($paymentLink, $paymentIntent->id);
+            $payment = app(CustomerStripePaymentProcessor::class)->process($paymentLink, $paymentIntent->id);
+
+            if ($payment && $paymentLink->tenant) {
+                app(TenantOnboardingService::class)->reconcileSafely($paymentLink->tenant);
+            }
         }
 
         return;
@@ -563,5 +576,9 @@ private function handlePaymentIntentSucceeded($paymentIntent): void
             ],
         ]);
     });
+
+    if ($paymentLink->tenant) {
+        app(TenantOnboardingService::class)->reconcileSafely($paymentLink->tenant);
+    }
 }
 }

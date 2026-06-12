@@ -8,6 +8,7 @@ use App\Models\Note;
 use App\Models\CustomerPaymentLink;
 use App\Services\CustomerStripePaymentProcessor;
 use App\Services\StripeCustomerPaymentService;
+use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Exception;
@@ -54,6 +55,10 @@ class CustomerController extends Controller
             'status' => $customer->status === 'active' ? 'inactive' : 'active'
         ]);
 
+        if ($customer->status === 'active') {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
+
         return back()->with('success', 'El estatus del cliente ha sido actualizado.');
     }
 
@@ -83,6 +88,8 @@ class CustomerController extends Controller
 
     try {
         Customer::create($data);
+
+        app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
 
         return redirect()
             ->route('client.customers.index')
@@ -136,6 +143,7 @@ public function show($id)
 
     private function reconcilePendingStripePayments(int $customerId): void
     {
+        $processedPayment = false;
         $links = CustomerPaymentLink::where('customer_id', $customerId)
             ->where('tenant_id', auth()->user()->tenant_id)
             ->where('status', 'pending')
@@ -148,15 +156,20 @@ public function show($id)
                     ->retrieveCheckoutSession($paymentLink->stripe_checkout_session_id);
 
                 if (($session->payment_status ?? null) === 'paid' && is_string($session->payment_intent ?? null)) {
-                    app(CustomerStripePaymentProcessor::class)->process(
+                    $payment = app(CustomerStripePaymentProcessor::class)->process(
                         $paymentLink,
                         $session->payment_intent,
                         $session->id
                     );
+                    $processedPayment = $processedPayment || (bool) $payment;
                 }
             } catch (\Throwable $exception) {
                 report($exception);
             }
+        }
+
+        if ($processedPayment) {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
         }
     }
 
@@ -212,6 +225,10 @@ public function show($id)
         ]);
 
         $customer->update($data);
+
+        if ($customer->status === 'active') {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
 
         return redirect()
             ->route('client.customers.show', [$customer, 'tab' => 'datos'])

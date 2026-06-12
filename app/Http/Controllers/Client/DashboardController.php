@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\TenantOnboardingStep;
+use App\Services\TenantOnboardingService;
 
 class DashboardController extends Controller
 {
@@ -31,6 +33,19 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        $onboarding = app(TenantOnboardingService::class)->reconcileSafely($tenant);
+
+        if ($onboarding) {
+            $stepPresentation = $this->onboardingStepPresentation();
+            $onboarding['steps'] = collect($onboarding['steps'])
+                ->map(function (array $step) use ($stepPresentation, $onboarding) {
+                    return array_merge($step, $stepPresentation[$step['key']], [
+                        'is_next' => $step['key'] === $onboarding['next_step'],
+                    ]);
+                })
+                ->all();
+        }
+
         return view('client.dashboard', compact(
             'totalCustomers',
             'activeCustomers',
@@ -42,7 +57,50 @@ class DashboardController extends Controller
             'totalSold',
             'totalCollected',
             'totalReceivable',
-            'recentNotes'
+            'recentNotes',
+            'onboarding'
         ));
+    }
+
+    private function onboardingStepPresentation(): array
+    {
+        return [
+            TenantOnboardingStep::CLINIC_CONFIGURED => [
+                'label' => 'Configura tu clinica',
+                'description' => 'Agrega una especie y un metodo de pago activos.',
+                'action_label' => 'Ir a configuracion',
+                'action_url' => route('client.mi-configuracion.index'),
+            ],
+            TenantOnboardingStep::FIRST_SERVICE_CREATED => [
+                'label' => 'Agrega tu primer servicio',
+                'description' => 'Crea al menos un servicio activo para vender.',
+                'action_label' => 'Ir a servicios',
+                'action_url' => route('client.servicios.index'),
+            ],
+            TenantOnboardingStep::FIRST_CUSTOMER_CREATED => [
+                'label' => 'Registra tu primer cliente',
+                'description' => 'Crea el expediente del primer propietario.',
+                'action_label' => 'Ir a clientes',
+                'action_url' => route('client.customers.index'),
+            ],
+            TenantOnboardingStep::FIRST_PET_CREATED => [
+                'label' => 'Registra tu primera mascota',
+                'description' => 'Asigna una mascota activa a uno de tus clientes.',
+                'action_label' => 'Ir a mascotas',
+                'action_url' => route('client.animals.index'),
+            ],
+            TenantOnboardingStep::FIRST_NOTE_CREATED => [
+                'label' => 'Crea tu primera nota',
+                'description' => 'Registra una venta con mascota y servicios.',
+                'action_label' => 'Crear nota',
+                'action_url' => route('client.ventas.create'),
+            ],
+            TenantOnboardingStep::FIRST_NOTE_PAID => [
+                'label' => 'Cobra tu primera nota',
+                'description' => 'Liquida una nota mediante un pago real aplicado.',
+                'action_label' => 'Ir a ventas',
+                'action_url' => route('client.ventas.index'),
+            ],
+        ];
     }
 }

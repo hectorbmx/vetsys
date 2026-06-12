@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PaymentMethod;
+use App\Services\TenantOnboardingService;
 
 use Illuminate\Support\Str;
 class PaymentMethodController extends Controller
@@ -53,6 +54,8 @@ class PaymentMethodController extends Controller
             'is_active' => true
         ]);
 
+        app(TenantOnboardingService::class)->reconcileSafely($tenant);
+
         return back()->with('success', 'Método de pago registrado correctamente.')->with('currentTab', 'pagos');
     }
 
@@ -66,6 +69,10 @@ class PaymentMethodController extends Controller
         $paymentMethod->update([
             'is_active' => !$paymentMethod->is_active
         ]);
+
+        if ($paymentMethod->is_active) {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
 
         return back()->with('success', 'Estado del método de pago actualizado.')->with('currentTab', 'pagos');
     }

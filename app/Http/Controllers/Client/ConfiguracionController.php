@@ -32,6 +32,7 @@ use Exception;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Models\TenantBillingProfile;
+use App\Services\TenantOnboardingService;
 
 class ConfiguracionController extends Controller
 {
@@ -137,6 +138,8 @@ class ConfiguracionController extends Controller
         try {
             AnimalType::create($data);
 
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+
             // CORRECCIÓN AQUÍ: Apuntar al nuevo nombre de la ruta
             return redirect()
                 ->route('client.mi-configuracion.index')
@@ -190,6 +193,10 @@ class ConfiguracionController extends Controller
 
         $animalType->is_active = !$animalType->is_active;
         $animalType->save();
+
+        if ($animalType->is_active) {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
 
         return back()
             ->with('activeTab', 'animales')
@@ -524,6 +531,10 @@ public function importCustomers(Request $request)
 
     fclose($handle);
 
+    if ($created > 0) {
+        app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+    }
+
     $message = "Importacion terminada. Creados: {$created}. Omitidos: {$skipped}.";
 
     if (!empty($errors)) {
@@ -637,6 +648,10 @@ public function importServices(Request $request)
     });
 
     fclose($handle);
+
+    if ($created > 0) {
+        app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+    }
 
     $message = "Importacion de servicios terminada. Creados: {$created}. Omitidos: {$skipped}.";
 
@@ -776,6 +791,10 @@ public function importHorses(Request $request)
     });
 
     fclose($handle);
+
+    if ($created > 0) {
+        app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+    }
 
     $message = "Importacion de caballos terminada. Creados: {$created}. Omitidos: {$skipped}.";
 

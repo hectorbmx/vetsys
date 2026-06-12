@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CustomerPaymentLink;
 use App\Services\StripeCustomerPaymentService;
 use App\Services\CustomerStripePaymentProcessor;
+use App\Services\TenantOnboardingService;
 
 class PublicCustomerPaymentController extends Controller
 {
@@ -20,11 +21,16 @@ class PublicCustomerPaymentController extends Controller
                     ->retrieveCheckoutSession($paymentLink->stripe_checkout_session_id);
 
                 if (($session->payment_status ?? null) === 'paid' && is_string($session->payment_intent ?? null)) {
-                    app(CustomerStripePaymentProcessor::class)->process(
+                    $payment = app(CustomerStripePaymentProcessor::class)->process(
                         $paymentLink,
                         $session->payment_intent,
                         $session->id
                     );
+
+                    if ($payment && $paymentLink->tenant) {
+                        app(TenantOnboardingService::class)->reconcileSafely($paymentLink->tenant);
+                    }
+
                     $paymentLink->refresh();
                 }
             } catch (\Throwable $exception) {

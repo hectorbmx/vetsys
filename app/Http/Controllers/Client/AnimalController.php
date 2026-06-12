@@ -8,6 +8,7 @@ use App\Models\Animal;
 use App\Models\Customer;
 use App\Models\AnimalType;
 use App\Models\Club;
+use App\Services\TenantOnboardingService;
 use Illuminate\Validation\Rule;
 
 use Exception;
@@ -77,6 +78,10 @@ class AnimalController extends Controller
             'status' => $animal->status === 'active' ? 'inactive' : 'active'
         ]);
 
+        if ($animal->status === 'active') {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
+
         return back()->with('success', 'El estatus de la mascota ha sido actualizado.');
     }
 
@@ -108,7 +113,12 @@ class AnimalController extends Controller
             'nullable',
             Rule::exists('clubs', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
         ],
-        'animal_type_id' => ['required', 'exists:animal_types,id'], // El select dinámico
+        'animal_type_id' => [
+            'required',
+            Rule::exists('animal_types', 'id')->where(fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->where('is_active', true)),
+        ],
         'name'           => ['required', 'string', 'max:255'],
         'sex'            => ['required', 'in:male,female,unknown'], // Campos de tu fillable
         'birthdate'      => ['nullable', 'date'],          // Sin guion bajo_
@@ -124,6 +134,8 @@ class AnimalController extends Controller
 
     try {
     $animal = Animal::create($data);
+
+    app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
 
     // Si viene desde el perfil de un cliente, regresamos a él
     if ($request->filled('redirect_to')) {
@@ -239,6 +251,10 @@ class AnimalController extends Controller
 
         try {
             $animal->update($data);
+
+            if ($animal->status === 'active') {
+                app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+            }
 
             return redirect()
                 ->route('client.animals.edit', $animal)

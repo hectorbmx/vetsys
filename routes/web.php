@@ -132,6 +132,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
             Route::get('/notificaciones/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
             Route::patch('/notificaciones/{notification}/leer', [NotificationController::class, 'markRead'])->name('notifications.mark-read');
+            Route::delete('/notificaciones/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
             /*
             |--------------------------------------------------------------------------
             | CUSTOMERS / ANIMALS

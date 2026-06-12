@@ -21,6 +21,92 @@
         </div>
     </div>
 
+    @if($onboarding)
+        @if(!$onboarding['is_completed'])
+            <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr]">
+                    <div class="relative overflow-hidden bg-[#0F172A] p-7 text-white">
+                        <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#38B2AC]/20"></div>
+                        <div class="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-violet-500/15"></div>
+
+                        <div class="relative z-10">
+                            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Configuracion inicial</p>
+                            <h2 class="mt-3 text-2xl font-black tracking-tight">{{ $onboarding['completed'] }} de {{ $onboarding['total'] }} completados</h2>
+                            <p class="mt-2 text-xs font-semibold leading-5 text-slate-300">
+                                Completa estos pasos para preparar la operacion diaria de tu clinica.
+                            </p>
+
+                            <div class="mt-6 h-3 overflow-hidden rounded-full bg-white/10">
+                                <div class="h-full rounded-full bg-gradient-to-r from-[#38B2AC] to-emerald-400 transition-all"
+                                     style="width: {{ $onboarding['percentage'] }}%"></div>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                                <span class="text-slate-400">Progreso</span>
+                                <span class="text-white">{{ $onboarding['percentage'] }}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
+                        @foreach(array_chunk($onboarding['steps'], 3) as $stepColumn)
+                            <div class="divide-y divide-slate-100">
+                                @foreach($stepColumn as $step)
+                                    <div class="flex items-start gap-4 p-5 {{ $step['is_next'] ? 'bg-[#38B2AC]/5' : '' }}">
+                                        <div class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-black
+                                            {{ $step['completed'] ? 'border-emerald-500 bg-emerald-500 text-white' : ($step['is_next'] ? 'border-[#38B2AC] bg-white text-[#38B2AC]' : 'border-slate-200 bg-slate-50 text-slate-300') }}">
+                                            @if($step['completed'])
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            @else
+                                                {{ $loop->parent->index * 3 + $loop->iteration }}
+                                            @endif
+                                        </div>
+
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                                <h3 class="text-xs font-black {{ $step['completed'] ? 'text-slate-400 line-through' : 'text-[#0F172A]' }}">
+                                                    {{ $step['label'] }}
+                                                </h3>
+                                                @if($step['is_next'])
+                                                    <span class="rounded-full bg-[#38B2AC]/10 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-[#238A85]">Siguiente</span>
+                                                @endif
+                                            </div>
+                                            <p class="mt-1 text-[10px] font-semibold leading-4 text-slate-400">{{ $step['description'] }}</p>
+
+                                            @if(!$step['completed'])
+                                                <a href="{{ $step['action_url'] }}"
+                                                   class="mt-3 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest {{ $step['is_next'] ? 'text-[#238A85]' : 'text-slate-400 hover:text-[#238A85]' }}">
+                                                    {{ $step['action_label'] }}
+                                                    <span aria-hidden="true">&rarr;</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @else
+            <section class="flex flex-col gap-4 rounded-[24px] border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white px-6 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">Configuracion inicial completa</p>
+                        <h2 class="mt-1 text-sm font-black text-[#0F172A]">Tu clinica ya completo el primer ciclo operativo.</h2>
+                    </div>
+                </div>
+                <span class="text-xs font-black text-emerald-700">6 de 6 completados</span>
+            </section>
+        @endif
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         <div class="relative overflow-hidden rounded-[24px] bg-[#0F172A] p-6 min-h-[190px] shadow-xl shadow-slate-200">
             <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-[#38B2AC]/30"></div>

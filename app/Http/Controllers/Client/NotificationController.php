@@ -36,4 +36,13 @@ class NotificationController extends Controller
 
         return back()->with('success', 'Notificacion marcada como leida.');
     }
+
+    public function destroy(TenantNotification $notification)
+    {
+        abort_unless($notification->tenant_id === auth()->user()->tenant_id, 404);
+
+        $notification->delete();
+
+        return back()->with('success', 'Notificacion eliminada.');
+    }
 }

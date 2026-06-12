@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CatalogItem;
+use App\Services\TenantOnboardingService;
 use Illuminate\Support\Facades\DB;
 
 class CatalogItemController extends Controller
@@ -91,6 +92,8 @@ class CatalogItemController extends Controller
             }
         });
 
+        app(TenantOnboardingService::class)->reconcileSafely($tenant);
+
         return redirect()->route('client.servicios.index')
             ->with('success', 'Artículo agregado al catálogo correctamente.');
     }
@@ -168,6 +171,10 @@ class CatalogItemController extends Controller
         $catalogItem->update([
             'is_active' => !$catalogItem->is_active
         ]);
+
+        if ($catalogItem->is_active) {
+            app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
 
         return back()->with('success', 'El estado del artículo fue modificado.');
     }

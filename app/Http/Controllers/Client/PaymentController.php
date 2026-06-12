@@ -8,6 +8,7 @@ use App\Models\Note;
 use App\Models\PaymentMethod;
 use App\Services\CustomerPaymentService;
 use App\Services\StripeCustomerPaymentService;
+use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -75,6 +76,8 @@ class PaymentController extends Controller
                 'status' => 'paid',
             ]
         ));
+
+        app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
 
         return redirect()
             ->route('client.customers.show', $customer)

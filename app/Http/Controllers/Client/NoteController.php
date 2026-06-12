@@ -10,6 +10,7 @@ use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
 use App\Services\CustomerPaymentService;
 use App\Services\InventoryService;
+use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -291,6 +292,8 @@ class NoteController extends Controller
             return $note;
         });
 
+        app(TenantOnboardingService::class)->reconcileSafely($tenant);
+
         $redirect = redirect()->route('client.ventas.show', $note);
 
         if ($generateStripeLink) {
@@ -449,10 +452,12 @@ public function storeManualPayment(Request $request, Note $note)
         if ($note->balance <= 0) {
             $note->update(['status' => 'PAGADA']);
         }
-    });
+        });
 
-    return back()->with('success', 'Pago manual aplicado correctamente.');
-}
+        app(TenantOnboardingService::class)->reconcileSafely($tenant);
+
+        return back()->with('success', 'Pago manual aplicado correctamente.');
+        }
 
 private function isCardPaymentMethod(PaymentMethod $paymentMethod): bool
 {
