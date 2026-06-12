@@ -72,6 +72,39 @@ public function show(Tenant $tenant)
         'pendingPlanRequest'
     ));
 }
+   public function update(Request $request, Tenant $tenant)
+   {
+       $validated = $request->validate([
+           'name' => [Rule::requiredIf($request->isMethod('PUT')), 'string', 'max:255'],
+           'slug' => [Rule::requiredIf($request->isMethod('PUT')), 'string', 'max:255', Rule::unique('tenants', 'slug')->ignore($tenant->id)],
+           'business_name' => ['nullable', 'string', 'max:255'],
+           'email' => [
+               'required',
+               'email',
+               'max:255',
+               Rule::unique('tenants', 'email')->ignore($tenant->id),
+           ],
+           'phone' => ['nullable', 'string', 'max:50'],
+           'status' => ['nullable', 'in:active,inactive,suspended,cancelled'],
+           'plan_id' => ['nullable', 'exists:plans,id'],
+       ]);
+
+       $tenant->update($validated);
+
+       return redirect()
+           ->route('admin.tenants.show', $tenant)
+           ->with('success', 'Cliente actualizado correctamente.');
+   }
+
+   public function edit(Tenant $tenant)
+   {
+       $plans = Plan::where('is_active', true)
+           ->orderBy('sort_order')
+           ->get();
+
+       return view('admin.tenants.edit', compact('tenant', 'plans'));
+   }
+
    public function create()
     {
         $plans = Plan::where('is_active', true)

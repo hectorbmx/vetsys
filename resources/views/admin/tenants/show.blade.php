@@ -144,17 +144,46 @@
                 </div>
             </div>
 
-            <div class="bg-slate-900 rounded-[24px] p-6 text-white shadow-xl relative overflow-hidden">
+            <div x-data="{ editingContact: false }" class="bg-slate-900 rounded-[24px] p-6 text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10 space-y-4">
-                    <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-[#38B2AC]">Datos de Contacto</h3>
-                    <div class="space-y-1">
-                        <p class="text-[10px] text-white/40 uppercase font-black">Email Corporativo</p>
-                        <p class="text-sm truncate">{{ $tenant->email ?: 'N/A' }}</p>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-[#38B2AC]">Datos de Contacto</h3>
+                        <button @click="editingContact = !editingContact" class="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+                            <span x-text="editingContact ? 'Cancelar' : 'Editar'"></span>
+                        </button>
                     </div>
-                    <div class="space-y-1">
-                        <p class="text-[10px] text-white/40 uppercase font-black">Línea Directa</p>
-                        <p class="text-sm">{{ $tenant->phone ?: 'N/A' }}</p>
-                    </div>
+
+                    <template x-if="!editingContact">
+                        <div class="space-y-4">
+                            <div class="space-y-1">
+                                <p class="text-[10px] text-white/40 uppercase font-black">Email Corporativo</p>
+                                <p class="text-sm truncate">{{ $tenant->email ?: 'N/A' }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] text-white/40 uppercase font-black">Línea Directa</p>
+                                <p class="text-sm">{{ $tenant->phone ?: 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="editingContact">
+                        <form action="{{ route('admin.tenants.update', $tenant) }}" method="POST" class="space-y-4">
+                            @csrf
+                            @method('PATCH')
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-white/40 uppercase font-black">Email Corporativo</label>
+                                <input type="email" name="email" value="{{ $tenant->email }}" required class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#38B2AC] transition-all">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-white/40 uppercase font-black">Línea Directa</label>
+                                <input type="text" name="phone" value="{{ $tenant->phone }}" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#38B2AC] transition-all">
+                            </div>
+                            <button type="submit" class="w-full bg-[#38B2AC] hover:bg-[#2C9A94] text-white text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-all">
+                                Actualizar Datos
+                            </button>
+                        </form>
+                    </template>
+
                     <div class="pt-4 border-t border-white/10 space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-[10px] text-white/40 uppercase font-black">Suscripción</span>
