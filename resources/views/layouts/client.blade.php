@@ -11,7 +11,9 @@
         .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900" x-data="{ sidebarOpen: true }">
+<body class="bg-slate-50 min-h-screen text-slate-900"
+      x-data="{ sidebarOpen: true }"
+      @hasSection('contextual-tour') data-contextual-tour="@yield('contextual-tour')" @endif>
 {{-- Toast de Notificación Global --}}
 @if(session('success'))
     <div x-data="{ show: true }" 
@@ -66,7 +68,7 @@
 </a>
 
         {{-- Nav Links --}}
-        <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav data-tour="main-navigation" class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
                 @php
                     $links = [
                         ['route' => 'client.dashboard', 'icon' => '▦', 'label' => 'Dashboard'],
@@ -157,8 +159,17 @@
 
             {{-- Información de usuario en el costado derecho --}}
             <div class="flex items-center gap-3">
+                <button type="button"
+                        data-tour-launch
+                        hidden
+                        class="inline-flex items-center gap-2 rounded-xl border border-[#38B2AC]/30 bg-[#38B2AC]/10 px-3.5 py-2.5 text-[#238A85] transition-all hover:bg-[#38B2AC]/20">
+                    <span class="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-black">?</span>
+                    <span class="hidden md:inline text-[10px] font-black uppercase tracking-widest">Guia</span>
+                </button>
+
                 <div class="relative" x-data="{ notificationsOpen: false }">
                     <button type="button"
+                            data-tour="notifications"
                             @click="notificationsOpen = !notificationsOpen"
                             class="relative inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all outline-none {{ ($layoutUnreadNotificationsCount ?? 0) > 0 ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600' }}">
                         <span class="text-base leading-none">🔔</span>

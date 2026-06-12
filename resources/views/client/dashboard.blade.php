@@ -1,10 +1,11 @@
 @extends('layouts.client')
 
 @section('title', 'Dashboard')
+@section('contextual-tour', 'dashboard')
 
 @section('content')
 <div class="space-y-8">
-    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+    <div data-tour="dashboard-welcome" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
             <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Panel General</p>
             <h1 class="text-3xl md:text-4xl font-black text-[#0F172A] tracking-tight mt-1">
@@ -23,7 +24,7 @@
 
     @if($onboarding)
         @if(!$onboarding['is_completed'])
-            <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <section data-tour="operational-onboarding" class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
                 <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr]">
                     <div class="relative overflow-hidden bg-[#0F172A] p-7 text-white">
                         <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#38B2AC]/20"></div>
@@ -90,7 +91,7 @@
                 </div>
             </section>
         @else
-            <section class="flex flex-col gap-4 rounded-[24px] border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white px-6 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <section data-tour="operational-onboarding" class="flex flex-col gap-4 rounded-[24px] border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white px-6 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center gap-4">
                     <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -107,7 +108,7 @@
         @endif
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+    <div data-tour="dashboard-metrics" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         <div class="relative overflow-hidden rounded-[24px] bg-[#0F172A] p-6 min-h-[190px] shadow-xl shadow-slate-200">
             <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-[#38B2AC]/30"></div>
             <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-fuchsia-400/20"></div>
@@ -179,7 +180,7 @@
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="xl:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+        <div data-tour="recent-sales" class="xl:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                 <div>
                     <h2 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Notas Recientes</h2>

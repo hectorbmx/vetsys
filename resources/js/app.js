@@ -1,5 +1,6 @@
 import Alpine from 'alpinejs';
 import './bootstrap';
+import { initializeContextualTours } from './contextual-tours';
 
 window.Alpine = Alpine;
 
@@ -48,3 +49,5 @@ Alpine.data('pagoModal', (customerId) => ({
 }));
 
 Alpine.start();
+
+document.addEventListener('DOMContentLoaded', initializeContextualTours);
