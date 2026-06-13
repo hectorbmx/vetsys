@@ -210,6 +210,80 @@ const tours = {
             },
         ],
     },
+    'patient-record': {
+        version: 1,
+        steps: [
+            {
+                element: '[data-tour="patient-record-header"]',
+                popover: {
+                    title: 'Expediente del paciente',
+                    description: 'Esta ficha concentra la informacion clinica y el seguimiento completo del paciente.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="patient-tab-details"]',
+                activate: true,
+                popover: {
+                    title: 'Datos del paciente',
+                    description: 'Consulta y actualiza sus datos generales, propietario, tipo, estado y notas clinicas.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="patient-tab-history"]',
+                activate: true,
+                popover: {
+                    title: 'Historial de servicios',
+                    description: 'Revisa todos los servicios y productos registrados previamente para este paciente.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="patient-tab-vaccination"]',
+                activate: true,
+                popover: {
+                    title: 'Cartas de vacunacion',
+                    description: 'Genera cartas de vacunacion y compartelas con el propietario del paciente.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="patient-tab-videos"]',
+                activate: true,
+                popover: {
+                    title: 'Videos clinicos',
+                    description: 'Sube y conserva videos de tratamientos, procedimientos o seguimiento clinico.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="patient-tab-radiology"]',
+                activate: true,
+                popover: {
+                    title: 'Radiologia',
+                    description: 'Crea carpetas por estudio y conserva organizadas las imagenes RX realizadas.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="patient-tab-telemedicine"]',
+                activate: true,
+                popover: {
+                    title: 'Telemedicina',
+                    description: 'Comparte el expediente en modo lectura con otro profesional veterinario y revoca el acceso cuando sea necesario.',
+                    side: 'bottom',
+                    align: 'end',
+                },
+            },
+        ],
+    },
     'first-sale': {
         version: 1,
         steps: [
@@ -258,7 +332,18 @@ function storageKey(tourName, version) {
 }
 
 function availableSteps(steps) {
-    return steps.filter((step) => !step.optional || document.querySelector(step.element));
+    return steps
+        .filter((step) => !step.optional || document.querySelector(step.element))
+        .map(({ activate, ...step }) => {
+            if (!activate) {
+                return step;
+            }
+
+            return {
+                ...step,
+                onHighlightStarted: (element) => element?.click(),
+            };
+        });
 }
 
 function markAsSeen(tourName, version) {
