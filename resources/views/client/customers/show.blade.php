@@ -6,13 +6,13 @@
     {{-- CABECERA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-2xl font-black text-[#0F172A]">{{ $customer->full_name }}</h1>
+            <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
             <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
                 {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin teléfono' }}
             </p>
         </div>
         <div class="flex items-center gap-3">
-             <button @click="open = true" class="bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+             <button @click="open = true" class="theme-button-primary px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
                 + Registrar Pago
             </button>
             <button @click="openStatementModal = true" class="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
@@ -114,7 +114,7 @@
                 </div>
                 <div class="flex gap-2 mt-6">
                     <button type="button" @click="openStatementModal = false" class="flex-1 px-4 py-2 text-xs font-bold text-slate-500 bg-slate-100 rounded-xl">Cancelar</button>
-                    <button type="submit" class="flex-1 px-4 py-2 text-xs font-bold text-white bg-[#38B2AC] rounded-xl">Generar PDF</button>
+                    <button type="submit" class="flex-1 px-4 py-2 text-xs font-bold text-white theme-bg-primary rounded-xl">Generar PDF</button>
                 </div>
             </form>
         </div>
@@ -141,7 +141,7 @@
                 {{-- Header modal --}}
                 <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                        <h2 class="text-base font-black text-[#0F172A]">Registrar Pago</h2>
+                        <h2 class="text-base font-black theme-text-heading">Registrar Pago</h2>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{{ $customer->full_name }}</p>
                     </div>
                     <button @click="open = false" class="text-slate-400 hover:text-slate-600 transition-colors text-xl font-light">✕</button>
@@ -167,7 +167,7 @@
                                     placeholder="0.00"
                                     x-model="amount"
                                     @input.debounce.400ms="fetchPreview()"
-                                    class="w-full pl-7 pr-4 py-3 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-[#38B2AC] focus:ring-2 focus:ring-[#38B2AC]/20 transition-all"
+                                    class="w-full pl-7 pr-4 py-3 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none theme-input focus:ring-2 theme-ring-primary transition-all"
                                     required
                                 />
                             </div>
@@ -182,7 +182,7 @@
                                 name="payment_method_id"
                                 x-model="paymentMethodId"
                                 @change="isCard = $event.target.selectedOptions[0]?.dataset.card === '1'"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:border-[#38B2AC] focus:ring-2 focus:ring-[#38B2AC]/20 transition-all bg-white"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none theme-input focus:ring-2 theme-ring-primary transition-all bg-white"
                                 required
                             >
                                 <option value="">Seleccionar...</option>
@@ -202,7 +202,7 @@
                                 type="text"
                                 name="reference"
                                 placeholder="N° de transferencia, cheque, etc."
-                                class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#38B2AC] focus:ring-2 focus:ring-[#38B2AC]/20 transition-all"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none theme-input focus:ring-2 theme-ring-primary transition-all"
                             />
                         </div>
 
@@ -257,7 +257,7 @@
                         </button>
                         <button
                             type="submit"
-                            class="flex-1 py-3 bg-[#38B2AC] hover:bg-[#2C9A94] disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl text-xs font-black transition-all"
+                            class="flex-1 py-3 theme-bg-primary hover:bg-[#2C9A94] disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl text-xs font-black transition-all"
                         >
                             Registrar pago / Generar link
                         </button>
@@ -268,11 +268,11 @@
 
             {{-- NAVEGACIÓN DE TABS --}}
     <div class="flex gap-2 border-b border-slate-200">
-        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Notas de Venta</button>
-        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Mascotas</button>
-        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Historial de Pagos</button>
-        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
-        <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
+        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Notas de Venta</button>
+        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Mascotas</button>
+        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Historial de Pagos</button>
+        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
+        <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
     </div>
 
     {{-- CONTENIDO DE TABS --}}
@@ -282,11 +282,11 @@
         <div x-show="tab === 'notas'" class="p-6">
             <div class="flex justify-between items-center gap-4 mb-5">
                 <div>
-                    <h2 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Notas de Venta</h2>
+                    <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Notas de Venta</h2>
                     <p class="text-[11px] text-slate-400 font-semibold mt-1">Ventas y saldos registrados para este cliente.</p>
                 </div>
                 <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
-                   class="bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
+                   class="theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
                     Nueva nota
                 </a>
             </div>
@@ -318,15 +318,15 @@
                             </td>
                             <td class="py-4 text-right">
                                 @if($note->balance > 0)
-                                    <button type="button" @click="openPayment = true" class="inline-flex items-center justify-center bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm mr-2">Pagar</button>
+                                    <button type="button" @click="openPayment = true" class="inline-flex items-center justify-center theme-button-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm mr-2">Pagar</button>
                                 @endif
                                 <a href="{{ route('client.ventas.show', $note) }}"
-                                   class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
+                                   class="inline-flex items-center justify-center theme-button-dark px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
                                     Ver nota
                                 </a>
 
                                 @if($note->balance > 0)
-                                    <div x-show="openPayment" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/70 backdrop-blur-sm p-4" @keydown.escape.window="openPayment = false">
+                                    <div x-show="openPayment" x-cloak class="fixed inset-0 z-50 flex items-center justify-center theme-overlay backdrop-blur-sm p-4" @keydown.escape.window="openPayment = false">
                                         <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md p-6 text-left" @click.outside="openPayment = false">
                                             <div class="flex justify-between items-start gap-4 mb-5">
                                                 <div>
@@ -353,7 +353,7 @@
                                                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Referencia opcional</label>
                                                     <input name="reference" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
                                                 </div>
-                                                <button type="submit" class="w-full bg-[#38B2AC] disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest">
+                                                <button type="submit" class="w-full theme-bg-primary disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest">
                                                     Aplicar pago / Generar link
                                                 </button>
                                             </form>
@@ -388,7 +388,7 @@
         >
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h3 class="text-sm font-black text-[#0F172A]">Nueva Mascota</h3>
+                <h3 class="text-sm font-black theme-text-heading">Nueva Mascota</h3>
                 <button @click="open = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -524,7 +524,7 @@
                     </button>
                     <button
                         type="submit"
-                        class="px-5 py-2 bg-[#38B2AC] hover:bg-[#2C9A94] text-white text-xs font-black rounded-xl transition-colors"
+                        class="px-5 py-2 theme-button-primary text-xs font-black rounded-xl transition-colors"
                     >
                         Guardar mascota
                     </button>
@@ -540,7 +540,7 @@
         <div class="flex justify-end mb-4">
             <button
                 @click="open = true"
-                class="flex items-center gap-2 px-4 py-2 bg-[#38B2AC] hover:bg-[#2C9A94] text-white text-xs font-black rounded-xl transition-colors"
+                class="flex items-center gap-2 px-4 py-2 theme-button-primary text-xs font-black rounded-xl transition-colors"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -569,10 +569,10 @@
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-4 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-[#38B2AC]/10 text-[#38B2AC] flex items-center justify-center font-black text-xs">
+                                    <div class="w-8 h-8 rounded-lg theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-xs">
                                         {{ substr($animal->name, 0, 1) }}
                                     </div>
-                                    <span class="text-xs font-bold text-[#0F172A]">{{ $animal->name }}</span>
+                                    <span class="text-xs font-bold theme-text-heading">{{ $animal->name }}</span>
                                 </div>
                             </td>
                             <td class="px-4 py-4">
@@ -591,7 +591,7 @@
                             </td>
                             <td class="px-4 py-4">
                                 @if($animal->club)
-                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-[#38B2AC] bg-teal-50 px-2.5 py-1 rounded-full">
+                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest theme-text-primary bg-teal-50 px-2.5 py-1 rounded-full">
                                         {{ $animal->club->name }}
                                     </span>
                                 @else
@@ -616,7 +616,7 @@
                                 </form>
                             </td>
                             <td class="px-4 py-4 text-right">
-                                <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                                <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
                                     Detalles
                                 </a>
                             </td>
@@ -678,50 +678,50 @@
                     {{-- Nombre --}}
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Nombre(s) *</label>
-                        <input type="text" name="name" value="{{ old('name', $customer->name) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                        <input type="text" name="name" value="{{ old('name', $customer->name) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
                     {{-- Apellidos --}}
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Apellidos</label>
-                        <input type="text" name="last_name" value="{{ old('last_name', $customer->last_name) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                        <input type="text" name="last_name" value="{{ old('last_name', $customer->last_name) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
                     {{-- Correo --}}
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Correo Electrónico</label>
-                        <input type="email" name="email" value="{{ old('email', $customer->email) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                        <input type="email" name="email" value="{{ old('email', $customer->email) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
                     {{-- Teléfono --}}
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Teléfono Principal</label>
-                        <input type="text" name="phone" value="{{ old('phone', $customer->phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                        <input type="text" name="phone" value="{{ old('phone', $customer->phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
                     {{-- Teléfono Secundario --}}
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Teléfono Secundario</label>
-                        <input type="text" name="secondary_phone" value="{{ old('secondary_phone', $customer->secondary_phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                        <input type="text" name="secondary_phone" value="{{ old('secondary_phone', $customer->secondary_phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
                     {{-- Dirección --}}
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Dirección</label>
-                        <input type="text" name="address" value="{{ old('address', $customer->address) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                        <input type="text" name="address" value="{{ old('address', $customer->address) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
                     {{-- Notas --}}
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Notas / Observaciones</label>
-                        <textarea name="notes" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC] resize-none">{{ old('notes', $customer->notes) }}</textarea>
+                        <textarea name="notes" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input resize-none">{{ old('notes', $customer->notes) }}</textarea>
                     </div>
                 </div>
 
                 {{-- Status Toggle --}}
                 <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-6 py-4">
                     <div>
-                        <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Estatus del Cliente</p>
+                        <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Estatus del Cliente</p>
                         <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Define si el cliente está activo para realizar nuevas notas de venta.</p>
                     </div>
                     <div x-data="{ active: @js($customer->status === 'active') }" class="flex items-center">
@@ -738,7 +738,7 @@
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="submit" class="bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
+                    <button type="submit" class="theme-button-primary px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
                         Actualizar Datos
                     </button>
                 </div>
@@ -753,7 +753,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-1 bg-slate-50 border border-slate-100 rounded-2xl p-5">
-                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Cuenta Contable</h3>
+                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Cuenta Contable</h3>
                     <p class="text-[11px] font-semibold text-slate-400 mt-2">
                         Define como se cortaran y conservaran los estados mensuales de este cliente.
                     </p>
@@ -761,11 +761,11 @@
                     <div class="mt-5 space-y-3 text-xs">
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Corte</span>
-                            <span class="font-black text-[#0F172A]">Dia {{ $accountSetting->cutoff_day ?? 1 }}</span>
+                            <span class="font-black theme-text-heading">Dia {{ $accountSetting->cutoff_day ?? 1 }}</span>
                         </div>
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Credito</span>
-                            <span class="font-black text-[#0F172A]">{{ $accountSetting->credit_days ?? 0 }} dias</span>
+                            <span class="font-black theme-text-heading">{{ $accountSetting->credit_days ?? 0 }} dias</span>
                         </div>
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Estados</span>
@@ -783,12 +783,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Dia de Corte</label>
-                            <input type="number" name="cutoff_day" min="1" max="31" value="{{ old('cutoff_day', $accountSetting->cutoff_day ?? 1) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                            <input type="number" name="cutoff_day" min="1" max="31" value="{{ old('cutoff_day', $accountSetting->cutoff_day ?? 1) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black theme-text-heading focus:outline-none theme-input">
                         </div>
 
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Metodo Preferido</label>
-                            <select name="preferred_payment_method_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                            <select name="preferred_payment_method_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                                 <option value="">Sin preferencia</option>
                                 @foreach($paymentMethods as $method)
                                     <option value="{{ $method->id }}" @selected(old('preferred_payment_method_id', $accountSetting->preferred_payment_method_id ?? null) == $method->id)>
@@ -800,20 +800,20 @@
 
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Dias de Credito</label>
-                            <input type="number" name="credit_days" min="0" max="365" value="{{ old('credit_days', $accountSetting->credit_days ?? 0) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                            <input type="number" name="credit_days" min="0" max="365" value="{{ old('credit_days', $accountSetting->credit_days ?? 0) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black theme-text-heading focus:outline-none theme-input">
                         </div>
                     </div>
 
                     <label class="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 cursor-pointer">
                         <div>
-                            <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Generacion mensual</p>
+                            <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Generacion mensual</p>
                             <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Preparado para generar y guardar estados de cuenta por corte.</p>
                         </div>
-                        <input type="checkbox" name="is_statement_enabled" value="1" @checked(old('is_statement_enabled', optional($accountSetting)->is_statement_enabled)) class="rounded border-slate-300 text-[#38B2AC] focus:ring-[#38B2AC]">
+                        <input type="checkbox" name="is_statement_enabled" value="1" @checked(old('is_statement_enabled', optional($accountSetting)->is_statement_enabled)) class="rounded border-slate-300 theme-text-primary focus:ring-[#38B2AC]">
                     </label>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="bg-[#0F172A] hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
+                        <button type="submit" class="theme-button-dark px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
                             Guardar Configuracion
                         </button>
                     </div>
@@ -823,7 +823,7 @@
             <div class="mt-6 border border-slate-100 rounded-2xl overflow-hidden">
                 <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                        <h3 class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Estados de Cuenta Guardados</h3>
+                        <h3 class="text-xs font-black theme-text-heading uppercase tracking-widest">Estados de Cuenta Guardados</h3>
                         <p class="text-[11px] font-semibold text-slate-400 mt-1">Genera el ultimo periodo cerrado segun el dia de corte configurado.</p>
                     </div>
                     <div class="flex items-center gap-3">
@@ -831,7 +831,7 @@
                         @if($accountSetting)
                             <form action="{{ route('client.customers.statements.store', $customer) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="bg-[#38B2AC] hover:bg-[#2C9A94] text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                <button type="submit" class="theme-button-primary px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
                                     Generar Estado
                                 </button>
                             </form>
@@ -854,18 +854,18 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($customer->statements as $statement)
                             <tr>
-                                <td class="px-5 py-4 text-xs font-bold text-[#0F172A]">
+                                <td class="px-5 py-4 text-xs font-bold theme-text-heading">
                                     {{ $statement->period_start->format('d/m/Y') }} - {{ $statement->period_end->format('d/m/Y') }}
                                 </td>
                                 <td class="px-5 py-4 text-xs font-black">${{ number_format($statement->period_charges, 2) }}</td>
                                 <td class="px-5 py-4 text-xs font-black text-emerald-600">${{ number_format($statement->period_payments, 2) }}</td>
-                                <td class="px-5 py-4 text-xs font-black text-[#0F172A]">${{ number_format($statement->ending_balance, 2) }}</td>
+                                <td class="px-5 py-4 text-xs font-black theme-text-heading">${{ number_format($statement->ending_balance, 2) }}</td>
                                 <td class="px-5 py-4">
                                     <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">{{ $statement->status }}</span>
                                 </td>
                                 <td class="px-5 py-4 text-right">
                                     @if($statement->pdf_path)
-                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="text-[10px] font-black uppercase tracking-widest text-[#38B2AC] hover:text-[#0F172A]">Abrir</a>
+                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="text-[10px] font-black uppercase tracking-widest theme-text-primary hover:theme-text-heading">Abrir</a>
                                     @else
                                         <span class="text-[10px] font-bold text-slate-300">Sin PDF</span>
                                     @endif

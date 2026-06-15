@@ -60,15 +60,18 @@ el sistema debe quedar funcional, con pruebas aprobadas y con la paleta actual
 
 ## Tokens visuales propuestos
 
-Los nombres definitivos pueden ajustarse durante el dia 1, pero deben expresar
-la funcion del color y no un color concreto.
+Los nombres quedaron definidos durante el dia 1 y expresan la funcion del color,
+no un color concreto. La matriz y reglas de uso viven en
+`docs/theme-token-guidelines.md`.
 
 ```css
 --theme-primary
 --theme-primary-hover
 --theme-primary-soft
+--theme-primary-soft-hover
 --theme-primary-strong
 --theme-primary-contrast
+--theme-primary-ink
 --theme-sidebar
 --theme-sidebar-footer
 --theme-heading
@@ -112,15 +115,15 @@ sistema.
 
 ## Tareas
 
-- [ ] Crear una rama dedicada al feature.
+- [x] Crear una rama dedicada al feature.
 - [ ] Registrar capturas de referencia del panel cliente en escritorio y movil.
-- [ ] Crear una matriz de colores de marca contra colores funcionales.
-- [ ] Definir los tokens visuales finales.
-- [ ] Agregar los tokens de la paleta `ocean` a `resources/css/app.css`.
-- [ ] Crear las primeras clases semanticas reutilizables.
-- [ ] Documentar ejemplos correctos e incorrectos de uso.
-- [ ] Compilar assets.
-- [ ] Confirmar que no existen cambios visuales.
+- [x] Crear una matriz de colores de marca contra colores funcionales.
+- [x] Definir los tokens visuales finales.
+- [x] Agregar los tokens de la paleta `ocean` a `resources/css/app.css`.
+- [x] Crear las primeras clases semanticas reutilizables.
+- [x] Documentar ejemplos correctos e incorrectos de uso.
+- [x] Compilar assets.
+- [x] Confirmar que no existen cambios visuales.
 
 ## Capturas minimas
 
@@ -171,13 +174,13 @@ Centralizar la marca aplicada por `resources/views/layouts/client.blade.php`.
 
 ## Tareas
 
-- [ ] Migrar fondo y footer del sidebar.
-- [ ] Migrar inicial y nombre del tenant.
-- [ ] Migrar navegacion activa.
-- [ ] Migrar boton de guia.
-- [ ] Migrar enlaces destacados de la topbar.
-- [ ] Migrar focus rings compartidos.
-- [ ] Mantener sin cambios los colores de notificaciones y errores.
+- [x] Migrar fondo y footer del sidebar.
+- [x] Migrar inicial y nombre del tenant.
+- [x] Migrar navegacion activa.
+- [x] Migrar boton de guia.
+- [x] Migrar enlaces destacados de la topbar.
+- [x] Migrar focus rings compartidos.
+- [x] Mantener sin cambios los colores de notificaciones y errores.
 - [ ] Revisar sidebar abierto y cerrado.
 - [ ] Revisar escritorio y movil.
 
@@ -232,21 +235,21 @@ lugar donde vivira el selector.
 
 ## Seccion A: Configuracion
 
-- [ ] Migrar tabs activos.
-- [ ] Migrar botones primarios.
-- [ ] Migrar inputs y focus.
-- [ ] Migrar encabezados oscuros de marca.
-- [ ] Migrar acentos de tipos de animales.
-- [ ] Migrar usuarios, pagos, plan e importaciones.
-- [ ] Mantener estados funcionales e integraciones con sus colores actuales.
+- [x] Migrar tabs activos.
+- [x] Migrar botones primarios.
+- [x] Migrar inputs y focus.
+- [x] Migrar encabezados oscuros de marca.
+- [x] Migrar acentos de tipos de animales.
+- [x] Migrar usuarios, pagos, plan e importaciones.
+- [x] Mantener estados funcionales e integraciones con sus colores actuales.
 
 ## Seccion B: Dashboard
 
-- [ ] Migrar encabezados y enlaces de marca.
-- [ ] Migrar onboarding incompleto.
-- [ ] Migrar banner de onboarding completado.
-- [ ] Mantener colores funcionales de metricas.
-- [ ] Mantener estados pagados y pendientes.
+- [x] Migrar encabezados y enlaces de marca.
+- [x] Migrar onboarding incompleto.
+- [x] Migrar banner de onboarding completado.
+- [x] Mantener colores funcionales de metricas.
+- [x] Mantener estados pagados y pendientes.
 
 ## Verificacion funcional
 
@@ -294,12 +297,12 @@ Centralizar los modulos de operacion cotidiana con menor complejidad visual.
 
 ## Checklist por modulo
 
-- [ ] Migrar boton principal.
-- [ ] Migrar encabezados y acentos.
-- [ ] Migrar tabs o navegacion local.
-- [ ] Migrar inputs y focus.
-- [ ] Migrar enlaces destacados.
-- [ ] Mantener estados funcionales.
+- [x] Migrar boton principal.
+- [x] Migrar encabezados y acentos.
+- [x] Migrar tabs o navegacion local.
+- [x] Migrar inputs y focus.
+- [x] Migrar enlaces destacados.
+- [x] Mantener estados funcionales.
 - [ ] Revisar listado.
 - [ ] Revisar creacion.
 - [ ] Revisar edicion.
@@ -560,11 +563,10 @@ Usar esta tabla al cerrar cada jornada.
 
 | Dia | Fecha | Responsable | Resultado | Pruebas | Commit | Pendientes |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 |  |  |  |  |  |  |
-| 2 |  |  |  |  |  |  |
-| 3 |  |  |  |  |  |  |
+| 1 | 15/06/2026 | Codex | Tokens `ocean`, utilidades y guia creados; sin cambios en vistas | Build aprobado; 31 pruebas aprobadas y 1 fallo heredado en `ExampleTest` | Pendiente | Capturas de referencia bloqueadas por navegador local |
+| 2 | 15/06/2026 | Codex | Layout cliente migrado a tokens semanticos; admin y vistas internas sin cambios | Build y Blade aprobados; 31 pruebas aprobadas y 1 fallo heredado en `ExampleTest` | Pendiente | Revision visual de sidebar, dropdown y responsive bloqueada por navegador local |
+| 3 | 15/06/2026 | Codex | Configuracion y Dashboard migrados; integraciones, estados y metricas funcionales preservados | Build, Blade y 5 pruebas de onboarding aprobados; suite con 31 aprobadas y 1 fallo heredado | Pendiente | Revision visual de tabs, modales y onboarding bloqueada por navegador local |
 | 4 |  |  |  |  |  |  |
 | 5 |  |  |  |  |  |  |
 | 6 |  |  |  |  |  |  |
 | 7 |  |  |  |  |  |  |
-

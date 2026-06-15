@@ -39,11 +39,11 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-slate-200 rounded-[24px] p-6">
         <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-[#38B2AC]/10 text-[#38B2AC] flex items-center justify-center font-black text-2xl border border-[#38B2AC]/20">
+            <div class="w-14 h-14 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-2xl border theme-border-primary-soft">
                 {{ substr($club->name, 0, 1) }}
             </div>
             <div>
-                <h1 class="text-2xl font-black text-[#0F172A] tracking-tighter">{{ $club->name }}</h1>
+                <h1 class="text-2xl font-black theme-text-heading tracking-tighter">{{ $club->name }}</h1>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Administración integral del club y sus miembros.</p>
             </div>
         </div>
@@ -61,9 +61,9 @@
 
     {{-- Tabs Navigation --}}
     <div class="flex gap-2 border-b border-slate-200">
-        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos del Club</button>
-        <button @click="tab = 'miembros'" :class="tab === 'miembros' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Miembros ({{ $club->animals_count }})</button>
-        <button @click="tab = 'coggins'" :class="tab === 'coggins' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Coggins</button>
+        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos del Club</button>
+        <button @click="tab = 'miembros'" :class="tab === 'miembros' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Miembros ({{ $club->animals_count }})</button>
+        <button @click="tab = 'coggins'" :class="tab === 'coggins' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Coggins</button>
     </div>
 
     {{-- Tabs Content --}}
@@ -77,29 +77,29 @@
                 
                 <div class="grid grid-cols-1 gap-6">
                     <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Nombre del Club *</label>
-                        <input type="text" name="name" value="{{ old('name', $club->name) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 outline-none">
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Nombre del Club *</label>
+                        <input type="text" name="name" value="{{ old('name', $club->name) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary outline-none">
                     </div>
 
                     <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Descripción</label>
-                        <textarea name="description" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 outline-none resize-none">{{ old('description', $club->description) }}</textarea>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Descripción</label>
+                        <textarea name="description" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary outline-none resize-none">{{ old('description', $club->description) }}</textarea>
                     </div>
 
                     <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Estado del Club</p>
+                            <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Estado del Club</p>
                             <p class="text-[10px] text-slate-400 font-semibold mt-0.5">Si está inactivo, no aparecerá en las opciones de selección.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="is_active" value="1" {{ $club->is_active ? 'checked' : '' }} class="sr-only peer">
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#38B2AC]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#38B2AC]"></div>
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 theme-peer-focus-ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all theme-peer-checked-bg-primary"></div>
                         </label>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-4">
-                    <button type="submit" class="bg-[#0F172A] text-white px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg shadow-slate-100">
+                    <button type="submit" class="theme-surface-dark px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg shadow-slate-100">
                         Guardar cambios
                     </button>
                 </div>
@@ -111,7 +111,7 @@
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Administrar Miembros</h3>
+                        <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Administrar Miembros</h3>
                         <p class="text-[11px] text-slate-400 font-semibold mt-1">Busca y agrega nuevas mascotas al club o remueve las existentes.</p>
                     </div>
                 </div>
@@ -125,7 +125,7 @@
                            x-model="animalQuery" 
                            @input.debounce.300ms="searchAnimals()"
                            placeholder="Buscar mascota por nombre..." 
-                           class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 outline-none transition-all">
+                           class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary outline-none transition-all">
                     
                     {{-- Search Results Dropdown --}}
                     <div x-show="animalResults.length > 0" 
@@ -134,12 +134,12 @@
                         <template x-for="animal in animalResults" :key="animal.id">
                             <button @click="addAnimal(animal)" class="w-full px-5 py-4 text-left hover:bg-slate-50 flex items-center justify-between transition-colors">
                                 <div>
-                                    <p class="text-sm font-black text-[#0F172A]" x-text="animal.name"></p>
+                                    <p class="text-sm font-black theme-text-heading" x-text="animal.name"></p>
                                     <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
                                         <span x-text="animal.type"></span> · <span x-text="animal.customer"></span>
                                     </p>
                                 </div>
-                                <span class="text-[#38B2AC] font-black text-[10px] uppercase tracking-widest">+ Agregar</span>
+                                <span class="theme-text-primary font-black text-[10px] uppercase tracking-widest">+ Agregar</span>
                             </button>
                         </template>
                     </div>
@@ -152,14 +152,14 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <template x-for="(animal, index) in selectedAnimals" :key="animal.id">
-                            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group hover:border-[#38B2AC]/30 transition-all">
+                            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group theme-hover-border-primary-soft transition-all">
                                 <input type="hidden" name="animal_ids[]" :value="animal.id">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-[#0F172A] font-black text-sm">
+                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center theme-text-heading font-black text-sm">
                                         <span x-text="animal.name.charAt(0)"></span>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="text-xs font-black text-[#0F172A] truncate" x-text="animal.name"></p>
+                                        <p class="text-xs font-black theme-text-heading truncate" x-text="animal.name"></p>
                                         <p class="text-[10px] text-slate-400 font-semibold truncate" x-text="animal.customer"></p>
                                     </div>
                                 </div>
@@ -174,7 +174,7 @@
                     </div>
 
                     <div class="flex justify-end pt-4">
-                        <button type="submit" class="bg-[#0F172A] text-white px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 transition-all">
+                        <button type="submit" class="theme-surface-dark px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 transition-all">
                             Actualizar miembros
                         </button>
                     </div>
@@ -186,10 +186,10 @@
         <div x-show="tab === 'coggins'" class="p-8 space-y-8" x-cloak>
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Archivos Coggins</h3>
+                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Archivos Coggins</h3>
                     <p class="text-[11px] text-slate-400 font-semibold mt-1">Lista de documentos PDF asociados a este club.</p>
                 </div>
-                <button @click="cogginModal = true" class="bg-[#38B2AC] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#2C9A94] transition-all flex items-center gap-2">
+                <button @click="cogginModal = true" class="theme-bg-primary text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#2C9A94] transition-all flex items-center gap-2">
                     <span class="text-sm">+</span>
                     Subir PDF
                 </button>
@@ -211,7 +211,7 @@
                                     <div class="flex items-center gap-3">
                                         <span class="text-rose-500 text-xl">📄</span>
                                         <div>
-                                            <p class="text-sm font-black text-[#0F172A]">{{ $coggin->file_name }}</p>
+                                            <p class="text-sm font-black theme-text-heading">{{ $coggin->file_name }}</p>
                                             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">PDF Documento</p>
                                         </div>
                                     </div>
@@ -260,22 +260,22 @@
     {{-- MODAL COGGINS --}}
     <div x-show="cogginModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-[#0F172A]/80 backdrop-blur-sm" @click="cogginModal = false"></div>
+            <div class="fixed inset-0 transition-opacity theme-overlay backdrop-blur-sm" @click="cogginModal = false"></div>
             <div class="relative inline-block w-full max-w-lg overflow-hidden text-left align-middle bg-white rounded-[24px] shadow-2xl border border-slate-100">
                 <form action="{{ route('client.clubes.coggins.store', $club) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="text-lg font-black text-[#0F172A] tracking-tighter">Subir archivo Coggins</h3>
+                        <h3 class="text-lg font-black theme-text-heading tracking-tighter">Subir archivo Coggins</h3>
                         <button type="button" @click="cogginModal = false" class="text-slate-400 hover:text-red-500">✕</button>
                     </div>
                     <div class="p-8 space-y-6">
                         <div class="space-y-4">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Seleccionar archivo PDF</label>
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Seleccionar archivo PDF</label>
                             <div class="flex items-center justify-center w-full">
-                                <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-[#38B2AC]/40 transition-all">
+                                <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100 theme-hover-border-primary-soft transition-all">
                                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                         <span class="text-3xl mb-3">📄</span>
-                                        <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest mb-1">Haz clic para subir</p>
+                                        <p class="text-xs font-black theme-text-heading uppercase tracking-widest mb-1">Haz clic para subir</p>
                                         <p class="text-[10px] text-slate-400 font-semibold">Solo archivos PDF (Max. 10MB)</p>
                                     </div>
                                     <input type="file" name="file" accept=".pdf" required class="hidden" />
@@ -285,7 +285,7 @@
                     </div>
                     <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
                         <button type="button" @click="cogginModal = false" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancelar</button>
-                        <button type="submit" class="bg-[#38B2AC] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-[#2C9A94] transition-all shadow-lg shadow-[#38B2AC]/20">
+                        <button type="submit" class="theme-bg-primary px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-[#2C9A94] transition-all shadow-lg theme-shadow-primary">
                             Subir archivo
                         </button>
                     </div>

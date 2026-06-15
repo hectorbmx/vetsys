@@ -2,6 +2,198 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    :root,
+    [data-theme-palette="ocean"] {
+        --theme-primary: #38b2ac;
+        --theme-primary-hover: #2c9a94;
+        --theme-primary-soft: rgb(56 178 172 / 10%);
+        --theme-primary-soft-hover: rgb(56 178 172 / 20%);
+        --theme-primary-border: rgb(56 178 172 / 30%);
+        --theme-primary-strong: #238a85;
+        --theme-primary-contrast: #ffffff;
+        --theme-primary-ink: #0f172a;
+        --theme-sidebar: #0f172a;
+        --theme-sidebar-hover: #1e293b;
+        --theme-sidebar-footer: #0b1222;
+        --theme-heading: #0f172a;
+        --theme-focus-ring: rgb(56 178 172 / 10%);
+    }
+}
+
+@layer components {
+    .theme-bg-primary {
+        background-color: var(--theme-primary);
+    }
+
+    .theme-bg-primary-soft {
+        background-color: var(--theme-primary-soft);
+    }
+
+    .theme-bg-primary-soft-hover:hover {
+        background-color: var(--theme-primary-soft-hover);
+    }
+
+    .theme-text-primary {
+        color: var(--theme-primary);
+    }
+
+    .theme-text-primary-strong {
+        color: var(--theme-primary-strong);
+    }
+
+    .theme-text-primary-ink {
+        color: var(--theme-primary-ink);
+    }
+
+    .theme-border-primary {
+        border-color: var(--theme-primary);
+    }
+
+    .theme-border-primary-soft {
+        border-color: var(--theme-primary-border);
+    }
+
+    .theme-ring-primary {
+        --tw-ring-color: var(--theme-focus-ring);
+    }
+
+    .theme-bg-sidebar {
+        background-color: var(--theme-sidebar);
+    }
+
+    .theme-bg-sidebar-hover:hover {
+        background-color: var(--theme-sidebar-hover);
+    }
+
+    .theme-bg-sidebar-footer {
+        background-color: var(--theme-sidebar-footer);
+    }
+
+    .theme-text-heading {
+        color: var(--theme-heading);
+    }
+
+    .theme-link-primary {
+        color: var(--theme-primary);
+    }
+
+    .theme-link-primary:hover {
+        color: var(--theme-heading);
+    }
+
+    .theme-hover-text-primary-strong:hover {
+        color: var(--theme-primary-strong);
+    }
+
+    .theme-hover-text-primary:hover {
+        color: var(--theme-primary);
+    }
+
+    .theme-hover-text-heading:hover {
+        color: var(--theme-heading);
+    }
+
+    .theme-hover-bg-primary:hover {
+        background-color: var(--theme-primary-hover);
+    }
+
+    .theme-hover-border-primary-soft:hover {
+        border-color: var(--theme-primary-border);
+    }
+
+    .group:hover .theme-group-hover-text-primary {
+        color: var(--theme-primary);
+    }
+
+    .peer:checked ~ .theme-peer-checked-bg-primary {
+        background-color: var(--theme-primary);
+    }
+
+    .peer:focus ~ .theme-peer-focus-ring-primary {
+        box-shadow: 0 0 0 4px var(--theme-primary-soft-hover);
+    }
+
+    .theme-button-primary {
+        background-color: var(--theme-primary);
+        color: var(--theme-primary-contrast);
+    }
+
+    .theme-button-primary:hover {
+        background-color: var(--theme-primary-hover);
+    }
+
+    .theme-button-dark {
+        background-color: var(--theme-sidebar);
+        color: var(--theme-primary-contrast);
+    }
+
+    .theme-button-dark:hover {
+        background-color: var(--theme-sidebar-hover);
+    }
+
+    .theme-surface-dark {
+        background-color: var(--theme-sidebar);
+        color: var(--theme-primary-contrast);
+    }
+
+    .theme-tab-active {
+        border-color: var(--theme-primary);
+        color: var(--theme-primary);
+    }
+
+    .theme-input:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        border-color: var(--theme-primary);
+        --tw-ring-color: var(--theme-focus-ring);
+        box-shadow: 0 0 0 3px var(--theme-focus-ring);
+    }
+
+    .theme-file-input::file-selector-button {
+        background-color: var(--theme-sidebar);
+        color: var(--theme-primary-contrast);
+    }
+
+    .theme-file-input:hover::file-selector-button {
+        background-color: var(--theme-sidebar-hover);
+    }
+
+    .theme-overlay {
+        background-color: rgb(15 23 42 / 80%);
+    }
+
+    .theme-border-top-primary {
+        border-top-color: var(--theme-primary);
+    }
+
+    .theme-progress-primary {
+        background-image: linear-gradient(to right, var(--theme-primary), #34d399);
+    }
+
+    .theme-nav-active {
+        background-color: var(--theme-primary-soft);
+        color: var(--theme-primary);
+        box-shadow: inset 0 0 0 1px var(--theme-primary-soft-hover);
+    }
+
+    .theme-shadow-primary {
+        box-shadow:
+            0 10px 15px -3px var(--theme-primary-soft-hover),
+            0 4px 6px -4px var(--theme-primary-soft-hover);
+    }
+
+    .theme-focus-primary:focus-visible {
+        outline: 2px solid var(--theme-primary);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px var(--theme-focus-ring);
+    }
+
+    .theme-focus-ring-primary:focus {
+        --tw-ring-color: var(--theme-primary);
+    }
+}
+
 .vetsys-tour-popover.driver-popover {
     max-width: 360px;
     border: 1px solid rgb(226 232 240);

@@ -14,7 +14,7 @@
                 <div class="flex items-center gap-3">
                     <span class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">✓</span>
                     <div>
-                        <p class="text-xs font-black text-[#0F172A] uppercase tracking-wider">Operación Exitosa</p>
+                        <p class="text-xs font-black theme-text-heading uppercase tracking-wider">Operación Exitosa</p>
                         <p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ session('success') }}</p>
                     </div>
                 </div>
@@ -27,7 +27,7 @@
                 <div class="flex items-center gap-3">
                     <span class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-sm font-bold">✕</span>
                     <div>
-                        <p class="text-xs font-black text-[#0F172A] uppercase tracking-wider">Error de Registro</p>
+                        <p class="text-xs font-black theme-text-heading uppercase tracking-wider">Error de Registro</p>
                         <p class="text-[11px] text-slate-500 font-semibold mt-0.5">
                             {{ session('error') ?? 'Por favor, verifica los campos obligatorios del formulario.' }}
                         </p>
@@ -41,19 +41,19 @@
     {{-- HEADER DE LA VISTA --}}
     <div data-tour="animals-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">Gestión de Mascotas</h1>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Mascotas</h1>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra los pacientes de tu clínica y sus historiales.</p>
         </div>
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <form method="GET" action="{{ route('client.animals.index') }}" class="relative w-full sm:w-80">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar mascota, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold text-[#0F172A] placeholder-slate-400 focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-sm">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar mascota, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
                 @if(request()->filled('q'))
                     <a href="{{ route('client.animals.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                 @endif
             </form>
-            <button data-tour="add-animal" @click="animalModal = true" class="inline-flex items-center justify-center gap-2 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
+            <button data-tour="add-animal" @click="animalModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
                 <span class="text-sm transition-transform group-hover:scale-125">+</span>
                 Nueva Mascota
             </button>
@@ -105,7 +105,7 @@
     <div data-tour="animals-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
         <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Database de Pacientes</h3>
+            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Database de Pacientes</h3>
             @if(request()->filled('q'))
                 <span class="text-[11px] font-bold text-slate-400">Filtro: {{ request('q') }}</span>
             @endif
@@ -131,11 +131,11 @@
                             {{-- Info Básica del Animal --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl bg-[#38B2AC]/10 text-[#38B2AC] flex items-center justify-center font-black text-sm">
+                                    <div class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm">
                                         {{ substr($animal->name, 0, 1) }}
                                     </div>
                                     <div>
-                                        <h4 class="text-sm font-bold text-[#0F172A] leading-tight">{{ $animal->name }}</h4>
+                                        <h4 class="text-sm font-bold theme-text-heading leading-tight">{{ $animal->name }}</h4>
                                         <p class="text-[10px] font-medium text-slate-400 mt-0.5">
                                             Edad: {{ $animal->birthdate ? $animal->birthdate->age . ' años' : 'No registrada' }}
                                         </p>
@@ -145,14 +145,14 @@
 
                             {{-- Especie y Raza --}}
                             <td class="px-6 py-4">
-                                <span class="text-xs font-bold text-[#0F172A] block">{{ $animal->animalType->name ?? 'Sin especie' }}</span>
+                                <span class="text-xs font-bold theme-text-heading block">{{ $animal->animalType->name ?? 'Sin especie' }}</span>
                                 <span class="text-[10px] text-slate-400 font-semibold block mt-0.5">{{ $animal->color ?? 'Color no registrado' }}</span>
                             </td>
 
                             {{-- Relación con el Dueño usando el Accessor full_name --}}
                             <td class="px-6 py-4">
                                 @if($animal->customer)
-                                    <div class="text-xs font-bold text-[#0F172A]">{{ $animal->customer->full_name }}</div>
+                                    <div class="text-xs font-bold theme-text-heading">{{ $animal->customer->full_name }}</div>
                                     <div class="text-[10px] text-slate-400 mt-0.5">{{ $animal->customer->phone }}</div>
                                 @else
                                     <span class="text-xs text-red-500 italic font-medium">Sin dueño asignado</span>
@@ -162,7 +162,7 @@
                             {{-- Peso --}}
                             <td class="px-6 py-4">
                                 @if($animal->club)
-                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-[#38B2AC] bg-teal-50 px-2.5 py-1 rounded-full">
+                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest theme-text-primary bg-teal-50 px-2.5 py-1 rounded-full">
                                         {{ $animal->club->name }}
                                     </span>
                                 @else
@@ -171,7 +171,7 @@
                             </td>
 
                             {{-- Peso --}}
-                            <td class="px-6 py-4 text-xs font-bold text-[#0F172A]">
+                            <td class="px-6 py-4 text-xs font-bold theme-text-heading">
                                 {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
                             </td>
 
@@ -199,9 +199,9 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     
-                                    <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center bg-[#0F172A] hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">🔍</a> -->
+                                    <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">🔍</a> -->
                                     <a href="{{ route('client.animals.edit',$animal) }}" 
-                                        class="p-1.5 text-slate-400 hover:text-[#38B2AC] transition-colors" 
+                                        class="p-1.5 text-slate-400 hover:theme-text-primary transition-colors" 
                                         title="Ver ficha">🔍</a>
                                 </div>
                             </td>
@@ -264,7 +264,7 @@
      }">
     
     <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
-        <div class="fixed inset-0 transition-opacity bg-[#0F172A]/80 backdrop-blur-sm" @click="if(!loading) animalModal = false"></div>
+        <div class="fixed inset-0 transition-opacity theme-overlay backdrop-blur-sm" @click="if(!loading) animalModal = false"></div>
 
         <div class="inline-block overflow-hidden text-left align-middle transition-all transform bg-white rounded-[24px] shadow-2xl sm:my-8 sm:max-w-2xl sm:w-full border border-slate-100 relative"
              x-show="animalModal"
@@ -275,7 +275,7 @@
             {{-- SPINNER DE CARGA --}}
             <div x-show="loading" class="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4" style="display: none;">
                 <div class="w-10 h-10 border-4 border-slate-200 border-t-[#38B2AC] rounded-full animate-spin"></div>
-                <p class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] animate-pulse">Guardando Paciente...</p>
+                <p class="text-[10px] font-black theme-text-heading uppercase tracking-[0.2em] animate-pulse">Guardando Paciente...</p>
             </div>
 
             {{-- Formulario --}}
@@ -283,14 +283,14 @@
                 @csrf
                 
                 <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 class="text-lg font-black text-[#0F172A] tracking-tighter">Registrar Nueva Mascota (Paciente)</h3>
+                    <h3 class="text-lg font-black theme-text-heading tracking-tighter">Registrar Nueva Mascota (Paciente)</h3>
                     <button type="button" @click="animalModal = false" :disabled="loading" class="text-slate-400 hover:text-red-500 transition-colors">✕</button>
                 </div>
 
                 <div class="p-8 space-y-5">
                     {{-- Buscador del propietario --}}
                     <div class="space-y-2 relative">
-                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Propietario / Dueño *</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Propietario / Dueño *</label>
                         <div class="relative">
                             <input type="text"
                                    x-model="customerQuery"
@@ -298,7 +298,7 @@
                                    placeholder="Escribe nombre, apellido o telefono..."
                                    :disabled="selectedCustomer !== null"
                                    required
-                                   class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 pr-36 text-sm font-semibold text-[#0F172A] placeholder-slate-400 focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+                                   class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 pr-36 text-sm font-semibold theme-text-heading placeholder-slate-400 focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
 
                             <template x-if="selectedCustomer">
                                 <button type="button"
@@ -319,10 +319,10 @@
                                         @click="selectCustomer(customer)"
                                         class="w-full p-3 hover:bg-slate-50 transition-colors flex justify-between items-center text-left">
                                     <span>
-                                        <span class="text-xs font-bold text-[#0F172A] block" x-text="customer.full_name"></span>
+                                        <span class="text-xs font-bold theme-text-heading block" x-text="customer.full_name"></span>
                                         <span class="text-[10px] text-slate-400 font-medium" x-text="customer.phone || 'Sin telefono'"></span>
                                     </span>
-                                    <span class="text-[9px] bg-teal-50 text-[#38B2AC] font-black px-2 py-1 rounded-full uppercase tracking-wider" x-text="customer.animals.length + ' mascotas'"></span>
+                                    <span class="text-[9px] bg-teal-50 theme-text-primary font-black px-2 py-1 rounded-full uppercase tracking-wider" x-text="customer.animals.length + ' mascotas'"></span>
                                 </button>
                             </template>
                         </div>
@@ -335,14 +335,14 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Nombre Mascota --}}
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Nombre del Paciente *</label>
-                            <input type="text" name="name" required placeholder="Ej. Rocko" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Nombre del Paciente *</label>
+                            <input type="text" name="name" required placeholder="Ej. Rocko" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
                         </div>
 
                         {{-- Tipo de Animal / Especie --}}
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Especie / Tipo de Animal *</label>
-                            <select name="animal_type_id" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner cursor-pointer">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Especie / Tipo de Animal *</label>
+                            <select name="animal_type_id" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner cursor-pointer">
                                 <option value="" disabled selected>Selecciona una especie...</option>
                                 @foreach($animalTypes as $type)
                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
@@ -358,8 +358,8 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Club</label>
-                        <select name="club_id" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner cursor-pointer">
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Club</label>
+                        <select name="club_id" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner cursor-pointer">
                             <option value="">Sin club</option>
                             @foreach($clubs as $club)
                                 <option value="{{ $club->id }}">{{ $club->name }}</option>
@@ -371,8 +371,8 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {{-- Sexo (Añadido Obligatorio) --}}
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Sexo *</label>
-                            <select name="sex" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner cursor-pointer">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Sexo *</label>
+                            <select name="sex" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner cursor-pointer">
                                 <option value="" disabled selected>Elegir...</option>
                                 <option value="male">Macho (♂)</option>
                                 <option value="female">Hembra (♀)</option>
@@ -382,27 +382,27 @@
 
                         {{-- Fecha de Nacimiento (Corregido a birthdate) --}}
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">F. de Nacimiento</label>
-                            <input type="date" name="birthdate" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">F. de Nacimiento</label>
+                            <input type="date" name="birthdate" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
                         </div>
 
                         {{-- Peso --}}
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Peso (kg)</label>
-                            <input type="number" step="0.01" name="weight" placeholder="Ej. 12.5" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Peso (kg)</label>
+                            <input type="number" step="0.01" name="weight" placeholder="Ej. 12.5" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
                         </div>
                     </div>
 
                     {{-- Notas Clínicas --}}
                     <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Notas Clínicas / Alergias</label>
-                        <textarea name="notes" rows="3" placeholder="Ej. Alérgico a la penicilina, comportamiento nervioso..." class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none resize-none shadow-inner"></textarea>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas Clínicas / Alergias</label>
+                        <textarea name="notes" rows="3" placeholder="Ej. Alérgico a la penicilina, comportamiento nervioso..." class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none shadow-inner"></textarea>
                     </div>
                 </div>
 
                 <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
                     <button type="button" @click="animalModal = false" :disabled="loading" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-                    <button type="submit" :disabled="loading" class="bg-[#0F172A] px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">Guardar Paciente</button>
+                    <button type="submit" :disabled="loading" class="theme-surface-dark px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">Guardar Paciente</button>
                 </div>
             </form>
         </div>

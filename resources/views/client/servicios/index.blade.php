@@ -10,7 +10,7 @@
     {{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
     <div data-tour="services-header" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 class="text-xl font-black text-[#0F172A] uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
+            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">Administra los servicios clínicos, estéticos y productos comerciales de tu veterinaria.</p>
         </div>
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
@@ -20,14 +20,14 @@
                        name="q"
                        value="{{ $search }}"
                        placeholder="Buscar servicio, producto o SKU..."
-                       class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3 text-xs font-semibold text-[#0F172A] placeholder-slate-400 focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-sm">
+                       class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
 
                 @if($search !== '')
                     <a href="{{ route('client.servicios.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                 @endif
             </form>
 
-            <button data-tour="add-service" @click="openForm = !openForm" class="bg-[#0F172A] hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+            <button data-tour="add-service" @click="openForm = !openForm" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
                 <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
             </button>
         </div>
@@ -36,7 +36,7 @@
     {{-- FORMULARIO DE ALTA --}}
     <div x-show="openForm" x-collapse class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-            <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Nuevo Artículo</h3>
+            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Nuevo Artículo</h3>
             <p class="text-[11px] text-slate-400 font-medium mt-0.5">Define si es un servicio o producto. El historial de precios se congelará automáticamente al guardar.</p>
         </div>
 
@@ -47,7 +47,7 @@
                 {{-- Tipo de Artículo --}}
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Tipo de Registro</label>
-                    <select name="type" x-model="type" @change="if(type === 'service') { hasInventory = false; }" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <select name="type" x-model="type" @change="if(type === 'service') { hasInventory = false; }" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                         <option value="service">⚙️ Servicio (Consulta, Estética, Cirugía)</option>
                         <option value="product">📦 Producto (Medicamento, Accesorio, Alimento)</option>
                     </select>
@@ -56,7 +56,7 @@
                 {{-- Nombre Comercial --}}
                 <div class="md:col-span-2">
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Nombre del Servicio o Producto</label>
-                    <input type="text" name="name" required placeholder="Ej: Consulta Médica General o Alimento Nupec Adulto 2Kg" value="{{ old('name') }}" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <input type="text" name="name" required placeholder="Ej: Consulta Médica General o Alimento Nupec Adulto 2Kg" value="{{ old('name') }}" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                     @error('name') <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -68,7 +68,7 @@
                     <input type="text" name="sku" 
                            :placeholder="type === 'service' ? 'Automático (SERV-00X)' : 'Automático (PROD-00X)'" 
                            value="{{ old('sku') }}" 
-                           class="w-full text-xs font-mono text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                           class="w-full text-xs font-mono theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                     <p class="text-[9px] text-slate-400 font-semibold mt-1">Si se deja vacío, se generará un folio autoincremental.</p>
                     @error('sku') <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                 </div>
@@ -76,7 +76,7 @@
                 {{-- Precio Inicial --}}
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Precio de Venta ($ NETO)</label>
-                    <input type="number" step="0.01" name="price" required placeholder="0.00" value="{{ old('price') }}" class="w-full text-xs font-bold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <input type="number" step="0.01" name="price" required placeholder="0.00" value="{{ old('price') }}" class="w-full text-xs font-bold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                     @error('price') <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
@@ -84,7 +84,7 @@
                 <div x-show="type === 'product'" x-transition class="flex items-center h-full pt-4">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="has_inventory" value="1" x-model="hasInventory" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#38B2AC]"></div>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all theme-peer-checked-bg-primary"></div>
                         <span class="ml-3 text-xs font-black uppercase tracking-widest text-slate-500">¿Controla Inventario?</span>
                     </label>
                 </div>
@@ -94,11 +94,11 @@
             <div x-show="hasInventory" x-collapse class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Stock Inicial Actual</label>
-                    <input type="number" step="0.01" name="stock_actual" placeholder="0.00" :required="hasInventory" value="{{ old('stock_actual', '0') }}" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <input type="number" step="0.01" name="stock_actual" placeholder="0.00" :required="hasInventory" value="{{ old('stock_actual', '0') }}" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                 </div>
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Stock Mínimo (Alerta de escasez)</label>
-                    <input type="number" step="0.01" name="stock_minimo" placeholder="0.00" :required="hasInventory" value="{{ old('stock_minimo', '0') }}" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                    <input type="number" step="0.01" name="stock_minimo" placeholder="0.00" :required="hasInventory" value="{{ old('stock_minimo', '0') }}" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                 </div>
                 <div class="flex items-center">
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -112,12 +112,12 @@
             {{-- Descripción --}}
             <div>
                 <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Descripción o detalles internos</label>
-                <textarea name="description" rows="2" placeholder="Detalles adicionales opcionales..." class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#38B2AC] transition-colors">{{ old('description') }}</textarea>
+                <textarea name="description" rows="2" placeholder="Detalles adicionales opcionales..." class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl p-4 focus:outline-none theme-input transition-colors">{{ old('description') }}</textarea>
             </div>
 
             {{-- Botón de envío --}}
             <div class="flex justify-end pt-2">
-                <button type="submit" class="bg-[#38B2AC] hover:bg-[#2C9691] text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
+                <button type="submit" class="theme-button-primary px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
                     Guardar en Catálogo
                 </button>
             </div>
@@ -146,11 +146,11 @@
                             {{-- Nombre e Icono --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg {{ $item->type === 'service' ? 'bg-teal-50 text-[#38B2AC]' : 'bg-amber-50 text-amber-600' }} flex items-center justify-center font-black text-xs">
+                                    <div class="w-8 h-8 rounded-lg {{ $item->type === 'service' ? 'bg-teal-50 theme-text-primary' : 'bg-amber-50 text-amber-600' }} flex items-center justify-center font-black text-xs">
                                         {{ $item->type === 'service' ? '⚙️' : '📦' }}
                                     </div>
                                     <div>
-                                        <span class="text-xs font-bold text-[#0F172A] block">{{ $item->name }}</span>
+                                        <span class="text-xs font-bold theme-text-heading block">{{ $item->name }}</span>
                                         @if($item->description)
                                             <span class="text-[10px] text-slate-400 font-medium block max-w-xs truncate">{{ $item->description }}</span>
                                         @endif
@@ -169,7 +169,7 @@
                             </td>
 
                             {{-- Precio Actual --}}
-                            <td class="px-6 py-4 text-xs font-black text-[#0F172A]">
+                            <td class="px-6 py-4 text-xs font-black theme-text-heading">
                                 ${{ number_format($item->current_price, 2) }}
                             </td>
 
@@ -234,7 +234,7 @@
                                 <div class="flex items-center justify-end gap-2">
                                     <button type="button"
                                             @click="editingItem = { name: @js($item->name), price: '{{ number_format($item->current_price, 2, '.', '') }}', url: '{{ route('client.servicios.update-price', $item) }}' }; priceModal = true"
-                                            class="px-2.5 py-1.5 bg-[#38B2AC]/10 border border-[#38B2AC]/20 hover:border-[#38B2AC]/50 rounded-lg text-[11px] font-bold text-[#2C9691] transition-colors shadow-sm">
+                                            class="px-2.5 py-1.5 theme-bg-primary-soft border theme-border-primary-soft theme-hover-border-primary-soft rounded-lg text-[11px] font-bold theme-text-primary-strong transition-colors shadow-sm">
                                         Editar Precio
                                     </button>
                                 </div>
@@ -258,12 +258,12 @@
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          style="display: none;">
-        <div class="absolute inset-0 bg-[#0F172A]/70 backdrop-blur-sm" @click="priceModal = false"></div>
+        <div class="absolute inset-0 theme-overlay backdrop-blur-sm" @click="priceModal = false"></div>
 
         <div class="relative bg-white w-full max-w-md rounded-[24px] shadow-2xl border border-slate-100 overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/70 flex items-start justify-between gap-4">
                 <div>
-                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Editar Precio</h3>
+                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Editar Precio</h3>
                     <p class="text-[11px] font-semibold text-slate-400 mt-1" x-text="editingItem.name"></p>
                 </div>
                 <button type="button" @click="priceModal = false" class="text-slate-400 hover:text-rose-500 text-sm font-black">x</button>
@@ -283,14 +283,14 @@
                                name="price"
                                x-model="editingItem.price"
                                required
-                               class="w-full text-sm font-black text-[#0F172A] bg-slate-50 border border-slate-200 rounded-xl py-3 pr-4 pl-8 focus:outline-none focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all">
+                               class="w-full text-sm font-black theme-text-heading bg-slate-50 border border-slate-200 rounded-xl py-3 pr-4 pl-8 focus:outline-none theme-input focus:ring-4 theme-ring-primary transition-all">
                     </div>
                     <p class="text-[11px] font-semibold text-slate-400 mt-2">Se cerrara el precio anterior y se creara un nuevo registro vigente en el historial.</p>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <button type="button" @click="priceModal = false" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-                    <button type="submit" class="bg-[#0F172A] hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
+                    <button type="submit" class="theme-button-dark px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
                         Guardar Precio
                     </button>
                 </div>

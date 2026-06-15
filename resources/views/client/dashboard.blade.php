@@ -7,8 +7,8 @@
 <div class="space-y-8">
     <div data-tour="dashboard-welcome" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Panel General</p>
-            <h1 class="text-3xl md:text-4xl font-black text-[#0F172A] tracking-tight mt-1">
+            <p class="text-[10px] font-black uppercase tracking-[0.28em] theme-text-primary">Panel General</p>
+            <h1 class="text-3xl md:text-4xl font-black theme-text-heading tracking-tight mt-1">
                 Dashboard de la Clinica
             </h1>
             <p class="text-sm font-semibold text-slate-400 mt-2">
@@ -18,7 +18,7 @@
 
         <div class="bg-white border border-slate-200 rounded-2xl px-5 py-4 shadow-sm">
             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Hoy</p>
-            <p class="text-sm font-black text-[#0F172A] mt-1">{{ now()->format('d/m/Y') }}</p>
+            <p class="text-sm font-black theme-text-heading mt-1">{{ now()->format('d/m/Y') }}</p>
         </div>
     </div>
 
@@ -26,19 +26,19 @@
         @if(!$onboarding['is_completed'])
             <section data-tour="operational-onboarding" class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
                 <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr]">
-                    <div class="relative overflow-hidden bg-[#0F172A] p-7 text-white">
-                        <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#38B2AC]/20"></div>
+                    <div class="relative overflow-hidden theme-surface-dark p-7">
+                        <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full theme-bg-primary-soft-hover"></div>
                         <div class="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-violet-500/15"></div>
 
                         <div class="relative z-10">
-                            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Ruta hacia tu primera venta</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.28em] theme-text-primary">Ruta hacia tu primera venta</p>
                             <h2 class="mt-3 text-2xl font-black tracking-tight">{{ $onboarding['completed'] }} de {{ $onboarding['total'] }} completados</h2>
                             <p class="mt-2 text-xs font-semibold leading-5 text-slate-300">
                                 Completa el camino minimo para registrar tu primera venta.
                             </p>
 
                             <div class="mt-6 h-3 overflow-hidden rounded-full bg-white/10">
-                                <div class="h-full rounded-full bg-gradient-to-r from-[#38B2AC] to-emerald-400 transition-all"
+                                <div class="h-full rounded-full theme-progress-primary transition-all"
                                      style="width: {{ $onboarding['percentage'] }}%"></div>
                             </div>
                             <div class="mt-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
@@ -52,9 +52,9 @@
                         @foreach(array_chunk($onboarding['steps'], 3) as $stepColumn)
                             <div class="divide-y divide-slate-100">
                                 @foreach($stepColumn as $step)
-                                    <div class="flex items-start gap-4 p-5 {{ $step['is_next'] ? 'bg-[#38B2AC]/5' : '' }}">
+                                    <div class="flex items-start gap-4 p-5 {{ $step['is_next'] ? 'theme-bg-primary-soft' : '' }}">
                                         <div class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-black
-                                            {{ $step['completed'] ? 'border-emerald-500 bg-emerald-500 text-white' : ($step['is_next'] ? 'border-[#38B2AC] bg-white text-[#38B2AC]' : 'border-slate-200 bg-slate-50 text-slate-300') }}">
+                                            {{ $step['completed'] ? 'border-emerald-500 bg-emerald-500 text-white' : ($step['is_next'] ? 'theme-border-primary bg-white theme-text-primary' : 'border-slate-200 bg-slate-50 text-slate-300') }}">
                                             @if($step['completed'])
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
@@ -66,18 +66,18 @@
 
                                         <div class="min-w-0 flex-1">
                                             <div class="flex flex-wrap items-center justify-between gap-2">
-                                                <h3 class="text-xs font-black {{ $step['completed'] ? 'text-slate-400 line-through' : 'text-[#0F172A]' }}">
+                                                <h3 class="text-xs font-black {{ $step['completed'] ? 'text-slate-400 line-through' : 'theme-text-heading' }}">
                                                     {{ $step['label'] }}
                                                 </h3>
                                                 @if($step['is_next'])
-                                                    <span class="rounded-full bg-[#38B2AC]/10 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-[#238A85]">Siguiente</span>
+                                                    <span class="rounded-full theme-bg-primary-soft px-2 py-1 text-[8px] font-black uppercase tracking-widest theme-text-primary-strong">Siguiente</span>
                                                 @endif
                                             </div>
                                             <p class="mt-1 text-[10px] font-semibold leading-4 text-slate-400">{{ $step['description'] }}</p>
 
                                             @if(!$step['completed'])
                                                 <a href="{{ $step['action_url'] }}"
-                                                   class="mt-3 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest {{ $step['is_next'] ? 'text-[#238A85]' : 'text-slate-400 hover:text-[#238A85]' }}">
+                                                   class="mt-3 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest {{ $step['is_next'] ? 'theme-text-primary-strong' : 'text-slate-400 theme-hover-text-primary-strong' }}">
                                                     {{ $step['action_label'] }}
                                                     <span aria-hidden="true">&rarr;</span>
                                                 </a>
@@ -100,7 +100,7 @@
                     </div>
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">Ruta inicial completa</p>
-                        <h2 class="mt-1 text-sm font-black text-[#0F172A]">Tu clinica ya esta lista para continuar vendiendo.</h2>
+                        <h2 class="mt-1 text-sm font-black theme-text-heading">Tu clinica ya esta lista para continuar vendiendo.</h2>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -193,10 +193,10 @@
         <div data-tour="recent-sales" class="xl:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                    <h2 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Notas Recientes</h2>
+                    <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Notas Recientes</h2>
                     <p class="text-[11px] font-semibold text-slate-400 mt-1">Ultimos movimientos de venta registrados.</p>
                 </div>
-                <a href="{{ route('client.ventas.index') }}" class="text-[10px] font-black uppercase tracking-widest text-[#38B2AC] hover:text-[#0F172A]">Ver todas</a>
+                <a href="{{ route('client.ventas.index') }}" class="text-[10px] font-black uppercase tracking-widest theme-link-primary">Ver todas</a>
             </div>
 
             <div class="overflow-x-auto">
@@ -212,14 +212,14 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse($recentNotes as $note)
                             <tr class="hover:bg-slate-50/60 transition-colors">
-                                <td class="px-6 py-4 text-xs font-black text-[#0F172A]">{{ $note->folio }}</td>
+                                <td class="px-6 py-4 text-xs font-black theme-text-heading">{{ $note->folio }}</td>
                                 <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ $note->customer->full_name ?? 'Sin cliente' }}</td>
                                 <td class="px-6 py-4">
                                     <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $note->status === 'PAGADA' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
                                         {{ $note->status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-xs font-black text-[#0F172A] text-right">${{ number_format($note->total, 2) }}</td>
+                                <td class="px-6 py-4 text-xs font-black theme-text-heading text-right">${{ number_format($note->total, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -233,7 +233,7 @@
 
         <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-5">
             <div>
-                <h2 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Venta vs Cobro</h2>
+                <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Venta vs Cobro</h2>
                 <p class="text-[11px] font-semibold text-slate-400 mt-1">Diferencia entre lo generado y lo que entro a caja.</p>
             </div>
 
@@ -244,7 +244,7 @@
             <div class="space-y-3">
                 <div class="flex items-end justify-between">
                     <span class="text-xs font-bold text-slate-500">Cobrado</span>
-                    <span class="text-2xl font-black text-[#0F172A]">{{ number_format($collectionPercent, 1) }}%</span>
+                    <span class="text-2xl font-black theme-text-heading">{{ number_format($collectionPercent, 1) }}%</span>
                 </div>
                 <div class="h-4 bg-slate-100 rounded-full overflow-hidden">
                     <div class="h-full bg-gradient-to-r from-[#38B2AC] to-emerald-400 rounded-full" style="width: {{ $collectionPercent }}%"></div>
@@ -254,7 +254,7 @@
             <div class="grid grid-cols-2 gap-3 pt-2">
                 <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Vendido</p>
-                    <p class="text-lg font-black text-[#0F172A] mt-2">${{ number_format($totalSold, 2) }}</p>
+                    <p class="text-lg font-black theme-text-heading mt-2">${{ number_format($totalSold, 2) }}</p>
                 </div>
                 <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
                     <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600">Cobrado</p>

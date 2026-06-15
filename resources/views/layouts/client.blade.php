@@ -43,14 +43,14 @@
     {{-- Sidebar Estilo Premium Admin --}}
     <aside 
         :class="sidebarOpen ? 'w-64' : 'w-20'"
-        class="sidebar-transition bg-[#0F172A] flex flex-col fixed inset-y-0 left-0 z-50 shadow-2xl">
+        class="sidebar-transition theme-bg-sidebar flex flex-col fixed inset-y-0 left-0 z-50 shadow-2xl">
         
         {{-- Logo Section --}}
     <a href="{{ route('client.profile.index') }}" class="block">
-    <div class="px-4 py-5 border-b border-white/5 flex items-center overflow-hidden bg-[#0F172A] hover:bg-slate-800 transition-colors cursor-pointer">
+    <div class="px-4 py-5 border-b border-white/5 flex items-center overflow-hidden theme-bg-sidebar theme-bg-sidebar-hover transition-colors cursor-pointer">
         <div class="flex items-center gap-3 min-w-[200px]">
-            {{-- Color de acento corporativo (#38B2AC) --}}
-            <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-[#38B2AC] text-[#0F172A] flex items-center justify-center font-black shadow-lg shadow-[#38B2AC]/20">
+            {{-- Identidad visual del tenant --}}
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl theme-bg-primary theme-text-primary-ink flex items-center justify-center font-black theme-shadow-primary">
                 {{ substr(auth()->user()->tenant->name ?? 'V', 0, 1) }}
             </div>
 
@@ -59,7 +59,7 @@
                     {{ auth()->user()->tenant->name ?? 'VetSys' }}
                 </h1>
 
-                <p class="text-[10px] uppercase tracking-widest text-[#38B2AC] mt-1 font-black">
+                <p class="text-[10px] uppercase tracking-widest theme-text-primary mt-1 font-black">
                     Panel Cliente
                 </p>
             </div>
@@ -89,11 +89,11 @@
                 <a href="{{ route($link['route']) }}"
                    class="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                    {{ request()->routeIs($link['route'])
-                       ? 'bg-[#38B2AC]/10 text-[#38B2AC] shadow-[inset_0_0_0_1px_rgba(56,178,172,0.2)]'
+                       ? 'theme-nav-active'
                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
                    }}">
                     
-                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ request()->routeIs($link['route']) ? 'text-[#38B2AC]' : 'text-slate-400 group-hover:text-white' }}">
+                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ request()->routeIs($link['route']) ? 'theme-text-primary' : 'text-slate-400 group-hover:text-white' }}">
                         {{ $link['icon'] }}
                     </span>
 
@@ -105,14 +105,14 @@
         </nav>
 
         {{-- Footer Sidebar con Datos de Sesión del Cliente --}}
-        <div class="px-3 py-4 border-t border-white/5 bg-[#0B1222]">
+        <div class="px-3 py-4 border-t border-white/5 theme-bg-sidebar-footer">
             <div class="flex items-center gap-3 px-3 py-2 overflow-hidden mb-2">
-                <div class="w-8 h-8 rounded-lg bg-[#38B2AC] flex-shrink-0 flex items-center justify-center text-xs font-black text-[#0F172A]">
+                <div class="w-8 h-8 rounded-lg theme-bg-primary flex-shrink-0 flex items-center justify-center text-xs font-black theme-text-primary-ink">
                     {{ substr(auth()->user()->name, 0, 1) }}
                 </div>
                 <div x-show="sidebarOpen" x-transition.opacity class="min-w-0">
                     <p class="text-xs font-bold text-white truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-[10px] text-[#38B2AC] truncate opacity-80">
+                    <p class="text-[10px] theme-text-primary truncate opacity-80">
                         {{ auth()->user()->tenant->plan->name ?? 'Sin plan' }}
                     </p>
                 </div>
@@ -140,7 +140,7 @@
                 {{-- BOTON DE COLAPSO (TOGGLE) --}}
                 <button 
                     @click="sidebarOpen = !sidebarOpen"
-                    class="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all outline-none">
+                    class="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all outline-none theme-focus-primary">
                     <svg x-show="sidebarOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                     </svg>
@@ -162,7 +162,7 @@
                 <button type="button"
                         data-tour-launch
                         hidden
-                        class="inline-flex items-center gap-2 rounded-xl border border-[#38B2AC]/30 bg-[#38B2AC]/10 px-3.5 py-2.5 text-[#238A85] transition-all hover:bg-[#38B2AC]/20">
+                        class="inline-flex items-center gap-2 rounded-xl border theme-border-primary-soft theme-bg-primary-soft px-3.5 py-2.5 theme-text-primary-strong transition-all theme-bg-primary-soft-hover theme-focus-primary">
                     <span class="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-black">?</span>
                     <span class="hidden md:inline text-[10px] font-black uppercase tracking-widest">Guia</span>
                 </button>
@@ -188,10 +188,10 @@
                          class="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50">
                         <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
                             <div>
-                                <p class="text-xs font-black text-[#0F172A] uppercase tracking-widest">Notificaciones</p>
+                                <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Notificaciones</p>
                                 <p class="text-[11px] font-semibold text-slate-400">{{ $layoutUnreadNotificationsCount ?? 0 }} sin leer</p>
                             </div>
-                            <a href="{{ route('client.notifications.index') }}" class="text-[10px] font-black uppercase tracking-widest text-[#38B2AC] hover:text-[#0F172A]">Ver todas</a>
+                            <a href="{{ route('client.notifications.index') }}" class="text-[10px] font-black uppercase tracking-widest theme-link-primary">Ver todas</a>
                         </div>
 
                         <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">
@@ -199,7 +199,7 @@
                                 <a href="{{ route('client.notifications.open', $notification) }}" class="block px-4 py-3 hover:bg-slate-50 transition-colors {{ $notification->read_at ? '' : 'bg-[#38B2AC]/5' }}">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
-                                            <p class="text-xs font-black text-[#0F172A]">{{ $notification->title }}</p>
+                                            <p class="text-xs font-black theme-text-heading">{{ $notification->title }}</p>
                                             <p class="text-[11px] font-semibold text-slate-500 mt-1 leading-5">{{ $notification->body }}</p>
                                             <p class="text-[10px] font-bold text-slate-400 mt-2">{{ $notification->created_at->diffForHumans() }}</p>
                                         </div>
@@ -210,7 +210,7 @@
                                 </a>
                             @empty
                                 <div class="px-4 py-8 text-center">
-                                    <p class="text-xs font-black text-[#0F172A]">Sin notificaciones</p>
+                                    <p class="text-xs font-black theme-text-heading">Sin notificaciones</p>
                                     <p class="text-[11px] font-semibold text-slate-400 mt-1">Aqui apareceran avisos de telemedicina y otros eventos.</p>
                                 </div>
                             @endforelse
@@ -220,7 +220,7 @@
 
                 <div class="text-right hidden sm:block">
                     <p class="text-xs font-bold text-slate-900 leading-none">{{ auth()->user()->name }}</p>
-                    <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold text-[#38B2AC]">
+                    <p class="text-[10px] mt-1 uppercase tracking-wider font-semibold theme-text-primary">
                         {{ auth()->user()->tenant->name ?? '' }}
                     </p>
                 </div>
