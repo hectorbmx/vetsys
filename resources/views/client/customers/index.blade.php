@@ -67,7 +67,7 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
     {{-- CARD 1: CUSTOMERS --}}
-    <div class="group bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Clientes</p>
             <div class="flex items-baseline gap-2">
@@ -78,28 +78,28 @@
     </div>
 
     {{-- CARD 2: PÁGINA ACTUAL --}}
-    <div class="group bg-gradient-to-br from-emerald-500 to-emerald-600 border border-emerald-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
-            <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Página Actual</p>
+            <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Página Actual</p>
             <div class="flex items-baseline gap-2">
                 <span class="text-3xl font-black text-white tracking-tight">{{ $customers->count() }}</span>
-                <span class="text-[10px] font-medium text-emerald-100">registros aquí</span>
+                <span class="text-[10px] font-medium text-white/80">registros aquí</span>
             </div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✓</div>
+        <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✓</div>
     </div>
 
     {{-- CARD 3: ÚLTIMO REGISTRO --}}
-    <div class="group bg-gradient-to-br from-teal-500 to-cyan-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
-            <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Último Registro</p>
+            <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Último Registro</p>
             <div class="flex items-baseline gap-2">
-                <span class="text-sm font-bold text-white truncate max-w-[140px]">
+                <span class="text-sm font-bold theme-text-heading truncate max-w-[140px]">
                     {{ $customers->first()->name ?? 'Ninguno' }}
                 </span>
             </div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
+        <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
     </div>
 </div>
 
@@ -188,11 +188,11 @@
                                 class="flex items-center gap-2 group focus:outline-none"
                                 title="{{ $customer->status === 'active' ? 'Click para Inactivar' : 'Click para Activar' }}">
                             
-                            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'theme-bg-primary' : 'bg-slate-300' }}">
                                 <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-4' : 'translate-x-0' }}"></div>
                             </div>
                             
-                            <span class="text-[10px] font-bold uppercase tracking-wider min-w-[50px] {{ $customer->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
+                            <span class="text-[10px] font-bold uppercase tracking-wider min-w-[50px] {{ $customer->status === 'active' ? 'theme-text-primary-strong' : 'text-slate-400' }}">
                                 {{ $customer->status === 'active' ? 'Active' : 'Inactive' }}
                             </span>
                         </button>
@@ -203,7 +203,7 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('client.customers.show', $customer->id) }}" 
-                                        class="p-1.5 text-slate-400 hover:theme-text-primary transition-colors" 
+                                        class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
                                         title="Ver ficha">🔍</a>
                                     <!-- <button class="p-1.5 text-slate-400 hover:theme-text-heading transition-colors" title="Editar">✏️</button> -->
                                 </div>
@@ -235,7 +235,7 @@
                 
                 {{-- SPINNER DE CARGA --}}
                 <div x-show="loading" class="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4" style="display: none;">
-                    <div class="w-10 h-10 border-4 border-slate-200 border-t-[#38B2AC] rounded-full animate-spin"></div>
+                    <div class="w-10 h-10 border-4 border-slate-200 theme-spinner-primary rounded-full animate-spin"></div>
                     <p class="text-[10px] font-black theme-text-heading uppercase tracking-[0.2em] animate-pulse">Guardando en Base de Datos...</p>
                 </div>
 

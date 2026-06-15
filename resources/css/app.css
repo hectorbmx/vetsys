@@ -19,6 +19,54 @@
         --theme-heading: #0f172a;
         --theme-focus-ring: rgb(56 178 172 / 10%);
     }
+
+    [data-theme-palette="violet"] {
+        --theme-primary: #7c3aed;
+        --theme-primary-hover: #6d28d9;
+        --theme-primary-soft: rgb(124 58 237 / 10%);
+        --theme-primary-soft-hover: rgb(124 58 237 / 20%);
+        --theme-primary-border: rgb(124 58 237 / 30%);
+        --theme-primary-strong: #5b21b6;
+        --theme-primary-contrast: #ffffff;
+        --theme-primary-ink: #111827;
+        --theme-sidebar: #1e1b4b;
+        --theme-sidebar-hover: #312e81;
+        --theme-sidebar-footer: #111827;
+        --theme-heading: #111827;
+        --theme-focus-ring: rgb(124 58 237 / 12%);
+    }
+
+    [data-theme-palette="forest"] {
+        --theme-primary: #059669;
+        --theme-primary-hover: #047857;
+        --theme-primary-soft: rgb(5 150 105 / 10%);
+        --theme-primary-soft-hover: rgb(5 150 105 / 20%);
+        --theme-primary-border: rgb(5 150 105 / 30%);
+        --theme-primary-strong: #065f46;
+        --theme-primary-contrast: #ffffff;
+        --theme-primary-ink: #0f172a;
+        --theme-sidebar: #064e3b;
+        --theme-sidebar-hover: #065f46;
+        --theme-sidebar-footer: #022c22;
+        --theme-heading: #0f172a;
+        --theme-focus-ring: rgb(5 150 105 / 12%);
+    }
+
+    [data-theme-palette="sunset"] {
+        --theme-primary: #ea580c;
+        --theme-primary-hover: #c2410c;
+        --theme-primary-soft: rgb(234 88 12 / 10%);
+        --theme-primary-soft-hover: rgb(234 88 12 / 20%);
+        --theme-primary-border: rgb(234 88 12 / 30%);
+        --theme-primary-strong: #9a3412;
+        --theme-primary-contrast: #ffffff;
+        --theme-primary-ink: #111827;
+        --theme-sidebar: #431407;
+        --theme-sidebar-hover: #7c2d12;
+        --theme-sidebar-footer: #1c0a03;
+        --theme-heading: #111827;
+        --theme-focus-ring: rgb(234 88 12 / 12%);
+    }
 }
 
 @layer components {
@@ -32,6 +80,10 @@
 
     .theme-bg-primary-soft-hover:hover {
         background-color: var(--theme-primary-soft-hover);
+    }
+
+    .theme-bg-primary-soft-always {
+        background-color: var(--theme-primary-soft);
     }
 
     .theme-text-primary {
@@ -167,8 +219,16 @@
         border-top-color: var(--theme-primary);
     }
 
+    .theme-spinner-primary {
+        border-top-color: var(--theme-primary);
+    }
+
     .theme-progress-primary {
-        background-image: linear-gradient(to right, var(--theme-primary), #34d399);
+        background-image: linear-gradient(to right, var(--theme-primary), var(--theme-primary-strong));
+    }
+
+    .theme-gradient-primary {
+        background-image: linear-gradient(to bottom right, var(--theme-primary), var(--theme-primary-strong));
     }
 
     .theme-nav-active {
@@ -203,7 +263,7 @@
 }
 
 .vetsys-tour-popover .driver-popover-title {
-    color: #0f172a;
+    color: var(--theme-heading);
     font-size: 15px;
     font-weight: 900;
 }
@@ -227,8 +287,8 @@
 }
 
 .vetsys-tour-popover .driver-popover-next-btn {
-    background: #38b2ac;
-    color: #0f172a;
+    background: var(--theme-primary);
+    color: var(--theme-primary-ink);
 }
 
 .vetsys-tour-popover .driver-popover-prev-btn {

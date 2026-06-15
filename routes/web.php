@@ -172,6 +172,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::post('clubes/{club}/coggins', [ClubController::class, 'storeCoggin'])->name('clubes.coggins.store');
             Route::delete('clubes/{club}/coggins/{coggin}', [ClubController::class, 'destroyCoggin'])->name('clubes.coggins.destroy');
             Route::resource('clubes', ClubController::class);
+            Route::patch('clubes/{club}/toggle', [ClubController::class, 'toggleStatus'])->name('clubes.toggle');
 
             /*
             |--------------------------------------------------------------------------
@@ -195,6 +196,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::post('mi-configuracion/stripe-connect', [StripeConnectController::class, 'connect'])->name('stripe-connect.connect');
             Route::get('mi-configuracion/stripe-connect/return', [StripeConnectController::class, 'return'])->name('stripe-connect.return');
             Route::patch('mi-configuracion', [ClientConfiguracionController::class, 'update'])->name('mi-configuracion.update');
+            Route::patch('mi-configuracion/apariencia', [ClientConfiguracionController::class, 'updateThemePalette'])->name('mi-configuracion.appearance.update');
             Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
             Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
             Route::post('mi-configuracion/plan', [ClientConfiguracionController::class, 'requestPlanChange'])->name('mi-configuracion.plan.request');

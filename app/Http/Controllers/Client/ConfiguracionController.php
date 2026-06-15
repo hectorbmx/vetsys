@@ -33,6 +33,7 @@ use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Models\TenantBillingProfile;
 use App\Services\TenantOnboardingService;
+use App\Support\TenantThemePalettes;
 
 class ConfiguracionController extends Controller
 {
@@ -90,6 +91,8 @@ class ConfiguracionController extends Controller
     $roleOptions = $this->tenantRoleOptions();
     $roleDescriptions = $this->tenantRoleDescriptions();
     $canManageTeam = $user->hasRole('admin');
+    $themePalettes = TenantThemePalettes::all();
+    $activeThemePalette = TenantThemePalettes::normalize($tenant?->theme_palette);
 
     $this->ensureTenantRolesExist();
 
@@ -107,8 +110,57 @@ class ConfiguracionController extends Controller
         'activePlans',
         'subscriptionPayments',
         'pendingPlanRequest',
-        'pendingPlanPayment'
+        'pendingPlanPayment',
+        'themePalettes',
+        'activeThemePalette'
     ));
+}
+
+public function updateThemePalette(Request $request)
+{
+    $user = $request->user();
+    $tenant = $user->tenant;
+
+    if (!$user->hasRole('admin')) {
+        abort(403);
+    }
+
+    $data = $request->validate([
+        'theme_palette' => ['required', Rule::in(TenantThemePalettes::keys())],
+        'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        'remove_logo' => ['nullable', 'boolean'],
+    ]);
+
+    $updates = [
+        'theme_palette' => $data['theme_palette'],
+    ];
+
+    if ($request->boolean('remove_logo') && $tenant?->logo) {
+        Storage::disk('r2')->delete($tenant->logo);
+        $updates['logo'] = null;
+    }
+
+    if ($request->hasFile('logo')) {
+        if ($tenant?->logo) {
+            Storage::disk('r2')->delete($tenant->logo);
+        }
+
+        $file = $request->file('logo');
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'png');
+        $path = 'tenants/'.$tenant->id.'/branding/logo-'.now()->format('YmdHis').'-'.Str::random(10).'.'.$extension;
+
+        Storage::disk('r2')->put($path, fopen($file->getRealPath(), 'rb'), [
+            'ContentType' => $file->getMimeType() ?: 'image/png',
+        ]);
+
+        $updates['logo'] = $path;
+    }
+
+    $tenant->update($updates);
+
+    return redirect()
+        ->route('client.mi-configuracion.index', ['tab' => 'apariencia'])
+        ->with('success', 'Apariencia actualizada para todo el equipo.');
 }
 
     /**

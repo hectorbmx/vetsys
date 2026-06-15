@@ -39,9 +39,9 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
     {{-- KPI 1: CLUBES ACTIVOS (TURQUESA) --}}
-    <div class="group bg-gradient-to-br from-teal-500 to-emerald-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
-            <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Clubes activos</p>
+            <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Clubes activos</p>
             <div class="flex items-baseline gap-2">
                 <span class="text-3xl font-black text-white tracking-tight">{{ $clubs->where('is_active', true)->count() }}</span>
             </div>
@@ -50,9 +50,9 @@
     </div>
 
     {{-- KPI 2: MIEMBROS ASIGNADOS (MORADO) --}}
-    <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
-            <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Miembros asignados</p>
+            <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Miembros asignados</p>
             <div class="flex items-baseline gap-2">
                 <span class="text-3xl font-black text-white tracking-tight">{{ $animals->whereNotNull('club_id')->count() }}</span>
             </div>
@@ -61,14 +61,14 @@
     </div>
 
     {{-- KPI 3: SIN CLUB (NARANJA) --}}
-    <div class="group bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
         <div class="space-y-1">
-            <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest">Sin club</p>
+            <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Sin club</p>
             <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-white tracking-tight">{{ $animals->whereNull('club_id')->count() }}</span>
+                <span class="text-3xl font-black theme-text-heading tracking-tight">{{ $animals->whereNull('club_id')->count() }}</span>
             </div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-lg font-black group-hover:scale-110 transition-transform">S</div>
+        <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-lg font-black group-hover:scale-110 transition-transform">S</div>
     </div>
 </div>
 
@@ -115,9 +115,22 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full {{ $club->is_active ? 'text-emerald-700 bg-emerald-50' : 'text-slate-500 bg-slate-100' }}">
-                                    {{ $club->is_active ? 'Activo' : 'Inactivo' }}
-                                </span>
+                                <form action="{{ route('client.clubes.toggle', $club->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="flex items-center gap-2 group focus:outline-none"
+                                            title="{{ $club->is_active ? 'Click para Inactivar' : 'Click para Activar' }}">
+
+                                        <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $club->is_active ? 'theme-bg-primary' : 'bg-slate-300' }}">
+                                            <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $club->is_active ? 'translate-x-4' : 'translate-x-0' }}"></div>
+                                        </div>
+
+                                        <span class="text-[10px] font-bold uppercase tracking-wider min-w-[50px] {{ $club->is_active ? 'theme-text-primary-strong' : 'text-slate-400' }}">
+                                            {{ $club->is_active ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </button>
+                                </form>
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">

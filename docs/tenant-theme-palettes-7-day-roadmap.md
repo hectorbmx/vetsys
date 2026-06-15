@@ -303,10 +303,14 @@ Centralizar los modulos de operacion cotidiana con menor complejidad visual.
 - [x] Migrar inputs y focus.
 - [x] Migrar enlaces destacados.
 - [x] Mantener estados funcionales.
-- [ ] Revisar listado.
-- [ ] Revisar creacion.
-- [ ] Revisar edicion.
-- [ ] Revisar detalle.
+- [x] Revisar listado.
+- [x] Revisar creacion.
+- [x] Revisar edicion.
+- [x] Revisar detalle.
+
+Nota de cierre: `resources/views/client/customers/statement.blade.php` conserva
+colores directos de marca porque es un documento/estado de cuenta imprimible y
+queda fuera del alcance de la primera version de paletas.
 
 ## Regla de avance
 
@@ -355,21 +359,26 @@ detectar colores de marca restantes.
 
 ## Restricciones
 
-- [ ] Stripe conserva sus colores.
-- [ ] WhatsApp conserva sus colores.
-- [ ] Estados clinicos conservan sus colores.
-- [ ] Estados financieros conservan sus colores.
-- [ ] Tickets e impresiones quedan fuera del tema.
-- [ ] Vistas publicas quedan fuera del tema.
+- [x] Stripe conserva sus colores.
+- [x] WhatsApp conserva sus colores.
+- [x] Estados clinicos conservan sus colores.
+- [x] Estados financieros conservan sus colores.
+- [x] Tickets e impresiones quedan fuera del tema.
+- [x] Vistas publicas quedan fuera del tema.
 
 ## Auditoria al terminar
 
-- [ ] Buscar referencias directas de colores de marca.
-- [ ] Clasificar cada referencia restante como intencional o pendiente.
-- [ ] Revisar contraste de texto.
-- [ ] Revisar hover, focus, disabled y loading.
+- [x] Buscar referencias directas de colores de marca.
+- [x] Clasificar cada referencia restante como intencional o pendiente.
+- [x] Revisar contraste de texto.
+- [x] Revisar hover, focus, disabled y loading.
 - [ ] Comparar contra las capturas del dia 1.
-- [ ] Documentar excepciones intencionales.
+- [x] Documentar excepciones intencionales.
+
+Nota de cierre: `resources/views/client/ventas/ticket.blade.php` conserva
+colores directos de marca porque es ticket/imprimible y queda fuera del alcance
+de la primera version de paletas. La comparacion visual contra capturas queda
+pendiente porque el navegador interno local fallo por sandbox.
 
 ## Busquedas sugeridas
 
@@ -406,35 +415,40 @@ Permitir que un administrador seleccione una paleta fija para todo su tenant.
 
 ## Backend
 
-- [ ] Agregar columna `theme_palette` a `tenants`.
-- [ ] Usar `ocean` como valor predeterminado.
-- [ ] Crear un catalogo central de paletas.
-- [ ] Agregar fallback seguro a `ocean`.
-- [ ] Exponer la paleta al layout cliente.
-- [ ] Crear endpoint para actualizar la paleta.
-- [ ] Validar mediante una lista cerrada.
-- [ ] Permitir cambios solo al rol `admin`.
-- [ ] Actualizar exclusivamente el tenant autenticado.
+- [x] Agregar columna `theme_palette` a `tenants`.
+- [x] Usar `ocean` como valor predeterminado.
+- [x] Crear un catalogo central de paletas.
+- [x] Agregar fallback seguro a `ocean`.
+- [x] Exponer la paleta al layout cliente.
+- [x] Crear endpoint para actualizar la paleta.
+- [x] Validar mediante una lista cerrada.
+- [x] Permitir cambios solo al rol `admin`.
+- [x] Actualizar exclusivamente el tenant autenticado.
 
 ## Interfaz
 
-- [ ] Agregar tab `Apariencia` en `mi-configuracion`.
-- [ ] Mostrar tarjetas de las paletas disponibles.
-- [ ] Mostrar la paleta activa.
-- [ ] Agregar vista previa temporal sin guardar.
-- [ ] Agregar boton `Aplicar paleta`.
-- [ ] Agregar boton `Restaurar predeterminada`.
-- [ ] Informar que el cambio afecta a todo el equipo.
+- [x] Agregar tab `Apariencia` en `mi-configuracion`.
+- [x] Mostrar tarjetas de las paletas disponibles.
+- [x] Mostrar la paleta activa.
+- [x] Agregar vista previa temporal sin guardar.
+- [x] Agregar boton `Aplicar paleta`.
+- [x] Agregar boton `Restaurar predeterminada`.
+- [x] Informar que el cambio afecta a todo el equipo.
 
 ## Pruebas automatizadas obligatorias
 
-- [ ] Tenant sin configuracion usa `ocean`.
-- [ ] Tenant puede guardar una paleta permitida.
-- [ ] Valor invalido es rechazado.
-- [ ] Usuario no administrador no puede cambiar la paleta.
-- [ ] Un tenant no puede modificar otro tenant.
-- [ ] Dos tenants pueden usar paletas distintas.
-- [ ] Admin y vistas publicas no cambian.
+- [x] Tenant sin configuracion usa `ocean`.
+- [x] Tenant puede guardar una paleta permitida.
+- [x] Valor invalido es rechazado.
+- [x] Usuario no administrador no puede cambiar la paleta.
+- [x] Un tenant no puede modificar otro tenant.
+- [x] Dos tenants pueden usar paletas distintas.
+- [x] Admin y vistas publicas no cambian.
+
+Nota de cierre: antes de agregar el selector se limpio la deuda de colores
+directos en pantallas autenticadas del cliente. Las referencias restantes son
+tokens CSS o documentos imprimibles excluidos: ticket de venta y estado de
+cuenta.
 
 ## Verificacion
 
@@ -566,7 +580,7 @@ Usar esta tabla al cerrar cada jornada.
 | 1 | 15/06/2026 | Codex | Tokens `ocean`, utilidades y guia creados; sin cambios en vistas | Build aprobado; 31 pruebas aprobadas y 1 fallo heredado en `ExampleTest` | Pendiente | Capturas de referencia bloqueadas por navegador local |
 | 2 | 15/06/2026 | Codex | Layout cliente migrado a tokens semanticos; admin y vistas internas sin cambios | Build y Blade aprobados; 31 pruebas aprobadas y 1 fallo heredado en `ExampleTest` | Pendiente | Revision visual de sidebar, dropdown y responsive bloqueada por navegador local |
 | 3 | 15/06/2026 | Codex | Configuracion y Dashboard migrados; integraciones, estados y metricas funcionales preservados | Build, Blade y 5 pruebas de onboarding aprobados; suite con 31 aprobadas y 1 fallo heredado | Pendiente | Revision visual de tabs, modales y onboarding bloqueada por navegador local |
-| 4 |  |  |  |  |  |  |
-| 5 |  |  |  |  |  |  |
-| 6 |  |  |  |  |  |  |
+| 4 | 15/06/2026 | Codex | CRUD principales cerrados: servicios, clientes, mascotas, clubes y notificaciones usan tokens semanticos; estados funcionales preservados; estado de cuenta imprimible excluido por alcance | Build Vite aprobado; 5 pruebas de onboarding aprobadas; suite con 31 aprobadas y 1 fallo heredado en `Tests\Feature\ExampleTest` | Pendiente | Revision visual en navegador interno bloqueada por sandbox local |
+| 5 | 15/06/2026 | Codex | Modulos complejos cerrados: ventas, telemedicina autenticada y facturacion autenticada usan tokens semanticos; Stripe, estados y ticket imprimible preservados | Build Vite aprobado; 5 pruebas de onboarding aprobadas; suite con 31 aprobadas y 1 fallo heredado en `Tests\Feature\ExampleTest` | Pendiente | Revision visual en navegador interno bloqueada por sandbox local |
+| 6 | 15/06/2026 | Codex | Persistencia y selector de apariencia implementados; deuda autenticada de colores limpiada; cuatro paletas disponibles con fallback `ocean` | Migracion aplicada; build Vite aprobado; 5 pruebas de paleta aprobadas; 5 pruebas de onboarding aprobadas; suite con 36 aprobadas y 1 fallo heredado en `Tests\Feature\ExampleTest` | Pendiente | Revision visual multi-paleta queda para dia 7 por bloqueo del navegador interno |
 | 7 |  |  |  |  |  |  |

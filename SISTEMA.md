@@ -491,6 +491,54 @@ Rutas utilizadas por la tarjeta:
 La app movil necesita una ruta y pantalla para configurar tipos de mascota y metodos
 de pago si se pretende completar todo el onboarding sin utilizar el portal web.
 
+## 11.1 Feature activo: personalizacion visual por tenant
+
+**Estado:** activo en panel cliente; pendiente revision visual multi-paleta.
+
+### Objetivo
+
+Permitir que un administrador de clinica seleccione una paleta fija para el panel
+cliente sin alterar colores funcionales ni vistas publicas o imprimibles.
+
+### Fuente de verdad
+
+- Campo `tenants.theme_palette`.
+- Catalogo cerrado en `App\Support\TenantThemePalettes`.
+- Fallback obligatorio: `ocean`.
+
+### Paletas disponibles
+
+| Clave | Uso |
+|---|---|
+| `ocean` | Paleta predeterminada y equivalente visual al panel original |
+| `violet` | Variante violeta con navegacion indigo |
+| `forest` | Variante verde con navegacion bosque |
+| `sunset` | Variante naranja con navegacion oscura |
+
+### Reglas de negocio
+
+- Solo usuarios con rol `admin` pueden cambiar la paleta.
+- El cambio actualiza exclusivamente el tenant autenticado.
+- Valores fuera del catalogo se rechazan al guardar y se normalizan a `ocean` al
+  renderizar el layout.
+- La paleta aplica al panel cliente autenticado mediante `data-theme-palette` y
+  tokens CSS `--theme-*`.
+- El panel administrativo, vistas publicas, tickets, estados de cuenta y otros
+  documentos imprimibles quedan fuera de la primera version.
+- Stripe, WhatsApp, exitos, errores, advertencias y estados clinicos o
+  financieros conservan colores funcionales u oficiales.
+
+### Archivos clave
+
+| Tema | Archivo |
+|---|---|
+| Catalogo | `app/Support/TenantThemePalettes.php` |
+| Persistencia | `database/migrations/2026_06_15_010000_add_theme_palette_to_tenants_table.php` |
+| Selector | `resources/views/client/mi-configuracion/index.blade.php` |
+| Aplicacion de paleta | `resources/views/layouts/client.blade.php` |
+| Tokens y paletas | `resources/css/app.css` |
+| Pruebas | `tests/Feature/TenantThemePaletteTest.php` |
+
 ## 12. Trabajos futuros y roadmap
 
 Esta seccion concentra features planeados o en proceso mencionados en la

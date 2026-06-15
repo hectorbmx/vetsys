@@ -257,7 +257,7 @@
                         </button>
                         <button
                             type="submit"
-                            class="flex-1 py-3 theme-bg-primary hover:bg-[#2C9A94] disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl text-xs font-black transition-all"
+                            class="flex-1 py-3 theme-button-primary disabled:bg-slate-200 disabled:text-slate-400 rounded-xl text-xs font-black transition-all"
                         >
                             Registrar pago / Generar link
                         </button>
@@ -411,7 +411,7 @@
                             name="name"
                             required
                             placeholder="Ej. Firulais"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                     <div>
@@ -419,7 +419,7 @@
                         <select
                             name="animal_type_id"
                             required
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                             <option value="">Seleccionar...</option>
                             @foreach($animalTypes as $type)
@@ -436,7 +436,7 @@
                         <select
                             name="sex"
                             required
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                             <option value="">Seleccionar...</option>
                             <option value="male">Macho</option>
@@ -449,7 +449,7 @@
                         <input
                             type="date"
                             name="birthdate"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                 </div>
@@ -458,7 +458,7 @@
                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Club</label>
                     <select
                         name="club_id"
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                     >
                         <option value="">Sin club</option>
                         @foreach($clubs as $club)
@@ -475,7 +475,7 @@
                             type="text"
                             name="color"
                             placeholder="Ej. Café con blanco"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                     <div>
@@ -486,7 +486,7 @@
                             step="0.01"
                             min="0"
                             placeholder="Ej. 4.50"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                 </div>
@@ -498,7 +498,7 @@
                         type="text"
                         name="microchip"
                         placeholder="Número de microchip"
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC]"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                     >
                 </div>
 
@@ -509,7 +509,7 @@
                         name="notes"
                         rows="2"
                         placeholder="Alergias, condiciones especiales..."
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#38B2AC] resize-none"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary resize-none"
                     ></textarea>
                 </div>
 
@@ -729,7 +729,7 @@
                         <button type="button" 
                                 @click="active = !active" 
                                 :class="active ? 'bg-emerald-500' : 'bg-slate-300'"
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#38B2AC] focus:ring-offset-2">
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 theme-focus-ring-primary focus:ring-offset-2">
                             <span :class="active ? 'translate-x-5' : 'translate-x-0'"
                                   class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
                         </button>
@@ -809,7 +809,7 @@
                             <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Generacion mensual</p>
                             <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Preparado para generar y guardar estados de cuenta por corte.</p>
                         </div>
-                        <input type="checkbox" name="is_statement_enabled" value="1" @checked(old('is_statement_enabled', optional($accountSetting)->is_statement_enabled)) class="rounded border-slate-300 theme-text-primary focus:ring-[#38B2AC]">
+                        <input type="checkbox" name="is_statement_enabled" value="1" @checked(old('is_statement_enabled', optional($accountSetting)->is_statement_enabled)) class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
                     </label>
 
                     <div class="flex justify-end">

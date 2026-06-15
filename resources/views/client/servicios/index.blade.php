@@ -146,7 +146,7 @@
                             {{-- Nombre e Icono --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg {{ $item->type === 'service' ? 'bg-teal-50 theme-text-primary' : 'bg-amber-50 text-amber-600' }} flex items-center justify-center font-black text-xs">
+                                    <div class="w-8 h-8 rounded-lg {{ $item->type === 'service' ? 'theme-bg-primary-soft theme-text-primary' : 'bg-amber-50 text-amber-600' }} flex items-center justify-center font-black text-xs">
                                         {{ $item->type === 'service' ? '⚙️' : '📦' }}
                                     </div>
                                     <div>
@@ -218,11 +218,11 @@
                 class="flex items-center gap-2 group focus:outline-none"
                 title="{{ $item->is_active ? 'Click para Inhabilitar' : 'Click para Habilitar' }}">
             
-            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $item->is_active ? 'bg-emerald-500' : 'bg-slate-300' }}">
+            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $item->is_active ? 'theme-bg-primary' : 'bg-slate-300' }}">
                 <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $item->is_active ? 'translate-x-4' : 'translate-x-0' }}"></div>
             </div>
             
-            <span class="text-[10px] font-bold uppercase tracking-wider {{ $item->is_active ? 'text-emerald-600' : 'text-slate-400' }}">
+            <span class="text-[10px] font-bold uppercase tracking-wider {{ $item->is_active ? 'theme-text-primary-strong' : 'text-slate-400' }}">
                 {{ $item->is_active ? 'Activo' : 'Inactivo' }}
             </span>
         </button>

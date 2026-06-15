@@ -9,12 +9,12 @@
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <div class="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                <a href="{{ route('client.mi-configuracion.index') }}" class="hover:text-[#38B2AC] transition-colors">Configuración</a>
+                <a href="{{ route('client.mi-configuracion.index') }}" class="hover:theme-text-primary transition-colors">Configuración</a>
                 <span>/</span>
                 <span class="text-slate-600">Campos Personalizados</span>
             </div>
-            <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">
-                Campos Clínicos para: <span class="text-[#38B2AC]">{{ $animalType->name }}</span>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">
+                Campos Clínicos para: <span class="theme-text-primary">{{ $animalType->name }}</span>
             </h1>
             <p class="text-sm text-slate-500 font-medium mt-1">
                 Define qué información extra e historial clínico deseas capturar de esta especie.
@@ -23,7 +23,7 @@
 
         {{-- Botón Regresar --}}
         <div>
-            <a href="{{ route('client.mi-configuracion.index') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-black text-[#0F172A] uppercase tracking-widest transition-all shadow-sm">
+            <a href="{{ route('client.mi-configuracion.index') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-black theme-text-heading uppercase tracking-widest transition-all shadow-sm">
                 ← Volver al Panel
             </a>
         </div>
@@ -37,12 +37,12 @@
             
             {{-- Spinner de carga interno --}}
             <div x-show="loading" class="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4" style="display: none;">
-                <div class="w-8 h-8 border-4 border-slate-200 border-t-[#38B2AC] rounded-full animate-spin"></div>
-                <p class="text-[10px] font-black text-[#0F172A] uppercase tracking-widest animate-pulse">Creando Campo...</p>
+                <div class="w-8 h-8 border-4 border-slate-200 theme-spinner-primary rounded-full animate-spin"></div>
+                <p class="text-[10px] font-black theme-text-heading uppercase tracking-widest animate-pulse">Creando Campo...</p>
             </div>
 
             <div class="px-6 py-5 bg-slate-50/50 border-b border-slate-100">
-                <h3 class="font-black text-[#0F172A] text-sm uppercase tracking-wider">Nuevo Campo Extra</h3>
+                <h3 class="font-black theme-text-heading text-sm uppercase tracking-wider">Nuevo Campo Extra</h3>
             </div>
 
             
@@ -52,14 +52,14 @@
 
                 {{-- Etiqueta del Campo --}}
                 <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Nombre / Etiqueta *</label>
-                    <input type="text" name="label" required placeholder="Ej. Número de Registro, Pedigree" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+                    <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Nombre / Etiqueta *</label>
+                    <input type="text" name="label" required placeholder="Ej. Número de Registro, Pedigree" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
                 </div>
 
                 {{-- Tipo de Entrada --}}
                 <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Tipo de Dato *</label>
-                    <select name="field_type" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner cursor-pointer">
+                    <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Tipo de Dato *</label>
+                    <select name="field_type" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner cursor-pointer">
                         <option value="text">Texto Corto (Línea única)</option>
                         <option value="textarea">Texto Largo (Párrafo / Notas)</option>
                         <option value="number">Número Entero</option>
@@ -72,22 +72,22 @@
 
                 {{-- Texto de Ayuda (Help Text) --}}
                 <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-[#0F172A] uppercase tracking-widest">Texto de ayuda (Opcional)</label>
-                    <input type="text" name="help_text" placeholder="Ej. Visible debajo del campo como guía" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all outline-none shadow-inner">
+                    <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Texto de ayuda (Opcional)</label>
+                    <input type="text" name="help_text" placeholder="Ej. Visible debajo del campo como guía" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
                 </div>
 
                 {{-- Obligatorio (is_required) --}}
                 <div class="pt-2">
                     <label class="relative flex items-center cursor-pointer select-none">
                         <input type="checkbox" name="is_required" value="1" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#38B2AC]"></div>
-                        <span class="ms-3 text-xs font-black text-[#0F172A] uppercase tracking-wider">¿Es campo obligatorio?</span>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all theme-peer-checked-bg-primary"></div>
+                        <span class="ms-3 text-xs font-black theme-text-heading uppercase tracking-wider">¿Es campo obligatorio?</span>
                     </label>
                 </div>
 
                 {{-- Botón Guardar --}}
                 <div class="pt-4 border-t border-slate-100">
-                    <button type="submit" class="w-full bg-[#0F172A] py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg transition-colors">
+                    <button type="submit" class="w-full theme-button-dark py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg transition-colors">
                         Agregar Campo Extra
                     </button>
                 </div>
@@ -97,8 +97,8 @@
         {{-- COLUMNA DERECHA: Listado de Campos Existentes --}}
         <div class="lg:col-span-2 bg-white rounded-[24px] border border-slate-100 shadow-xl overflow-hidden">
             <div class="px-6 py-5 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="font-black text-[#0F172A] text-sm uppercase tracking-wider">Campos Habilitados ({{ $fields->count() }})</h3>
-                <span class="px-2.5 py-1 bg-slate-100 text-[#0F172A] text-[10px] font-black uppercase tracking-widest rounded-md">N Cantidad</span>
+                <h3 class="font-black theme-text-heading text-sm uppercase tracking-wider">Campos Habilitados ({{ $fields->count() }})</h3>
+                <span class="px-2.5 py-1 bg-slate-100 theme-text-heading text-[10px] font-black uppercase tracking-widest rounded-md">N Cantidad</span>
             </div>
 
             <div class="divide-y divide-slate-100">
@@ -106,7 +106,7 @@
                     <div class="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                         <div class="space-y-1">
                             <div class="flex items-center gap-2">
-                                <h4 class="font-black text-[#0F172A] text-base tracking-tight">{{ $field->label }}</h4>
+                                <h4 class="font-black theme-text-heading text-base tracking-tight">{{ $field->label }}</h4>
                                 @if($field->is_required)
                                     <span class="bg-red-50 text-red-600 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border border-red-100">
                                         Obligatorio
@@ -134,7 +134,7 @@
                         <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100">
                             <span class="text-slate-400 text-lg">📝</span>
                         </div>
-                        <h4 class="text-sm font-black text-[#0F172A] uppercase tracking-wider">Sin campos personalizados</h4>
+                        <h4 class="text-sm font-black theme-text-heading uppercase tracking-wider">Sin campos personalizados</h4>
                         <p class="text-xs text-slate-400 font-medium mt-1 max-w-sm mx-auto">
                             Esta especie solo capturará los campos básicos del sistema por ahora (Nombre, Fecha de Nacimiento, Sexo, Peso y Notas).
                         </p>

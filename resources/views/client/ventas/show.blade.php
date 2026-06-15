@@ -9,7 +9,7 @@
         {{-- ENCABEZADO --}}
         <div class="flex items-start justify-between">
             <div>
-                <h1 class="text-2xl font-black text-[#0F172A] tracking-tight">{{ $note->folio }}</h1>
+                <h1 class="text-2xl font-black theme-text-heading tracking-tight">{{ $note->folio }}</h1>
                 <p class="text-sm text-slate-400 font-medium mt-0.5">{{ $note->date_at->format('d/m/Y') }}</p>
             </div>
             <div class="flex items-center gap-2">
@@ -49,7 +49,7 @@
                         <span x-text="copied ? 'Copiado' : 'Copiar link'"></span>
                     </button>
                 </div>
-                <input type="text" readonly :value="url" class="w-full bg-white border border-[#DAD7FE] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#0F172A]">
+                <input type="text" readonly :value="url" class="w-full bg-white border border-[#DAD7FE] rounded-xl px-4 py-2.5 text-xs font-semibold theme-text-heading">
             </div>
         @endif
 
@@ -58,7 +58,7 @@
             <div>
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cliente</p>
                 <a href="{{ route('client.customers.show', $note->customer->id) }}"
-                   class="text-base font-black text-[#0F172A] hover:text-blue-600 transition-colors">
+                   class="text-base font-black theme-text-heading theme-hover-text-primary transition-colors">
                     {{ $note->customer->full_name }}
                 </a>
                 <p class="text-xs text-slate-400 mt-0.5">📞 {{ $note->customer->phone ?? 'Sin teléfono' }}</p>
@@ -79,7 +79,7 @@
         @foreach($detailsByAnimal as $animalId => $details)
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <p class="text-xs font-black text-[#0F172A] uppercase tracking-wide">
+                    <p class="text-xs font-black theme-text-heading uppercase tracking-wide">
                         🐾 {{ $details->first()->animal->name ?? 'Sin mascota' }}
                     </p>
                 </div>
@@ -96,7 +96,7 @@
                         @foreach($details as $detail)
                             <tr>
                                 <td class="px-6 py-3">
-                                    <span class="text-xs font-bold text-[#0F172A]">{{ $detail->catalogItem->name }}</span>
+                                    <span class="text-xs font-bold theme-text-heading">{{ $detail->catalogItem->name }}</span>
                                     <span class="text-[10px] text-slate-400 block font-medium">
                                         {{ $detail->catalogItem->type === 'service' ? 'Servicio' : 'Producto' }}
                                     </span>
@@ -107,7 +107,7 @@
                                 <td class="px-6 py-3 text-xs font-semibold text-slate-600 text-right">
                                     ${{ number_format($detail->price_at_sale, 2) }}
                                 </td>
-                                <td class="px-6 py-3 text-xs font-black text-[#0F172A] text-right">
+                                <td class="px-6 py-3 text-xs font-black theme-text-heading text-right">
                                     ${{ number_format($detail->subtotal, 2) }}
                                 </td>
                             </tr>
@@ -123,7 +123,7 @@
             <div class="space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="font-semibold text-slate-600">Total de la nota</span>
-                    <span class="font-black text-[#0F172A]">${{ number_format($note->total, 2) }}</span>
+                    <span class="font-black theme-text-heading">${{ number_format($note->total, 2) }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="font-semibold text-slate-600">Pagado</span>
@@ -168,14 +168,14 @@
                         <div x-show="openManualPayment"
                              x-cloak
                              x-transition.opacity
-                             class="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/70 backdrop-blur-sm p-4"
+                             class="fixed inset-0 z-50 flex items-center justify-center theme-overlay backdrop-blur-sm p-4"
                              @keydown.escape.window="openManualPayment = false">
                             <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden"
                                  @click.outside="openManualPayment = false">
                                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                                     <div>
                                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Pago manual</p>
-                                        <h3 class="text-lg font-black text-[#0F172A] mt-1">{{ $note->folio }}</h3>
+                                        <h3 class="text-lg font-black theme-text-heading mt-1">{{ $note->folio }}</h3>
                                     </div>
                                     <button type="button"
                                             @click="openManualPayment = false"
@@ -200,14 +200,14 @@
                                                step="0.01"
                                                value="{{ number_format($note->balance, 2, '.', '') }}"
                                                required
-                                               class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                                               class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-black theme-text-heading theme-input">
                                     </div>
 
                                     <div>
                                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Metodo de pago</label>
                                         <select name="payment_method_id"
                                                 required
-                                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0F172A] bg-white focus:outline-none focus:border-[#38B2AC]">
+                                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading bg-white theme-input">
                                             <option value="">Seleccionar...</option>
                                             @foreach($paymentMethods as $method)
                                                 <option value="{{ $method->id }}">{{ $method->name }}</option>
@@ -221,7 +221,7 @@
                                                name="reference"
                                                maxlength="255"
                                                placeholder="Efectivo, transferencia, recibo, etc."
-                                               class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-[#0F172A] focus:outline-none focus:border-[#38B2AC]">
+                                               class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading theme-input">
                                     </div>
 
                                     <div class="flex gap-3 pt-2">
@@ -246,7 +246,7 @@
                         @foreach($note->paymentLinks as $link)
                             <div x-data="{ copied: false, url: @js(route('public.payments.show', $link->token)) }" class="border border-slate-100 bg-slate-50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
-                                    <p class="text-xs font-black text-[#0F172A]">${{ number_format((float) $link->amount, 2) }} {{ $link->currency }}</p>
+                                    <p class="text-xs font-black theme-text-heading">${{ number_format((float) $link->amount, 2) }} {{ $link->currency }}</p>
                                     <p class="text-[11px] font-semibold text-slate-400">
                                         {{ ucfirst($link->status) }} · {{ $link->created_at->format('d/m/Y H:i') }}
                                     </p>
@@ -267,7 +267,7 @@
         @if($note->payments->isNotEmpty())
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <p class="text-xs font-black text-[#0F172A] uppercase tracking-wide">💳 Pagos Registrados</p>
+                    <p class="text-xs font-black theme-text-heading uppercase tracking-wide">💳 Pagos Registrados</p>
                 </div>
                 <table class="w-full text-left">
                     <thead>
@@ -280,7 +280,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @foreach($note->payments as $payment)
                             <tr>
-                                <td class="px-6 py-3 text-xs font-bold text-[#0F172A]">
+                                <td class="px-6 py-3 text-xs font-bold theme-text-heading">
                                     {{ $payment->paymentMethod->name ?? '—' }}
                                 </td>
                                 <td class="px-6 py-3 text-xs text-slate-500 font-medium">

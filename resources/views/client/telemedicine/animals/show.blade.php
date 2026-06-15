@@ -14,12 +14,12 @@
 }">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-[#38B2AC]/10 text-[#38B2AC] flex items-center justify-center font-black text-xl">
+            <div class="w-14 h-14 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-xl">
                 {{ substr($animal->name, 0, 1) }}
             </div>
             <div>
-                <p class="text-[10px] font-black text-[#38B2AC] uppercase tracking-[0.24em]">Telemedicina</p>
-                <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter">{{ $animal->name }}</h1>
+                <p class="text-[10px] font-black theme-text-primary uppercase tracking-[0.24em]">Telemedicina</p>
+                <h1 class="text-3xl font-black theme-text-heading tracking-tighter">{{ $animal->name }}</h1>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                     {{ $animal->animalType->name ?? 'Sin especie' }} · Expediente compartido por {{ $animal->tenant->name ?? 'tenant origen' }}
                 </p>
@@ -34,22 +34,22 @@
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="border-b border-slate-100 px-6 pt-4">
             <nav class="flex flex-wrap gap-1">
-                <button type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Datos del Animal
                 </button>
-                <button type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Historial de Servicios
                 </button>
-                <button type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Cartas de Vacunacion
                 </button>
-                <button type="button" @click="tab = 'videos'" :class="tab === 'videos' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'videos'" :class="tab === 'videos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Videos
                 </button>
-                <button type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Radiologia
                 </button>
-                <button type="button" @click="tab = 'extra'" :class="tab === 'extra' ? 'border-[#38B2AC] text-[#38B2AC]' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'extra'" :class="tab === 'extra' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Mas Informacion
                 </button>
             </nav>
@@ -71,14 +71,14 @@
                 ] as $label => $value)
                     <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ $label }}</p>
-                        <p class="mt-2 text-sm font-black text-[#0F172A]">{{ $value }}</p>
+                        <p class="mt-2 text-sm font-black theme-text-heading">{{ $value }}</p>
                     </div>
                 @endforeach
             </div>
 
             <div class="mt-5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notas Clinicas / Alergias</p>
-                <p class="mt-2 text-sm font-semibold text-[#0F172A] whitespace-pre-line">{{ $animal->notes ?: 'Sin notas registradas.' }}</p>
+                <p class="mt-2 text-sm font-semibold theme-text-heading whitespace-pre-line">{{ $animal->notes ?: 'Sin notas registradas.' }}</p>
             </div>
         </div>
 
@@ -97,11 +97,11 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse($serviceHistory as $detail)
                             <tr>
-                                <td class="px-4 py-3 text-xs font-bold text-[#0F172A]">{{ optional($detail->note?->date_at)->format('d/m/Y') ?? '--' }}</td>
+                                <td class="px-4 py-3 text-xs font-bold theme-text-heading">{{ optional($detail->note?->date_at)->format('d/m/Y') ?? '--' }}</td>
                                 <td class="px-4 py-3 text-xs font-bold text-slate-500">{{ $detail->note->folio ?? 'Sin folio' }}</td>
-                                <td class="px-4 py-3 text-xs font-bold text-[#0F172A]">{{ $detail->catalogItem->name ?? 'Concepto eliminado' }}</td>
+                                <td class="px-4 py-3 text-xs font-bold theme-text-heading">{{ $detail->catalogItem->name ?? 'Concepto eliminado' }}</td>
                                 <td class="px-4 py-3 text-xs font-bold text-right text-slate-500">{{ $detail->quantity }}</td>
-                                <td class="px-4 py-3 text-xs font-black text-right text-[#0F172A]">${{ number_format($detail->subtotal, 2) }}</td>
+                                <td class="px-4 py-3 text-xs font-black text-right theme-text-heading">${{ number_format($detail->subtotal, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -122,12 +122,12 @@
                         </div>
                         <div class="p-4">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carta {{ $loop->iteration }}</p>
-                            <p class="text-sm font-black text-[#0F172A] mt-1">{{ $letter->date->format('d/m/Y') }}</p>
+                            <p class="text-sm font-black theme-text-heading mt-1">{{ $letter->date->format('d/m/Y') }}</p>
                         </div>
                     </div>
                 @empty
                     <div class="md:col-span-2 border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
-                        <p class="text-sm font-black text-[#0F172A]">Sin cartas de vacunacion</p>
+                        <p class="text-sm font-black theme-text-heading">Sin cartas de vacunacion</p>
                         <p class="text-xs font-semibold text-slate-400 mt-2">No hay documentos visibles para este paciente.</p>
                     </div>
                 @endforelse
@@ -137,7 +137,7 @@
         <div x-show="tab === 'videos'" class="p-6" x-cloak>
             <div class="overflow-hidden border border-slate-200 rounded-2xl bg-white">
                 <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/60">
-                    <p class="text-sm font-black text-[#0F172A]">Videos clinicos</p>
+                    <p class="text-sm font-black theme-text-heading">Videos clinicos</p>
                     <p class="text-[11px] text-slate-400 font-semibold mt-1">Contenido compartido en modo lectura.</p>
                 </div>
                 <div class="overflow-x-auto">
@@ -162,10 +162,10 @@
                                             </svg>
                                         </button>
                                     </td>
-                                    <td class="px-4 py-3 text-xs font-black text-[#0F172A] whitespace-nowrap">{{ $video->video_date->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3 text-xs font-black theme-text-heading whitespace-nowrap">{{ $video->video_date->format('d/m/Y') }}</td>
                                     <td class="px-4 py-3 min-w-[260px] text-xs font-semibold text-slate-600">{{ \Illuminate\Support\Str::limit($video->notes ?: 'Sin descripcion', 120) }}</td>
                                     <td class="px-4 py-3 min-w-[220px]">
-                                        <p class="text-xs font-bold text-[#0F172A]">{{ \Illuminate\Support\Str::limit($video->original_name ?? 'Video', 42) }}</p>
+                                        <p class="text-xs font-bold theme-text-heading">{{ \Illuminate\Support\Str::limit($video->original_name ?? 'Video', 42) }}</p>
                                         <p class="text-[11px] font-semibold text-slate-400 mt-0.5">
                                             {{ $video->mime_type ?? 'video/mp4' }}
                                             @if($video->size)
@@ -184,10 +184,10 @@
                 </div>
             </div>
 
-            <div x-show="videoPlayerOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center bg-[#0F172A]/80 px-4 py-6 backdrop-blur-sm">
+            <div x-show="videoPlayerOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
                 <div @click.outside="videoPlayerOpen = false; playingVideoUrl = ''" class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
                     <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
-                        <p class="truncate text-sm font-black text-[#0F172A]" x-text="playingVideoTitle"></p>
+                        <p class="truncate text-sm font-black theme-text-heading" x-text="playingVideoTitle"></p>
                         <button type="button" @click="videoPlayerOpen = false; playingVideoUrl = ''" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
                     </div>
                     <div class="aspect-video bg-slate-950">
@@ -201,7 +201,7 @@
 
         <div x-show="tab === 'radiologia'" class="p-6 space-y-6" x-cloak>
             <div>
-                <p class="text-sm font-black text-[#0F172A]">Carpetas de radiologia</p>
+                <p class="text-sm font-black theme-text-heading">Carpetas de radiologia</p>
                 <p class="text-[11px] text-slate-400 font-semibold mt-1">Estudios RX compartidos en modo lectura.</p>
             </div>
 
@@ -214,7 +214,7 @@
                         <div class="pt-5">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-black text-[#0F172A]">{{ $study->name }}</p>
+                                    <p class="truncate text-sm font-black theme-text-heading">{{ $study->name }}</p>
                                     <p class="mt-1 text-[11px] font-bold uppercase tracking-widest text-amber-700">{{ $study->study_date->format('d/m/Y') }}</p>
                                 </div>
                                 <span class="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-amber-700 ring-1 ring-amber-200">
@@ -228,18 +228,18 @@
                     </button>
                 @empty
                     <div class="sm:col-span-2 xl:col-span-3 border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
-                        <p class="text-sm font-black text-[#0F172A]">Sin carpetas de radiologia</p>
+                        <p class="text-sm font-black theme-text-heading">Sin carpetas de radiologia</p>
                         <p class="text-xs font-semibold text-slate-400 mt-2">No hay estudios RX visibles para este paciente.</p>
                     </div>
                 @endforelse
             </div>
 
             @foreach($animal->radiologyStudies as $study)
-                <div x-show="radiologyStudyOpen === {{ $study->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center bg-[#0F172A]/75 px-4 py-6 backdrop-blur-sm">
+                <div x-show="radiologyStudyOpen === {{ $study->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
                     <div @click.outside="radiologyStudyOpen = null; radiologyImageUrl = ''" class="relative flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
                         <div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-black text-[#0F172A]">{{ $study->name }}</p>
+                                <p class="truncate text-sm font-black theme-text-heading">{{ $study->name }}</p>
                                 <p class="mt-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">{{ $study->study_date->format('d/m/Y') }} &middot; {{ $study->images->count() }} RX</p>
                             </div>
                             <button type="button" @click="radiologyStudyOpen = null; radiologyImageUrl = ''" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200">Cerrar</button>
@@ -257,12 +257,12 @@
                                 @forelse($study->images as $image)
                                     <button type="button"
                                             @click="radiologyImageUrl = @js(route('client.telemedicine.radiology-images.show', [$share->token, $image])); radiologyImageTitle = @js($image->label ?: $image->original_name ?: 'RX')"
-                                            class="overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm hover:border-[#38B2AC]">
+                                            class="overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm theme-hover-border-primary-soft">
                                         <div class="aspect-square bg-slate-100">
                                             <img src="{{ route('client.telemedicine.radiology-images.show', [$share->token, $image]) }}" alt="{{ $image->label ?? $image->original_name ?? 'RX' }}" class="h-full w-full object-cover">
                                         </div>
                                         <div class="p-3">
-                                            <p class="truncate text-xs font-black text-[#0F172A]">{{ $image->label ?: 'RX' }}</p>
+                                            <p class="truncate text-xs font-black theme-text-heading">{{ $image->label ?: 'RX' }}</p>
                                             <p class="mt-1 text-[11px] font-semibold text-slate-400">
                                                 {{ \Illuminate\Support\Str::limit($image->original_name ?? 'Imagen', 24) }}
                                                 @if($image->size)
@@ -273,17 +273,17 @@
                                     </button>
                                 @empty
                                     <div class="col-span-full rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
-                                        <p class="text-sm font-black text-[#0F172A]">Carpeta sin RX</p>
+                                        <p class="text-sm font-black theme-text-heading">Carpeta sin RX</p>
                                         <p class="mt-2 text-xs font-semibold text-slate-400">No hay imagenes visibles en este estudio.</p>
                                     </div>
                                 @endforelse
                             </div>
                         </div>
 
-                        <div x-show="radiologyImageUrl" x-cloak x-transition.opacity class="absolute inset-0 z-[112] flex items-center justify-center bg-[#0F172A]/85 px-4 py-6 backdrop-blur-sm">
+                        <div x-show="radiologyImageUrl" x-cloak x-transition.opacity class="absolute inset-0 z-[112] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
                             <div @click.outside="radiologyImageUrl = ''" class="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
                                 <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
-                                    <p class="truncate text-sm font-black text-[#0F172A]" x-text="radiologyImageTitle"></p>
+                                    <p class="truncate text-sm font-black theme-text-heading" x-text="radiologyImageTitle"></p>
                                     <button type="button" @click="radiologyImageUrl = ''" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
                                 </div>
                                 <div class="overflow-auto bg-slate-950 p-4">
@@ -298,7 +298,7 @@
 
         <div x-show="tab === 'extra'" class="p-6" x-cloak>
             <div class="border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
-                <p class="text-sm font-black text-[#0F172A]">Mas informacion del paciente</p>
+                <p class="text-sm font-black theme-text-heading">Mas informacion del paciente</p>
                 <p class="text-xs font-semibold text-slate-400 mt-2">Este espacio queda visible en modo lectura para futuras secciones clinicas extendidas.</p>
             </div>
         </div>

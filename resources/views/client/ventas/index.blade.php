@@ -6,10 +6,10 @@
     {{-- ENCABEZADO --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 class="text-xl font-black text-[#0F172A] uppercase tracking-widest">Historial de Ventas</h1>
+            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Historial de Ventas</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.</p>
         </div>
-        <a href="{{ route('client.ventas.create') }}" class="bg-[#0F172A] hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center gap-2">
+        <a href="{{ route('client.ventas.create') }}" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center gap-2">
             + Nueva Nota de Venta
         </a>
     </div>
@@ -18,16 +18,16 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {{-- KPI 1: VENTAS DEL MES (VIOLETA) --}}
-        <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
             <div class="space-y-1">
-                <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Ventas del Mes</p>
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Ventas del Mes</p>
                 <div class="flex items-baseline gap-2">
                     <span class="text-3xl font-black text-white tracking-tight">${{ number_format($totalSalesMonth, 2) }}</span>
                 </div>
                 @if($totalPending > 0)
                     <div class="flex items-center gap-1.5 mt-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
-                        <p class="text-[10px] font-bold text-indigo-100 uppercase">Adeudo total pendiente: ${{ number_format($totalPending, 2) }}</p>
+                        <p class="text-[10px] font-bold text-slate-300 uppercase">Adeudo total pendiente: ${{ number_format($totalPending, 2) }}</p>
                     </div>
                 @else
                     <p class="text-[10px] font-bold text-emerald-300 uppercase mt-2">✓ Cartera al día</p>
@@ -37,12 +37,12 @@
         </div>
 
         {{-- KPI 2: NOTAS GENERADAS (AMBAR) --}}
-        <div class="group bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
             <div class="space-y-1">
-                <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest">Notas Generadas</p>
+                <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Notas Generadas</p>
                 <div class="flex items-baseline gap-2">
                     <span class="text-3xl font-black text-white tracking-tight">{{ $totalNotesMonth }}</span>
-                    <span class="text-[10px] font-medium text-orange-100">este mes</span>
+                    <span class="text-[10px] font-medium text-white/80">este mes</span>
                 </div>
                 <div class="flex gap-3 mt-2">
                     <div class="flex items-center gap-1">
@@ -59,12 +59,12 @@
         </div>
 
         {{-- KPI 3: PACIENTES ATENDIDOS (TURQUESA) --}}
-        <div class="group bg-gradient-to-br from-teal-500 to-emerald-600 border border-teal-500 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+        <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
             <div class="space-y-1">
-                <p class="text-[10px] font-black text-teal-100 uppercase tracking-widest">Pacientes Atendidos Este Mes</p>
+                <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Pacientes Atendidos Este Mes</p>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-white tracking-tight">{{ $animalsAttendedMonth }}</span>
-                    <span class="text-[10px] font-medium text-teal-100">animales únicos</span>
+                    <span class="text-3xl font-black theme-text-heading tracking-tight">{{ $animalsAttendedMonth }}</span>
+                    <span class="text-[10px] font-medium theme-text-primary-strong">animales únicos</span>
                 </div>
             </div>
             <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
@@ -90,7 +90,7 @@
                     @forelse($notes as $note)
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             {{-- Folio --}}
-                            <td class="px-6 py-4 text-xs font-mono font-bold text-[#0F172A]">
+                            <td class="px-6 py-4 text-xs font-mono font-bold theme-text-heading">
                                 {{ $note->folio }}
                             </td>
 
@@ -101,20 +101,20 @@
 
                             {{-- Cliente --}}
                             {{-- <td class="px-6 py-4">
-                                <span class="text-xs font-bold text-[#0F172A] block">{{ $note->customer->full_name }}</span>
+                                <span class="text-xs font-bold theme-text-heading block">{{ $note->customer->full_name }}</span>
                                 <span class="text-[10px] text-slate-400 font-medium block">📞 {{ $note->customer->phone ?? 'Sin Teléfono' }}</span>
                             </td> --}}
                             {{-- Cliente --}}
                             <td class="px-6 py-4">
                                 <a href="{{ route('client.customers.show', $note->customer->id) }}" 
-                                class="text-xs font-bold text-[#0F172A] block hover:text-blue-600 hover:underline transition-colors">
+                                class="text-xs font-bold theme-text-heading block theme-hover-text-primary hover:underline transition-colors">
                                     {{ $note->customer->full_name }}
                                 </a>
                                 <span class="text-[10px] text-slate-400 font-medium block">📞 {{ $note->customer->phone ?? 'Sin Teléfono' }}</span>
                             </td>
 
                             {{-- Total --}}
-                            <td class="px-6 py-4 text-xs font-black text-[#0F172A]">
+                            <td class="px-6 py-4 text-xs font-black theme-text-heading">
                                 ${{ number_format($note->total, 2) }}
                             </td>
 
@@ -149,7 +149,7 @@
                             <td class="px-6 py-4 text-right">
                               
                                        <a href="{{ route('client.ventas.show', $note->id) }}"
-                                        class="p-1.5 text-slate-400 hover:text-[#38B2AC] transition-colors" 
+                                        class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
                                         title="Ver ficha">🔍</a>
                             </td>
                         </tr>

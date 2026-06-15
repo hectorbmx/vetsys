@@ -11,7 +11,13 @@
         .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
+@php
+    $layoutTenant = auth()->user()?->tenant;
+    $layoutThemePalette = \App\Support\TenantThemePalettes::normalize($layoutTenant?->theme_palette);
+    $layoutTenantLogoUrl = $layoutTenant?->logoUrl();
+@endphp
 <body class="bg-slate-50 min-h-screen text-slate-900"
+      data-theme-palette="{{ $layoutThemePalette }}"
       x-data="{ sidebarOpen: true }"
       @hasSection('contextual-tour') data-contextual-tour="@yield('contextual-tour')" @endif>
 {{-- Toast de Notificación Global --}}
@@ -21,7 +27,7 @@
          x-show="show" 
          x-transition:enter="transition ease-out duration-300"
          x-transition:leave="transition ease-in duration-200"
-         class="fixed bottom-5 right-5 z-[100] bg-[#0F172A] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
+         class="fixed bottom-5 right-5 z-[100] theme-surface-dark px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
         <span class="text-xl">✅</span>
         <p class="text-[10px] font-black uppercase tracking-widest">{{ session('success') }}</p>
     </div>
@@ -50,13 +56,19 @@
     <div class="px-4 py-5 border-b border-white/5 flex items-center overflow-hidden theme-bg-sidebar theme-bg-sidebar-hover transition-colors cursor-pointer">
         <div class="flex items-center gap-3 min-w-[200px]">
             {{-- Identidad visual del tenant --}}
-            <div class="flex-shrink-0 w-10 h-10 rounded-xl theme-bg-primary theme-text-primary-ink flex items-center justify-center font-black theme-shadow-primary">
-                {{ substr(auth()->user()->tenant->name ?? 'V', 0, 1) }}
-            </div>
+            @if($layoutTenantLogoUrl)
+                <img src="{{ $layoutTenantLogoUrl }}"
+                     alt="{{ $layoutTenant->name ?? 'Tenant' }}"
+                     class="flex-shrink-0 w-10 h-10 rounded-xl bg-white/95 object-contain p-1 theme-shadow-primary">
+            @else
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl theme-bg-primary theme-text-primary-ink flex items-center justify-center font-black theme-shadow-primary">
+                    {{ substr($layoutTenant->name ?? 'V', 0, 1) }}
+                </div>
+            @endif
 
             <div x-show="sidebarOpen" x-transition.opacity>
                 <h1 class="font-bold text-lg leading-none text-white tracking-tight truncate max-w-[140px]">
-                    {{ auth()->user()->tenant->name ?? 'VetSys' }}
+                    {{ $layoutTenant->name ?? 'VetSys' }}
                 </h1>
 
                 <p class="text-[10px] uppercase tracking-widest theme-text-primary mt-1 font-black">
@@ -196,7 +208,7 @@
 
                         <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">
                             @forelse(($layoutNotifications ?? collect()) as $notification)
-                                <a href="{{ route('client.notifications.open', $notification) }}" class="block px-4 py-3 hover:bg-slate-50 transition-colors {{ $notification->read_at ? '' : 'bg-[#38B2AC]/5' }}">
+                                <a href="{{ route('client.notifications.open', $notification) }}" class="block px-4 py-3 hover:bg-slate-50 transition-colors {{ $notification->read_at ? '' : 'theme-bg-primary-soft' }}">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <p class="text-xs font-black theme-text-heading">{{ $notification->title }}</p>
@@ -204,7 +216,7 @@
                                             <p class="text-[10px] font-bold text-slate-400 mt-2">{{ $notification->created_at->diffForHumans() }}</p>
                                         </div>
                                         @if(!$notification->read_at)
-                                            <span class="mt-1 h-2 w-2 rounded-full bg-[#38B2AC] flex-shrink-0"></span>
+                                            <span class="mt-1 h-2 w-2 rounded-full theme-bg-primary flex-shrink-0"></span>
                                         @endif
                                     </div>
                                 </a>

@@ -5,10 +5,10 @@
         {{-- CABECERA DE LA SECCIÓN --}}
         <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div>
-                <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Métodos de Pago Habilitados</h3>
+                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Métodos de Pago Habilitados</h3>
                 <p class="text-[11px] text-slate-400 font-medium mt-0.5">Configura las opciones que tus clientes tendrán disponibles para liquidar o abonar a sus notas médicas.</p>
             </div>
-            <button @click="openForm = !openForm" class="bg-[#0F172A] hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all">
+            <button @click="openForm = !openForm" class="theme-button-dark px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all">
                 <span x-text="openForm ? '✕ Cerrar' : '+ Agregar Método'"></span>
             </button>
         </div>
@@ -20,16 +20,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Nombre comercial</label>
-                        <input type="text" name="name" required placeholder="Ej: Terminal Clip, Efectivo" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                        <input type="text" name="name" required placeholder="Ej: Terminal Clip, Efectivo" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                         @error('name') <span class="text-[11px] text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                     </div>
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Descripción (Opcional)</label>
-                        <input type="text" name="description" placeholder="Ej: Cobros en caja central" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                        <input type="text" name="description" placeholder="Ej: Cobros en caja central" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none theme-input transition-colors">
                     </div>
                 </div>
                 <div class="flex justify-end">
-                    <button type="submit" class="bg-[#38B2AC] hover:bg-[#2C9691] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
+                    <button type="submit" class="theme-button-primary px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
                         Guardar Método
                     </button>
                 </div>
@@ -53,10 +53,10 @@
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-teal-50 text-[#38B2AC] flex items-center justify-center font-black text-xs">
+                                    <div class="w-8 h-8 rounded-lg bg-teal-50 theme-text-primary flex items-center justify-center font-black text-xs">
                                         💵
                                     </div>
-                                    <span class="text-xs font-bold text-[#0F172A]">{{ $method->name }}</span>
+                                    <span class="text-xs font-bold theme-text-heading">{{ $method->name }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-xs font-mono text-slate-400">{{ $method->slug }}</td>
@@ -70,7 +70,7 @@
                                 <form action="{{ route('client.payment-methods.toggle', $method) }}" method="POST" class="inline">
                                     @csrf
                                     @method('PATCH')
-                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-semibold text-[#0F172A] transition-colors shadow-sm">
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-semibold theme-text-heading transition-colors shadow-sm">
                                         {{ $method->is_active ? '⏸️ Desactivar' : '▶️ Activar' }}
                                     </button>
                                 </form>

@@ -11,6 +11,8 @@ use App\Models\Animal;
 use App\Models\AnimalType;
 use App\Models\AnimalTypeField;
 use App\Models\AnimalFieldValue;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class Tenant extends Model
 {
@@ -36,6 +38,7 @@ class Tenant extends Model
         'activation_expires_at',
         'activated_at',
         'onboarding_banner_dismissed_at',
+        'theme_palette',
     ];
 
     protected $casts = [
@@ -50,6 +53,23 @@ class Tenant extends Model
     public static function activationCodeHash(string $code): string
     {
         return hash('sha256', 'tenant-activation-code:' . $code);
+    }
+
+    public function logoUrl(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        if (filter_var($this->logo, FILTER_VALIDATE_URL)) {
+            return $this->logo;
+        }
+
+        try {
+            return Storage::disk('r2')->temporaryUrl($this->logo, now()->addMinutes(60));
+        } catch (Throwable) {
+            return null;
+        }
     }
     public function users()
     {

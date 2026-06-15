@@ -119,9 +119,9 @@
     @endif
 
     <div data-tour="dashboard-metrics" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-        <div class="relative overflow-hidden rounded-[24px] bg-[#0F172A] p-6 min-h-[190px] shadow-xl shadow-slate-200">
-            <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-[#38B2AC]/30"></div>
-            <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-fuchsia-400/20"></div>
+        <a href="{{ route('client.customers.index') }}" class="relative overflow-hidden rounded-[24px] theme-surface-dark p-6 min-h-[190px] shadow-xl shadow-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl theme-focus-primary">
+            <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full theme-bg-primary-soft"></div>
+            <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
             <div class="relative z-10 h-full flex flex-col justify-between">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.24em] text-slate-300">Clientes</p>
@@ -132,9 +132,9 @@
                     <span class="text-sm font-black text-white bg-white/10 px-3 py-1.5 rounded-full">{{ number_format($activeCustomers) }}</span>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#38B2AC] to-emerald-400 p-6 min-h-[190px] shadow-xl shadow-teal-100">
+        <a href="{{ route('client.animals.index') }}" class="relative overflow-hidden rounded-[24px] theme-gradient-primary p-6 min-h-[190px] shadow-xl shadow-teal-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl theme-focus-primary">
             <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/20"></div>
             <div class="relative z-10 h-full flex flex-col justify-between">
                 <div>
@@ -146,9 +146,9 @@
                     <span class="text-sm font-black text-white bg-white/20 px-3 py-1.5 rounded-full">{{ number_format($activeAnimals) }}</span>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-violet-600 to-fuchsia-500 p-6 min-h-[190px] shadow-xl shadow-fuchsia-100">
+        <a href="{{ route('client.ventas.index') }}" class="relative overflow-hidden rounded-[24px] theme-gradient-primary p-6 min-h-[190px] shadow-xl shadow-teal-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl theme-focus-primary">
             <div class="absolute -left-10 -bottom-10 w-36 h-36 rounded-full bg-white/15"></div>
             <div class="relative z-10 h-full flex flex-col justify-between">
                 <div>
@@ -166,7 +166,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
 
         <div class="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-amber-400 to-rose-500 p-6 min-h-[190px] shadow-xl shadow-rose-100">
             <div class="absolute right-0 top-0 w-28 h-28 rounded-bl-full bg-white/20"></div>
@@ -247,7 +247,7 @@
                     <span class="text-2xl font-black theme-text-heading">{{ number_format($collectionPercent, 1) }}%</span>
                 </div>
                 <div class="h-4 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-[#38B2AC] to-emerald-400 rounded-full" style="width: {{ $collectionPercent }}%"></div>
+                    <div class="h-full theme-progress-primary rounded-full" style="width: {{ $collectionPercent }}%"></div>
                 </div>
             </div>
 

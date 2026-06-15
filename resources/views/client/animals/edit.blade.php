@@ -77,7 +77,7 @@
     <div x-show="videoUploading" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
         <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full theme-bg-primary-soft">
-                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft border-t-[#38B2AC]"></div>
+                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
             </div>
             <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Procesando video</p>
             <p class="mt-2 text-xs font-semibold text-slate-500">Optimizando y guardando el archivo. Esto puede tardar unos minutos.</p>
@@ -87,7 +87,7 @@
     <div x-show="radiologyUploading" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
         <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full theme-bg-primary-soft">
-                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft border-t-[#38B2AC]"></div>
+                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
             </div>
             <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando radiologia</p>
             <p class="mt-2 text-xs font-semibold text-slate-500">Subiendo archivos RX al expediente.</p>
@@ -373,7 +373,7 @@
                         <p class="text-[11px] text-slate-400 font-semibold mt-1">Registro compacto de visitas, evolucion y evidencia clinica.</p>
                     </div>
 
-                    <button type="button" @click="videoFormOpen = true" class="inline-flex items-center justify-center rounded-xl theme-bg-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#2C9A94]">
+                    <button type="button" @click="videoFormOpen = true" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
                         Agregar video
                     </button>
                 </div>
@@ -509,7 +509,7 @@
                     <p class="text-sm font-black theme-text-heading">Carpetas de radiologia</p>
                     <p class="text-[11px] text-slate-400 font-semibold mt-1">Cada carpeta agrupa las RX de un estudio o visita.</p>
                 </div>
-                <button type="button" @click="radiologyFormOpen = true" class="inline-flex items-center justify-center rounded-xl theme-bg-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#2C9A94]">
+                <button type="button" @click="radiologyFormOpen = true" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
                     Nueva carpeta
                 </button>
             </div>
@@ -588,7 +588,7 @@
                                 <p class="mt-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">{{ $study->study_date->format('d/m/Y') }} &middot; {{ $study->images->count() }} RX</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
-                                <button type="button" @click="radiologyImageFormOpen = true" class="rounded-xl theme-bg-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-[#2C9A94]">
+                                <button type="button" @click="radiologyImageFormOpen = true" class="rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em]">
                                     Agregar RX
                                 </button>
                                 <form action="{{ route('client.radiology-studies.destroy', $study) }}" method="POST" onsubmit="return confirm('Eliminar esta carpeta y todas sus RX?');">
@@ -719,7 +719,7 @@
                     </div>
 
                     <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                        <input type="checkbox" checked required class="rounded border-slate-300 theme-text-primary focus:ring-[#38B2AC]">
+                        <input type="checkbox" checked required class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
                         <span class="text-xs font-black uppercase tracking-widest theme-text-heading">Activar compartir</span>
                     </label>
 

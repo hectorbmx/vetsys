@@ -6,7 +6,22 @@
 
 @section('content')
 {{-- Centralizamos el estado de las pestañas y del modal de especies con Alpine --}}
-<div class="space-y-8" x-data="{ currentTab: @js(request('tab', session('activeTab', 'animales'))), typeModal: false }">
+<div class="space-y-8" x-data="{
+    currentTab: @js(request('tab', session('activeTab', 'animales'))),
+    typeModal: false,
+    selectedThemePalette: @js($activeThemePalette),
+    savedThemePalette: @js($activeThemePalette),
+    previewThemePalette(palette) {
+        this.selectedThemePalette = palette;
+        document.body.dataset.themePalette = palette;
+    },
+    restoreThemePalette() {
+        this.previewThemePalette('ocean');
+    },
+    cancelThemePreview() {
+        this.previewThemePalette(this.savedThemePalette);
+    }
+}">
     
     {{-- SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -95,6 +110,11 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             💰 Métodos de Pago
         </button>
+        <button @click="currentTab = 'apariencia'"
+                :class="currentTab === 'apariencia' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            🎨 Apariencia
+        </button>
         <button @click="currentTab = 'facturacion'"
                 :class="currentTab === 'facturacion' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
@@ -119,6 +139,102 @@
     </div>
 
     {{-- CONTENIDO DE LAS PESTAÑAS --}}
+
+    {{-- TAB: APARIENCIA --}}
+    <div x-show="currentTab === 'apariencia'" x-transition:enter="transition duration-200" class="space-y-6" x-cloak>
+        <form action="{{ route('client.mi-configuracion.appearance.update') }}" method="POST" enctype="multipart/form-data" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+            @csrf
+            @method('PATCH')
+            <input type="hidden" name="theme_palette" :value="selectedThemePalette">
+
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Apariencia del panel</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">La paleta se aplica a todos los usuarios de esta clinica.</p>
+                </div>
+                <span class="inline-flex rounded-xl theme-bg-primary-soft px-3 py-2 text-[10px] font-black uppercase tracking-widest theme-text-primary-strong">
+                    <span x-text="selectedThemePalette"></span>
+                </span>
+            </div>
+
+            <div class="p-6 border-b border-slate-100 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest theme-text-heading">Logo del tenant</p>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Se muestra en el panel lateral de todos los usuarios.</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    @php($tenantLogoUrl = $tenant?->logoUrl())
+                    <div class="h-20 w-20 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                        @if($tenantLogoUrl)
+                            <img src="{{ $tenantLogoUrl }}" alt="{{ $tenant->name }}" class="h-full w-full object-contain p-2">
+                        @else
+                            <span class="h-12 w-12 rounded-xl theme-bg-primary theme-text-primary-ink flex items-center justify-center font-black text-lg">
+                                {{ substr($tenant->name ?? 'V', 0, 1) }}
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="flex-1 space-y-3">
+                        <input type="file"
+                               name="logo"
+                               accept="image/png,image/jpeg,image/webp"
+                               @disabled(!$canManageTeam)
+                               class="block w-full text-xs font-semibold text-slate-500 file:mr-4 file:rounded-xl file:border-0 file:px-4 file:py-2.5 file:text-[10px] file:font-black file:uppercase file:tracking-widest theme-file-input disabled:opacity-50">
+
+                        <div class="flex flex-wrap items-center gap-3">
+                            <p class="text-[10px] font-semibold text-slate-400">PNG, JPG o WebP. Max 2 MB.</p>
+                            @if($tenant?->logo && $canManageTeam)
+                                <label class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                    <input type="checkbox" name="remove_logo" value="1" class="rounded border-slate-300 theme-text-primary focus:ring-0">
+                                    Quitar logo
+                                </label>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                @foreach($themePalettes as $key => $palette)
+                    <button type="button"
+                            @click="previewThemePalette(@js($key))"
+                            :class="selectedThemePalette === @js($key) ? 'theme-border-primary ring-4 theme-ring-primary' : 'border-slate-200 hover:border-slate-300'"
+                            class="text-left rounded-2xl border bg-white p-4 transition-all shadow-sm focus:outline-none theme-focus-primary">
+                        <span class="flex items-center gap-3">
+                            <span class="flex h-11 w-11 overflow-hidden rounded-xl border border-slate-100">
+                                <span class="h-full w-1/2" style="background-color: {{ $palette['sidebar'] }}"></span>
+                                <span class="h-full w-1/2" style="background-color: {{ $palette['primary'] }}"></span>
+                            </span>
+                            <span>
+                                <span class="block text-xs font-black uppercase tracking-widest theme-text-heading">{{ $palette['label'] }}</span>
+                                <span class="mt-1 block text-[11px] font-semibold text-slate-400">{{ $palette['description'] }}</span>
+                            </span>
+                        </span>
+                    </button>
+                @endforeach
+            </div>
+
+            <div class="px-6 py-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                @if($canManageTeam)
+                    <p class="text-[11px] font-semibold text-slate-400">Vista previa activa hasta guardar o cancelar.</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" @click="cancelThemePreview()" class="rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors">
+                            Cancelar vista previa
+                        </button>
+                        <button type="button" @click="restoreThemePalette()" class="rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest theme-text-heading hover:bg-slate-100 transition-colors">
+                            Restaurar predeterminada
+                        </button>
+                        <button type="submit" class="theme-button-primary rounded-xl px-5 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all">
+                            Aplicar paleta
+                        </button>
+                    </div>
+                @else
+                    <p class="text-[11px] font-semibold text-slate-400">Solo un administrador puede cambiar la paleta.</p>
+                @endif
+            </div>
+        </form>
+    </div>
     
     {{-- TAB 1: TIPOS DE ANIMALES --}}
     <div x-show="currentTab === 'animales'" x-transition:enter="transition duration-200" class="space-y-6">

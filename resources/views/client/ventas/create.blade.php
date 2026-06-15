@@ -28,7 +28,7 @@
     {{-- ENCABEZADO --}}
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-xl font-black text-[#0F172A] uppercase tracking-widest">Nueva Nota de Venta</h1>
+            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Nueva Nota de Venta</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">Genera cargos a clientes, asigna conceptos a pacientes y procesa pagos al instante.</p>
         </div>
         <a href="{{ route('client.ventas.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
@@ -52,7 +52,7 @@
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">1. Buscar Cliente (Propietario)</label>
                         
                         <div class="relative">
-                            <input type="text" x-model="customerQuery" @input.debounce.300ms="searchCustomers()" placeholder="Escribe nombre, apellido o teléfono..." class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors" :disabled="selectedCustomer !== null">
+                            <input type="text" x-model="customerQuery" @input.debounce.300ms="searchCustomers()" placeholder="Escribe nombre, apellido o teléfono..." class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 theme-input transition-colors" :disabled="selectedCustomer !== null">
                             
                             {{-- Botón para remover cliente seleccionado --}}
                             <template x-if="selectedCustomer !== null">
@@ -70,10 +70,10 @@
                             <template x-for="customer in customerSuggestions" :key="customer.id">
                                 <div @click="selectCustomer(customer)" class="p-3 hover:bg-slate-50 cursor-pointer transition-colors flex justify-between items-center">
                                     <div>
-                                        <span class="text-xs font-bold text-[#0F172A] block" x-text="customer.full_name"></span>
+                                        <span class="text-xs font-bold theme-text-heading block" x-text="customer.full_name"></span>
                                         <span class="text-[10px] text-slate-400 font-medium" x-text="'📞 ' + (customer.phone ?? 'Sin teléfono')"></span>
                                     </div>
-                                    <span class="text-[9px] bg-teal-50 text-[#38B2AC] font-black px-2 py-1 rounded-full uppercase tracking-wider" x-text="customer.animals.length + ' mascotas'"></span>
+                                    <span class="text-[9px] theme-bg-primary-soft theme-text-primary-strong font-black px-2 py-1 rounded-full uppercase tracking-wider" x-text="customer.animals.length + ' mascotas'"></span>
                                 </div>
                             </template>
                         </div>
@@ -82,7 +82,7 @@
                     {{-- Campo de Fecha --}}
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Fecha de la Nota</label>
-                        <input type="date" name="date_at" x-model="noteDate" required class="w-full text-xs font-bold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                        <input type="date" name="date_at" x-model="noteDate" required class="w-full text-xs font-bold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 theme-input transition-colors">
                     </div>
                 </div>
 
@@ -94,15 +94,15 @@
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">2. Seleccionar Pacientes</label>
                             <p class="text-[11px] font-semibold text-slate-500">Cada producto o servicio agregado se aplicara a todas las mascotas seleccionadas.</p>
                         </div>
-                        <span class="text-[10px] bg-teal-50 text-[#38B2AC] font-black px-3 py-1.5 rounded-full uppercase tracking-wider" x-text="selectedAnimalIds.length + ' seleccionadas'"></span>
+                        <span class="text-[10px] theme-bg-primary-soft theme-text-primary-strong font-black px-3 py-1.5 rounded-full uppercase tracking-wider" x-text="selectedAnimalIds.length + ' seleccionadas'"></span>
                     </div>
 
                     <template x-if="selectedCustomer && selectedCustomer.animals.length > 0">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             <template x-for="animal in selectedCustomer.animals" :key="animal.id">
                                 <label class="flex items-center gap-3 border rounded-xl px-3 py-3 cursor-pointer transition-all"
-                                       :class="isAnimalSelected(animal.id) ? 'border-[#38B2AC] bg-teal-50 text-[#0F172A]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">
-                                    <input type="checkbox" class="rounded border-slate-300 text-[#38B2AC] focus:ring-[#38B2AC]" :checked="isAnimalSelected(animal.id)" @change="toggleAnimal(animal.id)">
+                                       :class="isAnimalSelected(animal.id) ? 'theme-border-primary theme-bg-primary-soft theme-text-heading' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">
+                                    <input type="checkbox" class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary" :checked="isAnimalSelected(animal.id)" @change="toggleAnimal(animal.id)">
                                     <span class="text-xs font-black" x-text="animal.name"></span>
                                 </label>
                             </template>
@@ -123,17 +123,17 @@
                 <div data-tour="sale-items" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null || selectedAnimalIds.length === 0}">
                     <div class="relative">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">3. Anadir Productos o Servicios al Detalle</label>
-                        <input type="text" x-model="itemQuery" @input.debounce.300ms="searchItems()" placeholder="Escribe el nombre del servicio o escanea el SKU del producto..." class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+                        <input type="text" x-model="itemQuery" @input.debounce.300ms="searchItems()" placeholder="Escribe el nombre del servicio o escanea el SKU del producto..." class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 theme-input transition-colors">
                         
                         {{-- Lista Desplegable de Artículos --}}
                         <div x-show="itemSuggestions.length > 0" x-cloak class="absolute z-40 left-0 right-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden divide-y divide-slate-100">
                             <template x-for="item in itemSuggestions" :key="item.id">
                                 <div @click="addItemToTable(item)" class="p-3 hover:bg-slate-50 cursor-pointer transition-colors flex justify-between items-center">
                                     <div>
-                                        <span class="text-xs font-bold text-[#0F172A] block" x-text="item.name"></span>
+                                        <span class="text-xs font-bold theme-text-heading block" x-text="item.name"></span>
                                         <span class="text-[10px] text-slate-400 font-mono uppercase" x-text="item.type === 'service' ? '⚙️ Servicio' : '📦 Producto'"></span>
                                     </div>
-                                    <span class="text-xs font-black text-[#0F172A]" x-text="'$' + parseFloat(item.price).toFixed(2)"></span>
+                                    <span class="text-xs font-black theme-text-heading" x-text="'$' + parseFloat(item.price).toFixed(2)"></span>
                                 </div>
                             </template>
                         </div>
@@ -156,7 +156,7 @@
                                     <tr class="hover:bg-slate-50/50 transition-colors">
                                         {{-- Nombre e Inputs Ocultos del Renglón para Laravel --}}
                                         <td class="px-4 py-3">
-                                            <span class="text-xs font-bold text-[#0F172A] block" x-text="row.name"></span>
+                                            <span class="text-xs font-bold theme-text-heading block" x-text="row.name"></span>
                                             <span x-show="row.has_inventory" class="text-[10px] text-slate-400 font-semibold block" x-text="'Disponible: ' + parseFloat(row.stock_actual).toFixed(2)"></span>
                                             <span x-show="stockMessage(row)" class="text-[10px] font-bold block mt-1"
                                                   :class="stockState(row) === 'blocked' || stockState(row) === 'negative' ? 'text-rose-600' : 'text-amber-600'"
@@ -167,19 +167,19 @@
 
                                         {{-- Cantidad Editable --}}
                                         <td class="px-4 py-3">
-                                            <input type="number" step="0.01" min="0.01" :name="'items['+index+'][quantity]'" x-model.number="row.quantity" @input="calculateTotals()" class="w-full text-xs font-bold text-center text-[#0F172A] bg-slate-50 border border-slate-200 rounded-lg py-1 px-1.5 focus:outline-none focus:border-[#38B2AC]">
+                                            <input type="number" step="0.01" min="0.01" :name="'items['+index+'][quantity]'" x-model.number="row.quantity" @input="calculateTotals()" class="w-full text-xs font-bold text-center theme-text-heading bg-slate-50 border border-slate-200 rounded-lg py-1 px-1.5 theme-input">
                                         </td>
 
                                         {{-- Precio Editable --}}
                                         <td class="px-4 py-3">
                                             <div class="relative flex items-center">
                                                 <span class="absolute left-1.5 text-xs text-slate-400 font-bold">$</span>
-                                                <input type="number" step="0.01" min="0" :name="'items['+index+'][price]'" x-model.number="row.price" @input="calculateTotals()" class="w-full text-xs font-bold text-right text-[#0F172A] bg-slate-50 border border-slate-200 rounded-lg py-1 pr-1.5 pl-4 focus:outline-none focus:border-[#38B2AC]">
+                                                <input type="number" step="0.01" min="0" :name="'items['+index+'][price]'" x-model.number="row.price" @input="calculateTotals()" class="w-full text-xs font-bold text-right theme-text-heading bg-slate-50 border border-slate-200 rounded-lg py-1 pr-1.5 pl-4 theme-input">
                                             </div>
                                         </td>
 
                                         {{-- Subtotal Calculado --}}
-                                        <td class="px-4 py-3 text-right text-xs font-black text-[#0F172A]" x-text="'$' + (row.quantity * row.price).toFixed(2)">
+                                        <td class="px-4 py-3 text-right text-xs font-black theme-text-heading" x-text="'$' + (row.quantity * row.price).toFixed(2)">
                                         </td>
 
                                         {{-- Botón Eliminar Fila --}}
@@ -215,7 +215,7 @@
                         <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Subtotal por mascota:</span>
-                                <span class="text-sm font-black text-[#0F172A]" x-text="'$' + basketSubtotal.toFixed(2)"></span>
+                                <span class="text-sm font-black theme-text-heading" x-text="'$' + basketSubtotal.toFixed(2)"></span>
                             </div>
                             <div class="flex justify-between items-center text-[11px] font-bold text-slate-500">
                                 <span>Mascotas seleccionadas:</span>
@@ -223,7 +223,7 @@
                             </div>
                             <div class="border-t border-slate-200 pt-3 flex justify-between items-center">
                                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Total de Nota:</span>
-                                <span class="text-2xl font-black text-[#0F172A]" x-text="'$' + noteTotal.toFixed(2)"></span>
+                                <span class="text-2xl font-black theme-text-heading" x-text="'$' + noteTotal.toFixed(2)"></span>
                             </div>
                         </div>
                     </div>
@@ -239,13 +239,13 @@
     <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
         <button type="button" 
                 @click="paymentType = 'credito'; amountReceived = 0;" 
-                :class="paymentType === 'credito' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                :class="paymentType === 'credito' ? 'bg-white theme-text-heading shadow-sm' : 'text-slate-500 hover:text-slate-800'"
                 class="py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all text-center">
             🕒 Crédito
         </button>
         <button type="button" 
                 @click="paymentType = 'contado'; amountReceived = noteTotal; handlePaymentMethodChange();" 
-                :class="paymentType === 'contado' ? 'bg-[#38B2AC] text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                :class="paymentType === 'contado' ? 'theme-button-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'"
                 class="py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all text-center">
             💰 Contado
         </button>
@@ -260,7 +260,7 @@
             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Monto Recibido ($)</label>
             <div class="relative flex items-center">
                 <span class="absolute left-4 text-xs font-black text-slate-400">$</span>
-                <input type="number" step="0.01" min="0" name="amount_received" x-model.number="amountReceived" :disabled="isStripeCardPayment()" class="w-full text-xs font-black text-[#0F172A] bg-white border border-slate-200 rounded-xl py-2.5 pr-4 pl-8 focus:outline-none focus:border-[#38B2AC] transition-colors disabled:bg-slate-100 disabled:text-slate-400">
+                <input type="number" step="0.01" min="0" name="amount_received" x-model.number="amountReceived" :disabled="isStripeCardPayment()" class="w-full text-xs font-black theme-text-heading bg-white border border-slate-200 rounded-xl py-2.5 pr-4 pl-8 theme-input transition-colors disabled:bg-slate-100 disabled:text-slate-400">
             </div>
             <p x-show="isStripeCardPayment()" x-cloak class="text-[11px] font-semibold text-[#635BFF] mt-2">El cobro con tarjeta se confirmara por Stripe. La nota quedara pendiente hasta recibir el pago.</p>
         </div>
@@ -268,7 +268,7 @@
         {{-- Forma de Pago --}}
         <div>
             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Forma de Pago</label>
-            <select name="payment_method_id" x-model="paymentMethodId" @change="handlePaymentMethodChange()" :required="paymentType === 'contado'" class="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#38B2AC] transition-colors">
+            <select name="payment_method_id" x-model="paymentMethodId" @change="handlePaymentMethodChange()" :required="paymentType === 'contado'" class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 theme-input transition-colors">
                 <option value="">-- Selecciona Método --</option>
                 @foreach($paymentMethods as $method)
                     <option value="{{ $method->id }}" data-slug="{{ $method->slug }}">💵 {{ $method->name }}</option>
@@ -285,7 +285,7 @@
 </div>
 
                     {{-- BOTÓN PRINCIPAL DE ENVÍO --}}
-                    <button type="submit" class="w-full bg-[#0F172A] hover:bg-slate-800 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
+                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
                         <span x-text="isStripeCardPayment() ? 'Guardar nota y generar link Stripe' : '🛒 Procesar y Guardar Nota'"></span>
                     </button>
                 </div>

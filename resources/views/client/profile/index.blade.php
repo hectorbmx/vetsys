@@ -13,8 +13,8 @@
 
     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#38B2AC]">Perfil de Veterinaria</p>
-            <h1 class="text-3xl md:text-4xl font-black text-[#0F172A] tracking-tight mt-1">
+            <p class="text-[10px] font-black uppercase tracking-[0.28em] theme-text-primary">Perfil de Veterinaria</p>
+            <h1 class="text-3xl md:text-4xl font-black theme-text-heading tracking-tight mt-1">
                 {{ $tenant->business_name ?? $tenant->name }}
             </h1>
             <p class="text-sm font-semibold text-slate-400 mt-2">
@@ -32,20 +32,20 @@
 
         {{-- COLUMNA IZQUIERDA --}}
         <div class="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden h-fit">
-            <div class="h-28 bg-gradient-to-br from-[#38B2AC] via-emerald-400 to-cyan-400"></div>
+            <div class="h-28 theme-gradient-primary"></div>
             <div class="px-6 pb-6 -mt-10">
                 <div class="w-24 h-24 rounded-3xl bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
                     @if($tenant->logo)
                         <img src="{{ asset('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="w-full h-full object-cover">
                     @else
-                        <div class="w-full h-full bg-[#0F172A] text-white flex items-center justify-center text-3xl font-black">
+                        <div class="w-full h-full theme-surface-dark flex items-center justify-center text-3xl font-black">
                             {{ substr($tenant->name, 0, 1) }}
                         </div>
                     @endif
                 </div>
 
                 <div class="mt-4">
-                    <h2 class="text-xl font-black text-[#0F172A]">{{ $tenant->business_name ?? $tenant->name }}</h2>
+                    <h2 class="text-xl font-black theme-text-heading">{{ $tenant->business_name ?? $tenant->name }}</h2>
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $tenant->slug }}</p>
                 </div>
 
@@ -54,7 +54,7 @@
                     <div class="space-y-2">
                         <div class="flex items-center justify-between text-[11px] font-bold">
                             <span class="text-slate-400">ID de Cliente</span>
-                            <span class="text-[#0F172A]">#{{ str_pad($tenant->id, 5, '0', STR_PAD_LEFT) }}</span>
+                            <span class="theme-text-heading">#{{ str_pad($tenant->id, 5, '0', STR_PAD_LEFT) }}</span>
                         </div>
                     </div>
                 </div>
@@ -66,21 +66,21 @@
                     <div class="space-y-1.5">
                         <label for="name" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nombre Completo</label>
                         <input type="text" name="name" id="name" value="{{ old('name', auth()->user()->name) }}"
-                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('name') border-rose-500 @enderror">
+                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold theme-text-heading focus:ring-2 theme-focus-ring-primary focus:border-transparent transition-all @error('name') border-rose-500 @enderror">
                         @error('name') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-1.5">
                         <label for="email" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email de Acceso</label>
                         <input type="email" name="email" id="email" value="{{ old('email', auth()->user()->email) }}"
-                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('email') border-rose-500 @enderror">
+                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold theme-text-heading focus:ring-2 theme-focus-ring-primary focus:border-transparent transition-all @error('email') border-rose-500 @enderror">
                         @error('email') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="space-y-1.5">
                         <label for="phone" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Teléfono Registro</label>
                         <input type="text" name="phone" id="phone" value="{{ old('phone', $tenant->phone) }}"
-                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('phone') border-rose-500 @enderror">
+                               class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold theme-text-heading focus:ring-2 theme-focus-ring-primary focus:border-transparent transition-all @error('phone') border-rose-500 @enderror">
                         @error('phone') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                     </div>
 
@@ -95,7 +95,7 @@
                             <div class="space-y-1.5">
                                 <label for="password" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nueva Contraseña</label>
                                 <input type="password" name="password" id="password" placeholder="••••••••"
-                                       class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all @error('password') border-rose-500 @enderror">
+                                       class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold theme-text-heading focus:ring-2 theme-focus-ring-primary focus:border-transparent transition-all @error('password') border-rose-500 @enderror">
                                 <p class="text-[9px] text-slate-400 font-semibold ml-1 italic">Dejar en blanco para no cambiar</p>
                                 @error('password') <p class="text-[10px] font-bold text-rose-500 mt-1">{{ $message }}</p> @enderror
                             </div>
@@ -103,12 +103,12 @@
                             <div class="space-y-1.5">
                                 <label for="password_confirmation" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirmar Contraseña</label>
                                 <input type="password" name="password_confirmation" id="password_confirmation" placeholder="••••••••"
-                                       class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold text-[#0F172A] focus:ring-2 focus:ring-[#38B2AC] focus:border-transparent transition-all">
+                                       class="w-full rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-sm font-bold theme-text-heading focus:ring-2 theme-focus-ring-primary focus:border-transparent transition-all">
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full mt-4 bg-[#0F172A] hover:bg-slate-800 text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-[0.98] text-[10px] uppercase tracking-[0.15em]">
+                    <button type="submit" class="w-full mt-4 theme-button-dark font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-[0.98] text-[10px] uppercase tracking-[0.15em]">
                         Actualizar mis datos
                     </button>
                 </form>
@@ -120,10 +120,10 @@
 
             {{-- Plan + Suscripcion --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative overflow-hidden bg-[#0F172A] rounded-[24px] p-6 shadow-xl shadow-slate-200 min-h-[210px]">
-                    <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-[#38B2AC]/30"></div>
+                <div class="relative overflow-hidden theme-surface-dark rounded-[24px] p-6 shadow-xl shadow-slate-200 min-h-[210px]">
+                    <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full theme-bg-primary-soft-hover"></div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#38B2AC]">Plan Contratado</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] theme-text-primary">Plan Contratado</p>
                         <h3 class="text-3xl font-black text-white mt-4">{{ $tenant->plan->name ?? 'Sin plan' }}</h3>
                         <p class="text-sm font-semibold text-slate-300 mt-2">{{ $tenant->plan->description ?? 'Sin descripcion disponible.' }}</p>
 
@@ -147,24 +147,24 @@
 
                 <div class="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Suscripcion</p>
-                    <h3 class="text-2xl font-black text-[#0F172A] mt-3">
+                    <h3 class="text-2xl font-black theme-text-heading mt-3">
                         {{ $currentSubscription->status ?? $tenant->status }}
                     </h3>
 
                     <div class="mt-5 space-y-3 text-sm">
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Inicio</span>
-                            <span class="font-black text-[#0F172A]">{{ optional($currentSubscription?->starts_at)->format('d/m/Y') ?? '--' }}</span>
+                            <span class="font-black theme-text-heading">{{ optional($currentSubscription?->starts_at)->format('d/m/Y') ?? '--' }}</span>
                         </div>
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Vence</span>
-                            <span class="font-black {{ $tenant->subscription_ends_at && $tenant->subscription_ends_at->isPast() ? 'text-rose-600' : 'text-[#0F172A]' }}">
+                            <span class="font-black {{ $tenant->subscription_ends_at && $tenant->subscription_ends_at->isPast() ? 'text-rose-600' : 'theme-text-heading' }}">
                                 {{ optional($tenant->subscription_ends_at ?? $currentSubscription?->ends_at)->format('d/m/Y') ?? '--' }}
                             </span>
                         </div>
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Trial</span>
-                            <span class="font-black text-[#0F172A]">{{ optional($tenant->trial_ends_at ?? $currentSubscription?->trial_ends_at)->format('d/m/Y') ?? '--' }}</span>
+                            <span class="font-black theme-text-heading">{{ optional($tenant->trial_ends_at ?? $currentSubscription?->trial_ends_at)->format('d/m/Y') ?? '--' }}</span>
                         </div>
                     </div>
                 </div>
@@ -174,15 +174,15 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white border border-slate-200 rounded-[20px] p-5">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Usuarios max.</p>
-                    <p class="text-2xl font-black text-[#0F172A] mt-2">{{ $tenant->plan->max_users ?? 'Sin limite' }}</p>
+                    <p class="text-2xl font-black theme-text-heading mt-2">{{ $tenant->plan->max_users ?? 'Sin limite' }}</p>
                 </div>
                 <div class="bg-white border border-slate-200 rounded-[20px] p-5">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Clientes max.</p>
-                    <p class="text-2xl font-black text-[#0F172A] mt-2">{{ $tenant->plan->max_clients ?? 'Sin limite' }}</p>
+                    <p class="text-2xl font-black theme-text-heading mt-2">{{ $tenant->plan->max_clients ?? 'Sin limite' }}</p>
                 </div>
                 <div class="bg-white border border-slate-200 rounded-[20px] p-5">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Ultimo pago</p>
-                    <p class="text-2xl font-black text-[#0F172A] mt-2">
+                    <p class="text-2xl font-black theme-text-heading mt-2">
                         {{ $lastPayment ? '$' . number_format($lastPayment->amount, 2) : '--' }}
                     </p>
                     @if($lastPayment)
@@ -203,7 +203,7 @@
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                        <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Renovacion</h3>
+                        <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Renovacion</h3>
                         @if($pendingCheckout)
                             <p class="text-[11px] font-semibold text-amber-500 mt-1">Tienes un pago pendiente de completar.</p>
                         @elseif($canCheckout)
@@ -224,7 +224,7 @@
                             @csrf
                             <input type="hidden" name="plan_id" value="{{ $tenant->plan->id }}">
                             <button type="submit"
-                                    class="bg-[#0F172A] hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                    class="theme-button-dark px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                                 Renovar con Stripe
                             </button>
                         </form>
@@ -283,7 +283,7 @@
             {{-- Tabla de pagos --}}
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100">
-                    <h3 class="text-sm font-black text-[#0F172A] uppercase tracking-widest">Pagos de suscripcion</h3>
+                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Pagos de suscripcion</h3>
                 </div>
                 <table class="w-full text-left">
                     <thead>
@@ -300,12 +300,12 @@
 
                             <tr>
                                 <td class="px-6 py-4 text-xs font-bold text-slate-600">{{ optional($payment->paid_at)->format('d/m/Y') ?? $payment->created_at->format('d/m/Y') }}</td>
-                                <td class="px-6 py-4 text-xs font-bold text-[#0F172A]">{{ $payment->plan->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 text-xs font-bold theme-text-heading">{{ $payment->plan->name ?? 'N/A' }}</td>
                                 <td class="px-6 py-4 text-xs font-semibold text-slate-500">{{ $payment->payment_method ?? 'Manual' }}</td>
                                 <td class="px-6 py-4">
                                     <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $payment->status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">{{ $payment->status }}</span>
                                 </td>
-                                <td class="px-6 py-4 text-xs font-black text-right text-[#0F172A]">${{ number_format($payment->amount, 2) }} {{ $payment->currency }}</td>
+                                <td class="px-6 py-4 text-xs font-black text-right theme-text-heading">${{ number_format($payment->amount, 2) }} {{ $payment->currency }}</td>
                             </tr>
                         @empty
                             <tr>

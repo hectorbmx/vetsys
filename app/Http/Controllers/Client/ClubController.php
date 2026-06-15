@@ -32,6 +32,19 @@ class ClubController extends Controller
         return view('client.clubes.index', compact('clubs', 'animals'));
     }
 
+    public function toggleStatus(Club $club)
+    {
+        if ($club->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $club->update([
+            'is_active' => !$club->is_active
+        ]);
+
+        return back()->with('success', 'El estatus del club ha sido actualizado.');
+    }
+
     public function store(Request $request)
     {
         $tenantId = auth()->user()->tenant_id;

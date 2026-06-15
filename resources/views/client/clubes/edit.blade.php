@@ -189,7 +189,7 @@
                     <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Archivos Coggins</h3>
                     <p class="text-[11px] text-slate-400 font-semibold mt-1">Lista de documentos PDF asociados a este club.</p>
                 </div>
-                <button @click="cogginModal = true" class="theme-bg-primary text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#2C9A94] transition-all flex items-center gap-2">
+                <button @click="cogginModal = true" class="theme-button-primary px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2">
                     <span class="text-sm">+</span>
                     Subir PDF
                 </button>
@@ -285,7 +285,7 @@
                     </div>
                     <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
                         <button type="button" @click="cogginModal = false" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancelar</button>
-                        <button type="submit" class="theme-bg-primary px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-[#2C9A94] transition-all shadow-lg theme-shadow-primary">
+                        <button type="submit" class="theme-button-primary px-6 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg theme-shadow-primary">
                             Subir archivo
                         </button>
                     </div>
