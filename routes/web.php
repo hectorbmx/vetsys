@@ -60,6 +60,7 @@ Route::post('/activar-cuenta', [ActivationController::class, 'store'])->name('ac
 Route::view('/soporte', 'public.app-store.support')->name('public.support');
 Route::view('/marketing', 'public.app-store.marketing')->name('public.marketing');
 Route::view('/derechos-de-autor', 'public.app-store.copyright')->name('public.copyright');
+Route::view('/politica-de-privacidad', 'public.app-store.privacy')->name('public.privacy');
 
 $redirectAuthenticatedUser = function () {
     $user = auth()->user();

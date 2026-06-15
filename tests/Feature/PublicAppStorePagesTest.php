@@ -26,4 +26,11 @@ class PublicAppStorePagesTest extends TestCase
             ->assertOk()
             ->assertSee('Todos los derechos reservados.');
     }
+
+    public function test_privacy_page_is_publicly_accessible(): void
+    {
+        $this->get('/politica-de-privacidad')
+            ->assertOk()
+            ->assertSee('No vendemos, alquilamos');
+    }
 }
