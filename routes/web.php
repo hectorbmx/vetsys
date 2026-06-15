@@ -57,6 +57,9 @@ Route::get('/activar-cuenta/{token}', [ActivationController::class, 'show'])->na
 
 Route::post('/activar-cuenta', [ActivationController::class, 'store'])->name('activation.store');
 
+Route::view('/soporte', 'public.app-store.support')->name('public.support');
+Route::view('/marketing', 'public.app-store.marketing')->name('public.marketing');
+
 $redirectAuthenticatedUser = function () {
     $user = auth()->user();
 
