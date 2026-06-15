@@ -103,7 +103,17 @@
                         <h2 class="mt-1 text-sm font-black text-[#0F172A]">Tu clinica ya esta lista para continuar vendiendo.</h2>
                     </div>
                 </div>
-                <span class="text-xs font-black text-emerald-700">6 de 6 completados</span>
+                <div class="flex items-center gap-4">
+                    <span class="text-xs font-black text-emerald-700">6 de 6 completados</span>
+                    <form method="POST" action="{{ route('client.dashboard.onboarding-banner.dismiss') }}">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit"
+                                class="rounded-full border border-emerald-200 bg-white px-3 py-2 text-[9px] font-black uppercase tracking-widest text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50">
+                            Quitar banner
+                        </button>
+                    </form>
+                </div>
             </section>
         @endif
     @endif

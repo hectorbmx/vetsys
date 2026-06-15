@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\TenantOnboardingStep;
 use App\Services\TenantOnboardingService;
+use Illuminate\Http\RedirectResponse;
 
 class DashboardController extends Controller
 {
@@ -36,6 +37,12 @@ class DashboardController extends Controller
         $onboarding = app(TenantOnboardingService::class)->reconcileSafely($tenant);
 
         if ($onboarding) {
+            if ($onboarding['is_completed'] && ! $onboarding['show_completed_banner']) {
+                $onboarding = null;
+            }
+        }
+
+        if ($onboarding) {
             $stepPresentation = $this->onboardingStepPresentation();
             $onboarding['steps'] = collect($onboarding['steps'])
                 ->map(function (array $step) use ($stepPresentation, $onboarding) {
@@ -60,6 +67,18 @@ class DashboardController extends Controller
             'recentNotes',
             'onboarding'
         ));
+    }
+
+    public function dismissOnboardingBanner(TenantOnboardingService $onboardingService): RedirectResponse
+    {
+        $tenant = auth()->user()->tenant;
+        $onboarding = $onboardingService->reconcileSafely($tenant);
+
+        abort_unless($onboarding && $onboarding['is_completed'], 422);
+
+        $tenant->update(['onboarding_banner_dismissed_at' => now()]);
+
+        return redirect()->route('client.dashboard');
     }
 
     private function onboardingStepPresentation(): array

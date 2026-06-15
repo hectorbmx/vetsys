@@ -35,6 +35,7 @@ class Tenant extends Model
         'activation_link_token',
         'activation_expires_at',
         'activated_at',
+        'onboarding_banner_dismissed_at',
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class Tenant extends Model
         'subscription_ends_at' => 'datetime',
         'activation_expires_at' => 'datetime',
         'activated_at' => 'datetime',
+        'onboarding_banner_dismissed_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 

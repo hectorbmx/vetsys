@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\TenantOnboardingStep;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\ViewErrorBag;
 use Tests\TestCase;
 
@@ -24,7 +25,7 @@ class DashboardOnboardingTest extends TestCase
             'status' => 'active',
         ]);
         $this->actingAs($user);
-        view()->share('errors', new ViewErrorBag());
+        view()->share('errors', new ViewErrorBag);
 
         $view = app(DashboardController::class)->index();
         $onboarding = $view->getData()['onboarding'];
@@ -58,7 +59,7 @@ class DashboardOnboardingTest extends TestCase
         }
 
         $this->actingAs($user);
-        view()->share('errors', new ViewErrorBag());
+        view()->share('errors', new ViewErrorBag);
 
         $view = app(DashboardController::class)->index();
         $html = $view->render();
@@ -66,7 +67,68 @@ class DashboardOnboardingTest extends TestCase
         $this->assertTrue($view->getData()['onboarding']['is_completed']);
         $this->assertStringContainsString('Ruta inicial completa', $html);
         $this->assertStringContainsString('6 de 6 completados', $html);
+        $this->assertStringContainsString('Quitar banner', $html);
         $this->assertStringNotContainsString('Crear tipo de animal', $html);
+    }
+
+    public function test_dashboard_hides_completed_onboarding_seven_days_after_completion(): void
+    {
+        [$tenant, $user] = $this->tenantUser('expired');
+
+        foreach (TenantOnboardingStep::STEPS as $step) {
+            $tenant->onboardingSteps()->create([
+                'step' => $step,
+                'completed_at' => now()->subDays(7),
+            ]);
+        }
+
+        $this->actingAs($user);
+        view()->share('errors', new ViewErrorBag);
+
+        $view = app(DashboardController::class)->index();
+
+        $this->assertNull($view->getData()['onboarding']);
+        $this->assertStringNotContainsString('Ruta inicial completa', $view->render());
+    }
+
+    public function test_tenant_can_dismiss_completed_onboarding_banner(): void
+    {
+        Carbon::setTestNow('2026-06-15 12:00:00');
+        [$tenant, $user] = $this->tenantUser('dismissed');
+
+        foreach (TenantOnboardingStep::STEPS as $step) {
+            $tenant->onboardingSteps()->create([
+                'step' => $step,
+                'completed_at' => now(),
+            ]);
+        }
+
+        $this->withoutMiddleware();
+        $this->actingAs($user)
+            ->patch(route('client.dashboard.onboarding-banner.dismiss'))
+            ->assertRedirect(route('client.dashboard'));
+
+        $this->assertEquals(now(), $tenant->fresh()->onboarding_banner_dismissed_at);
+
+        view()->share('errors', new ViewErrorBag);
+        $view = app(DashboardController::class)->index();
+
+        $this->assertNull($view->getData()['onboarding']);
+        $this->assertStringNotContainsString('Ruta inicial completa', $view->render());
+
+        Carbon::setTestNow();
+    }
+
+    public function test_tenant_cannot_dismiss_onboarding_banner_before_completion(): void
+    {
+        [$tenant, $user] = $this->tenantUser('incomplete-dismiss');
+
+        $this->withoutMiddleware();
+        $this->actingAs($user)
+            ->patch(route('client.dashboard.onboarding-banner.dismiss'))
+            ->assertUnprocessable();
+
+        $this->assertNull($tenant->fresh()->onboarding_banner_dismissed_at);
     }
 
     private function tenantUser(string $suffix): array

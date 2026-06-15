@@ -127,6 +127,8 @@ Route::middleware(['auth', 'role:super-admin'])
         ->name('client.')
         ->group(function () {
             Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
+            Route::patch('/dashboard/onboarding-banner/dismiss', [ClientDashboardController::class, 'dismissOnboardingBanner'])
+                ->name('dashboard.onboarding-banner.dismiss');
             Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
             Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');

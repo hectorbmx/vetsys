@@ -51,7 +51,7 @@ class TenantOnboardingService
 
     public function markCompleted(Tenant $tenant, string $step, ?Model $evidence = null): TenantOnboardingStep
     {
-        if (!TenantOnboardingStep::isValidStep($step)) {
+        if (! TenantOnboardingStep::isValidStep($step)) {
             throw new InvalidArgumentException("Unsupported onboarding step: {$step}");
         }
 
@@ -73,6 +73,8 @@ class TenantOnboardingService
             ->keyBy('step');
         $total = count(TenantOnboardingStep::STEPS);
         $completedCount = $completed->count();
+        $isCompleted = $completedCount === $total;
+        $completedAt = $isCompleted ? $completed->max('completed_at') : null;
         $steps = collect(TenantOnboardingStep::STEPS)
             ->map(function (string $step) use ($completed) {
                 $record = $completed->get($step);
@@ -90,7 +92,11 @@ class TenantOnboardingService
             'completed' => $completedCount,
             'total' => $total,
             'percentage' => (int) round(($completedCount / $total) * 100),
-            'is_completed' => $completedCount === $total,
+            'is_completed' => $isCompleted,
+            'completed_at' => $completedAt?->toISOString(),
+            'show_completed_banner' => $isCompleted
+                && ! $tenant->onboarding_banner_dismissed_at
+                && $completedAt?->gt(now()->subDays(7)),
             'next_step' => collect($steps)->firstWhere('completed', false)['key'] ?? null,
             'steps' => $steps,
         ];
