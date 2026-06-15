@@ -19,4 +19,11 @@ class PublicAppStorePagesTest extends TestCase
             ->assertOk()
             ->assertSee('Tu clínica, organizada en un solo lugar.');
     }
+
+    public function test_copyright_page_is_publicly_accessible(): void
+    {
+        $this->get('/derechos-de-autor')
+            ->assertOk()
+            ->assertSee('Todos los derechos reservados.');
+    }
 }
