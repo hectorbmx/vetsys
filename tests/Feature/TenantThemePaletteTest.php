@@ -41,6 +41,20 @@ class TenantThemePaletteTest extends TestCase
         $this->assertSame('forest', $tenant->fresh()->theme_palette);
     }
 
+    public function test_client_admin_can_save_allowed_palette_for_own_tenant(): void
+    {
+        [$tenant, $user] = $this->tenantUser('client-admin-save', 'client-admin');
+
+        $this->withoutMiddleware();
+        $this->actingAs($user)
+            ->patch(route('client.mi-configuracion.appearance.update'), [
+                'theme_palette' => 'forest',
+            ])
+            ->assertRedirect(route('client.mi-configuracion.index', ['tab' => 'apariencia']));
+
+        $this->assertSame('forest', $tenant->fresh()->theme_palette);
+    }
+
     public function test_invalid_palette_is_rejected(): void
     {
         [$tenant, $user] = $this->tenantUser('invalid', 'admin');
@@ -69,6 +83,36 @@ class TenantThemePaletteTest extends TestCase
             ->assertForbidden();
 
         $this->assertSame(TenantThemePalettes::DEFAULT, $tenant->fresh()->theme_palette);
+    }
+
+    public function test_tenant_primary_contact_can_save_appearance_without_admin_role(): void
+    {
+        [$tenant, $user] = $this->tenantUser('primary-contact', 'asistente');
+        $tenant->update(['email' => $user->email]);
+
+        $this->withoutMiddleware();
+        $this->actingAs($user)
+            ->patch(route('client.mi-configuracion.appearance.update'), [
+                'theme_palette' => 'forest',
+            ])
+            ->assertRedirect(route('client.mi-configuracion.index', ['tab' => 'apariencia']));
+
+        $this->assertSame('forest', $tenant->fresh()->theme_palette);
+    }
+
+    public function test_tenant_creator_can_save_appearance_without_admin_role(): void
+    {
+        [$tenant, $user] = $this->tenantUser('creator', 'asistente');
+        $tenant->update(['created_by' => $user->id]);
+
+        $this->withoutMiddleware();
+        $this->actingAs($user)
+            ->patch(route('client.mi-configuracion.appearance.update'), [
+                'theme_palette' => 'violet',
+            ])
+            ->assertRedirect(route('client.mi-configuracion.index', ['tab' => 'apariencia']));
+
+        $this->assertSame('violet', $tenant->fresh()->theme_palette);
     }
 
     public function test_palette_change_is_isolated_between_tenants(): void

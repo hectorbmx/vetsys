@@ -17,6 +17,7 @@ use App\Models\Club;
 use App\Models\Customer;
 use App\Models\Plan;
 use App\Models\PriceHistory;
+use App\Models\Tenant;
 use App\Models\TenantPayment;
 use App\Models\TenantSubscription;
 use App\Models\User;
@@ -90,7 +91,8 @@ class ConfiguracionController extends Controller
     $canInviteUsers = is_null($maxUsers) || $usersUsed < (int) $maxUsers;
     $roleOptions = $this->tenantRoleOptions();
     $roleDescriptions = $this->tenantRoleDescriptions();
-    $canManageTeam = $user->hasRole('admin');
+    $canManageTeam = $this->isTenantAdmin($user);
+    $canManageAppearance = $this->canManageTenantAppearance($user, $tenant);
     $themePalettes = TenantThemePalettes::all();
     $activeThemePalette = TenantThemePalettes::normalize($tenant?->theme_palette);
 
@@ -107,6 +109,7 @@ class ConfiguracionController extends Controller
         'roleOptions',
         'roleDescriptions',
         'canManageTeam',
+        'canManageAppearance',
         'activePlans',
         'subscriptionPayments',
         'pendingPlanRequest',
@@ -121,7 +124,7 @@ public function updateThemePalette(Request $request)
     $user = $request->user();
     $tenant = $user->tenant;
 
-    if (!$user->hasRole('admin')) {
+    if (!$this->canManageTenantAppearance($user, $tenant)) {
         abort(403);
     }
 
@@ -161,6 +164,22 @@ public function updateThemePalette(Request $request)
     return redirect()
         ->route('client.mi-configuracion.index', ['tab' => 'apariencia'])
         ->with('success', 'Apariencia actualizada para todo el equipo.');
+}
+
+private function canManageTenantAppearance(User $user, ?Tenant $tenant): bool
+{
+    if (!$tenant) {
+        return false;
+    }
+
+    return $this->isTenantAdmin($user)
+        || (int) $tenant->created_by === (int) $user->id
+        || strcasecmp((string) $tenant->email, (string) $user->email) === 0;
+}
+
+private function isTenantAdmin(User $user): bool
+{
+    return $user->hasAnyRole(['admin', 'client-admin']);
 }
 
     /**
@@ -302,7 +321,7 @@ public function fieldsStore(Request $request, AnimalType $animalType)
 
 public function storeUser(Request $request)
 {
-    abort_unless(auth()->user()->hasRole('admin'), 403);
+    abort_unless($this->isTenantAdmin(auth()->user()), 403);
 
     $tenant = auth()->user()->tenant()->with('plan')->firstOrFail();
     $usersUsed = $tenant->users()->count();
@@ -381,7 +400,7 @@ public function storeUser(Request $request)
 private function tenantRoleOptions(): array
 {
     return [
-        'admin' => 'Administrador',
+        'client-admin' => 'Administrador',
         'asistente' => 'Asistente',
         'cajero' => 'Cajero',
     ];
@@ -390,7 +409,7 @@ private function tenantRoleOptions(): array
 private function tenantRoleDescriptions(): array
 {
     return [
-        'admin' => 'Administra usuarios, configuracion y operacion del tenant.',
+        'client-admin' => 'Administra usuarios, configuracion y operacion del tenant.',
         'asistente' => 'Apoya la operacion clinica y la captura diaria del tenant.',
         'cajero' => 'Atiende ventas, cobros y movimientos de caja del tenant.',
     ];

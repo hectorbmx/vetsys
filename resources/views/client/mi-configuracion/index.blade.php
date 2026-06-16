@@ -179,12 +179,12 @@
                         <input type="file"
                                name="logo"
                                accept="image/png,image/jpeg,image/webp"
-                               @disabled(!$canManageTeam)
+                               @disabled(!$canManageAppearance)
                                class="block w-full text-xs font-semibold text-slate-500 file:mr-4 file:rounded-xl file:border-0 file:px-4 file:py-2.5 file:text-[10px] file:font-black file:uppercase file:tracking-widest theme-file-input disabled:opacity-50">
 
                         <div class="flex flex-wrap items-center gap-3">
                             <p class="text-[10px] font-semibold text-slate-400">PNG, JPG o WebP. Max 2 MB.</p>
-                            @if($tenant?->logo && $canManageTeam)
+                            @if($tenant?->logo && $canManageAppearance)
                                 <label class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
                                     <input type="checkbox" name="remove_logo" value="1" class="rounded border-slate-300 theme-text-primary focus:ring-0">
                                     Quitar logo
@@ -216,7 +216,7 @@
             </div>
 
             <div class="px-6 py-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                @if($canManageTeam)
+                @if($canManageAppearance)
                     <p class="text-[11px] font-semibold text-slate-400">Vista previa activa hasta guardar o cancelar.</p>
                     <div class="flex flex-wrap gap-2">
                         <button type="button" @click="cancelThemePreview()" class="rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors">
@@ -230,7 +230,7 @@
                         </button>
                     </div>
                 @else
-                    <p class="text-[11px] font-semibold text-slate-400">Solo un administrador puede cambiar la paleta.</p>
+                    <p class="text-[11px] font-semibold text-slate-400">Solo un administrador o responsable del tenant puede cambiar la apariencia.</p>
                 @endif
             </div>
         </form>
