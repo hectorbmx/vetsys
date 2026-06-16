@@ -16,6 +16,17 @@ class EnsureValidWebAccessSession
         $manager = app(UserAccessSessionManager::class);
         $access = $user ? $manager->activeWebAccess($user, $request) : null;
 
+        if ($user?->hasRole('customer')) {
+            $manager->revokeCurrentWeb($request);
+            Auth::guard('web')->logoutCurrentDevice();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Tu acceso es exclusivo para la app movil del cliente.',
+            ]);
+        }
+
         if ($user && ! $access && Auth::guard('web')->viaRemember() && $manager->planAllows($user, 'web')) {
             $request->session()->regenerate();
             $access = $manager->registerWeb($user, $request);

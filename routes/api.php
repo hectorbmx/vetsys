@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogItemController;
 use App\Http\Controllers\Api\V1\ClubController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\CustomerPortalController;
 use App\Http\Controllers\Api\V1\MobileBootstrapController;
 use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -33,6 +34,28 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'access.mobile', 'api.tenant'])->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+        Route::middleware('customer.portal')
+            ->prefix('portal')
+            ->name('api.v1.portal.')
+            ->group(function () {
+                Route::get('/bootstrap', [CustomerPortalController::class, 'bootstrap']);
+                Route::get('/me', [CustomerPortalController::class, 'me']);
+                Route::get('/patients', [CustomerPortalController::class, 'patients']);
+                Route::get('/notes/{note}', [CustomerPortalController::class, 'note']);
+                Route::get('/statements', [CustomerPortalController::class, 'statements']);
+                Route::get('/statements/{statement}/pdf', [CustomerPortalController::class, 'statementPdf'])->name('statements.pdf');
+                Route::get('/notifications', [CustomerPortalController::class, 'notifications']);
+                Route::patch('/notifications/read-all', [CustomerPortalController::class, 'markAllNotificationsRead']);
+                Route::patch('/notifications/{notification}/read', [CustomerPortalController::class, 'markNotificationRead']);
+                Route::get('/patients/{patient}/notes', [CustomerPortalController::class, 'patientNotes']);
+                Route::get('/patients/{patient}/history', [CustomerPortalController::class, 'patientHistory']);
+                Route::get('/patients/{patient}/videos', [CustomerPortalController::class, 'patientVideos']);
+                Route::get('/patients/{patient}/radiology', [CustomerPortalController::class, 'patientRadiology']);
+                Route::get('/patients/{patient}/vaccines', [CustomerPortalController::class, 'patientVaccines']);
+                Route::get('/patients/{patient}', [CustomerPortalController::class, 'patient']);
+            });
+
         Route::get('/mobile/bootstrap', MobileBootstrapController::class);
         Route::apiResource('customers', CustomerController::class)
             ->except(['destroy']);

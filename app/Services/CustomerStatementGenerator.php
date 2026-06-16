@@ -48,7 +48,7 @@ class CustomerStatementGenerator
 
         Storage::disk('local')->put($path, $pdf->output());
 
-        return CustomerStatement::updateOrCreate(
+        $statement = CustomerStatement::updateOrCreate(
             [
                 'tenant_id' => $tenant->id,
                 'customer_id' => $customer->id,
@@ -64,8 +64,14 @@ class CustomerStatementGenerator
                 'pdf_path' => $path,
                 'generated_at' => now(),
                 'status' => $existingStatement ? 'regenerated' : 'generated',
+                'visible_to_customer' => true,
+                'published_at' => now(),
             ]
         );
+
+        app(PortalNotificationService::class)->statementGenerated($statement->fresh('customer'));
+
+        return $statement;
     }
 
     public function shouldGenerateToday(Customer $customer, ?Carbon $date = null): bool

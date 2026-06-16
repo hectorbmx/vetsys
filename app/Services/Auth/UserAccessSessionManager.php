@@ -18,6 +18,10 @@ class UserAccessSessionManager
             return true;
         }
 
+        if ($platform === 'web' && $user->hasRole('customer')) {
+            return false;
+        }
+
         $plan = $user->tenant?->plan;
 
         if (! $plan) {

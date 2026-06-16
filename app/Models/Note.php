@@ -19,6 +19,9 @@ class Note extends Model
         'total',
         'status',
         'date_at',
+        'visible_to_customer',
+        'published_at',
+        'published_by',
     ];
 
     protected static function boot()
@@ -36,6 +39,8 @@ class Note extends Model
         'date_at' => 'date',
         'total' => 'decimal:2',
         'synced_from_mobile' => 'boolean',
+        'visible_to_customer' => 'boolean',
+        'published_at' => 'datetime',
     ];
 
     public function tenant() { return $this->belongsTo(Tenant::class); }
@@ -79,5 +84,10 @@ public function payments()
 public function invoices()
 {
     return $this->hasMany(Invoice::class);
+}
+
+public function publisher()
+{
+    return $this->belongsTo(User::class, 'published_by');
 }
 }

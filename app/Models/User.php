@@ -78,6 +78,31 @@ class User extends Authenticatable
         return $this->hasMany(UserAccessSession::class);
     }
 
+    public function customerLinks()
+    {
+        return $this->hasMany(CustomerUserLink::class);
+    }
+
+    public function customerPortalAccesses()
+    {
+        return $this->hasMany(CustomerPortalAccess::class);
+    }
+
+    public function finalUserPatientAssignments()
+    {
+        return $this->hasMany(FinalUserPatientAssignment::class);
+    }
+
+    public function animalPortalVisibilitySettings()
+    {
+        return $this->hasMany(AnimalPortalVisibilitySetting::class);
+    }
+
+    public function portalNotifications()
+    {
+        return $this->hasMany(PortalNotification::class);
+    }
+
     public static function activationCodeHash(string $code): string
     {
         return hash('sha256', 'activation-code:'.$code);

@@ -112,4 +112,29 @@ public function invoices()
 {
     return $this->hasMany(Invoice::class);
 }
+
+public function portalUserLinks()
+{
+    return $this->hasMany(CustomerUserLink::class);
+}
+
+public function portalAccesses()
+{
+    return $this->hasMany(CustomerPortalAccess::class);
+}
+
+public function finalUserPatientAssignments()
+{
+    return $this->hasMany(FinalUserPatientAssignment::class);
+}
+
+public function animalPortalVisibilitySettings()
+{
+    return $this->hasMany(AnimalPortalVisibilitySetting::class);
+}
+
+public function portalNotifications()
+{
+    return $this->hasMany(PortalNotification::class);
+}
 }

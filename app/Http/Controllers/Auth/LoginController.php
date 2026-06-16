@@ -36,6 +36,14 @@ class LoginController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
+        if ($user->hasRole('customer')) {
+            $this->logoutCurrentDevice($request);
+
+            return back()->withErrors([
+                'email' => 'Tu acceso es exclusivo para la app movil del cliente.',
+            ])->onlyInput('email');
+        }
+
         if (! $user->tenant_id) {
             $this->logoutCurrentDevice($request);
 

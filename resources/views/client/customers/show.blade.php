@@ -1,7 +1,7 @@
 @extends('layouts.client')
 
 @section('content')
-<div x-data="{ tab: '{{ request('tab', 'notas') }}', ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="p-6 max-w-7xl mx-auto space-y-6">
+<div x-data="{ tab: '{{ session('activeCustomerTab', request('tab', 'notas')) }}', ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- CABECERA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -31,6 +31,7 @@
     @if(session('error'))
         <div class="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-3 rounded-2xl text-xs font-bold">{{ session('error') }}</div>
     @endif
+    @include('client.customers.partials.activation-invite')
     @if(session('customer_payment_link_url') || session('payment_link_url'))
         @php $generatedPaymentUrl = session('customer_payment_link_url') ?? session('payment_link_url'); @endphp
         <div x-data="{ copied: false, url: @js($generatedPaymentUrl) }" class="bg-[#F4F3FF] border border-[#DAD7FE] rounded-2xl p-5">
@@ -41,6 +42,39 @@
             </div>
         </div>
     @endif
+
+   {{-- ACCESO APP/WEB --}}
+    @php
+        $activePortalAccess = $customer->portalAccesses->firstWhere('status', 'active');
+        $latestPortalAccess = $activePortalAccess ?? $customer->portalAccesses->sortByDesc('updated_at')->first();
+        $portalUser = $latestPortalAccess?->user ?? $customer->portalUserLinks->first()?->user;
+        $assignedPatientsCount = $customer->finalUserPatientAssignments->whereNull('revoked_at')->count();
+    @endphp
+    <div class="bg-white border border-slate-200 rounded-[24px] p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl {{ $activePortalAccess ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400' }} text-xs font-black">APP</span>
+                <div>
+                    <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Acceso app/web del customer</h2>
+                    <p class="text-[11px] font-semibold text-slate-400 mt-1">
+                        {{ $activePortalAccess ? 'Activo para login del cliente final.' : 'Suspendido o no activado.' }}
+                        {{ $portalUser ? ' Usuario: '.$portalUser->email.'.' : ' Sin usuario vinculado.' }}
+                    </p>
+                </div>
+            </div>
+            <p class="text-[11px] font-semibold text-slate-400 mt-3">
+                {{ $assignedPatientsCount }} paciente(s) preparado(s) para configuracion granular.
+            </p>
+        </div>
+
+        <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST">
+            @csrf
+            @method('PATCH')
+            <button type="submit" class="inline-flex items-center justify-center px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all {{ $activePortalAccess ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-indigo-600 text-white hover:bg-indigo-700' }}">
+                {{ $activePortalAccess ? 'Suspender acceso' : 'Activar acceso' }}
+            </button>
+        </form>
+    </div>
 
    {{-- KPIs --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -566,6 +600,31 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($customer->animals as $animal)
+                        @php
+                            $portalUserId = $activePortalAccess?->user_id;
+                            $animalAssignment = $customer->finalUserPatientAssignments
+                                ->where('animal_id', $animal->id)
+                                ->where('user_id', $portalUserId)
+                                ->first();
+                            $animalVisibility = $customer->animalPortalVisibilitySettings
+                                ->where('animal_id', $animal->id)
+                                ->where('user_id', $portalUserId)
+                                ->first();
+                            $isShared = $animalAssignment && !$animalAssignment->revoked_at;
+                            $portalSectionOptions = [
+                                'show_profile' => 'Datos',
+                                'show_history' => 'Historial',
+                                'show_notes' => 'Notas',
+                                'show_services' => 'Servicios',
+                                'show_products' => 'Productos',
+                                'show_files' => 'Archivos',
+                                'show_videos' => 'Videos',
+                                'show_radiology' => 'RX',
+                                'show_statement' => 'Estado',
+                                'show_vaccines' => 'Vacunas',
+                                'show_appointments' => 'Citas',
+                            ];
+                        @endphp
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-4 py-4">
                                 <div class="flex items-center gap-3">
@@ -619,6 +678,37 @@
                                 <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
                                     Detalles
                                 </a>
+                            </td>
+                        </tr>
+                        <tr class="bg-slate-50/60">
+                            <td colspan="8" class="px-4 py-4">
+                                <form action="{{ route('client.customers.portal-animals.update', $customer) }}" method="POST" class="space-y-3">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="animal_id" value="{{ $animal->id }}">
+
+                                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                        <label class="inline-flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" name="is_shared" value="1" @checked($isShared) class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
+                                            <span class="text-[10px] font-black uppercase tracking-widest {{ $isShared ? 'text-indigo-600' : 'text-slate-400' }}">
+                                                Compartir en app/web
+                                            </span>
+                                        </label>
+
+                                        <button type="submit" class="self-start lg:self-auto inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white border border-slate-200 theme-text-heading text-[10px] font-black uppercase tracking-widest hover:bg-slate-100">
+                                            Guardar visibilidad
+                                        </button>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
+                                        @foreach($portalSectionOptions as $field => $label)
+                                            <label class="flex items-center justify-between gap-2 rounded-xl bg-white border border-slate-100 px-3 py-2">
+                                                <span class="text-[10px] font-bold text-slate-500">{{ $label }}</span>
+                                                <input type="checkbox" name="{{ $field }}" value="1" @checked(optional($animalVisibility)->{$field}) class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </form>
                             </td>
                         </tr>
                     @empty

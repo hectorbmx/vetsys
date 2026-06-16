@@ -69,6 +69,16 @@ $redirectAuthenticatedUser = function () {
         return redirect()->route('admin.dashboard');
     }
 
+    if ($user->hasRole('customer')) {
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('login')->withErrors([
+            'email' => 'Tu acceso es exclusivo para la app movil del cliente.',
+        ]);
+    }
+
     if ($user->tenant_id) {
         return redirect()->route('client.dashboard');
     }
@@ -147,6 +157,8 @@ Route::middleware(['auth', 'role:super-admin'])
             |*/
             Route::resource('customers', CustomerController::class);
             Route::patch('customers/{customer}/toggle', [CustomerController::class, 'toggleStatus'])->name('customers.toggle');
+            Route::patch('customers/{customer}/portal-access', [CustomerController::class, 'togglePortalAccess'])->name('customers.portal-access.toggle');
+            Route::patch('customers/{customer}/portal-animals', [CustomerController::class, 'updateAnimalPortalVisibility'])->name('customers.portal-animals.update');
             Route::get('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'show'])->name('vaccination-letters.show');
             Route::get('vaccination-letters/{vaccinationLetter}/print', [VaccinationLetterController::class, 'print'])->name('vaccination-letters.print');
             Route::post('animals/{animal}/vaccination-letters', [VaccinationLetterController::class, 'store'])->name('animals.vaccination-letters.store');

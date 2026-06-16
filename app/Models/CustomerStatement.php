@@ -19,6 +19,9 @@ class CustomerStatement extends Model
         'pdf_path',
         'generated_at',
         'status',
+        'visible_to_customer',
+        'published_at',
+        'published_by',
     ];
 
     protected $casts = [
@@ -30,8 +33,11 @@ class CustomerStatement extends Model
         'period_payments' => 'decimal:2',
         'ending_balance' => 'decimal:2',
         'generated_at' => 'datetime',
+        'visible_to_customer' => 'boolean',
+        'published_at' => 'datetime',
     ];
 
     public function tenant() { return $this->belongsTo(Tenant::class); }
     public function customer() { return $this->belongsTo(Customer::class); }
+    public function publisher() { return $this->belongsTo(User::class, 'published_by'); }
 }

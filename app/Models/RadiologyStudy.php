@@ -15,10 +15,15 @@ class RadiologyStudy extends Model
         'name',
         'study_date',
         'notes',
+        'visible_to_customer',
+        'published_at',
+        'published_by',
     ];
 
     protected $casts = [
         'study_date' => 'date',
+        'visible_to_customer' => 'boolean',
+        'published_at' => 'datetime',
     ];
 
     public function tenant()
@@ -34,5 +39,10 @@ class RadiologyStudy extends Model
     public function images()
     {
         return $this->hasMany(RadiologyImage::class);
+    }
+
+    public function publisher()
+    {
+        return $this->belongsTo(User::class, 'published_by');
     }
 }

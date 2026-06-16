@@ -87,6 +87,12 @@ class CustomerStripePaymentProcessor
                 ],
             ]);
 
+            app(PortalNotificationService::class)->customerPaymentConfirmed(
+                $paymentLink->customer,
+                $payment,
+                (float) $paymentLink->amount
+            );
+
             return $payment;
         });
     }

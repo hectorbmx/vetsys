@@ -184,4 +184,34 @@ public function onboardingSteps()
 {
     return $this->hasMany(TenantOnboardingStep::class);
 }
+
+public function portalSetting()
+{
+    return $this->hasOne(TenantPortalSetting::class);
+}
+
+public function customerUserLinks()
+{
+    return $this->hasMany(CustomerUserLink::class);
+}
+
+public function customerPortalAccesses()
+{
+    return $this->hasMany(CustomerPortalAccess::class);
+}
+
+public function finalUserPatientAssignments()
+{
+    return $this->hasMany(FinalUserPatientAssignment::class);
+}
+
+public function animalPortalVisibilitySettings()
+{
+    return $this->hasMany(AnimalPortalVisibilitySetting::class);
+}
+
+public function portalNotifications()
+{
+    return $this->hasMany(PortalNotification::class);
+}
 }

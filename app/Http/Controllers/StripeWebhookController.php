@@ -14,6 +14,7 @@ use App\Models\TenantSubscription;
 use App\Models\AdminNotification;
 use App\Services\CustomerPaymentService;
 use App\Services\CustomerStripePaymentProcessor;
+use App\Services\PortalNotificationService;
 use App\Services\TenantOnboardingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -237,6 +238,12 @@ class StripeWebhookController extends Controller
                     'stripe_payment_intent_id' => is_string($session->payment_intent ?? null) ? $session->payment_intent : null,
                 ],
             ]);
+
+            app(PortalNotificationService::class)->notePaymentConfirmed(
+                $note->fresh(['customer', 'details']),
+                $payment,
+                $amountToApply
+            );
         });
 
         if ($paymentLink->tenant) {
@@ -575,6 +582,12 @@ private function handlePaymentIntentSucceeded($paymentIntent): void
                 'stripe_payment_intent_id' => $paymentIntent->id,
             ],
         ]);
+
+        app(PortalNotificationService::class)->notePaymentConfirmed(
+            $note->fresh(['customer', 'details']),
+            $payment,
+            $amountToApply
+        );
     });
 
     if ($paymentLink->tenant) {

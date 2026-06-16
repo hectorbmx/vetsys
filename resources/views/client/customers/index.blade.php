@@ -63,6 +63,8 @@
         </div>
     </div>
 
+    @include('client.customers.partials.activation-invite')
+
     {{-- CARDS / TRES KPIS SUPERIORES CON COLORES Y DEGRADADOS --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
@@ -122,6 +124,7 @@
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Animales</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">APP</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
                     </tr>
@@ -180,6 +183,25 @@
                             </td>
 
                             {{-- Status Toggle Dinámico --}}
+                            <td class="px-6 py-4">
+                                @php($portalAccessActive = $customer->portalAccesses->firstWhere('status', 'active'))
+                                <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-2 group focus:outline-none"
+                                            title="{{ $portalAccessActive ? 'Suspender acceso app/web' : 'Activar acceso app/web' }}">
+                                        <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $portalAccessActive ? 'bg-indigo-500' : 'bg-slate-300' }}">
+                                            <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $portalAccessActive ? 'translate-x-4' : 'translate-x-0' }}"></div>
+                                        </div>
+
+                                        <span class="text-[10px] font-bold uppercase tracking-wider min-w-[34px] {{ $portalAccessActive ? 'text-indigo-600' : 'text-slate-400' }}">
+                                            {{ $portalAccessActive ? 'ON' : 'OFF' }}
+                                        </span>
+                                    </button>
+                                </form>
+                            </td>
+
                   <td class="px-6 py-4">
                     <form action="{{ route('client.customers.toggle', $customer->id) }}" method="POST">
                         @csrf
@@ -212,7 +234,7 @@
                     @empty
                         {{-- Estado vacío si la consulta no devuelve nada --}}
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-slate-400">No se encontraron clientes registrados en este Tenant.</p>
                             </td>
                         </tr>

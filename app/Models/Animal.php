@@ -84,4 +84,19 @@ public function shares()
 {
     return $this->hasMany(AnimalShare::class);
 }
+
+public function finalUserPatientAssignments()
+{
+    return $this->hasMany(FinalUserPatientAssignment::class);
+}
+
+public function portalVisibilitySettings()
+{
+    return $this->hasMany(AnimalPortalVisibilitySetting::class);
+}
+
+public function portalNotifications()
+{
+    return $this->hasMany(PortalNotification::class);
+}
 }

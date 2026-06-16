@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Note;
 use App\Models\CustomerPaymentLink;
 use App\Services\CustomerStripePaymentProcessor;
+use App\Services\CustomerPortalAccessService;
 use App\Services\StripeCustomerPaymentService;
 use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class CustomerController extends Controller
 
     $customers = Customer::query()
         ->where('tenant_id', $tenantId)
+        ->with('portalAccesses')
         ->withCount('animals')
         ->withSum([
             'saleNotes as general_debt' => fn ($query) => $query->where('status', 'PENDIENTE'),
@@ -118,6 +120,10 @@ public function show($id)
         'animals',
         'payments.paymentMethod',
         'accountSetting',
+        'portalUserLinks.user',
+        'portalAccesses.user',
+        'finalUserPatientAssignments.animal',
+        'animalPortalVisibilitySettings',
         'statements' => fn ($query) => $query->latest(),
     ])->findOrFail($id);
     $this->authorizeTenant($customer);
@@ -170,6 +176,95 @@ public function show($id)
 
         if ($processedPayment) {
             app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        }
+    }
+
+    public function togglePortalAccess(Customer $customer, CustomerPortalAccessService $portalAccessService)
+    {
+        $this->authorizeTenant($customer);
+
+        $activeAccess = $customer->portalAccesses()
+            ->where('status', 'active')
+            ->first();
+
+        try {
+            if ($activeAccess) {
+                $portalAccessService->suspend($customer, auth()->user());
+
+                return back()->with('success', 'Acceso app/web suspendido para este cliente.');
+            }
+
+            $result = $portalAccessService->activate($customer, auth()->user());
+            $message = 'Acceso app/web activado para este cliente.';
+
+            if ($result['invitation_url']) {
+                session()->flash('activation_link', $result['invitation_url']);
+                session()->flash('activation_code', $result['activation_code']);
+                session()->flash('activation_email', $result['user']->email);
+            }
+
+            if ($result['created_user'] && $result['mail_sent']) {
+                $message .= ' Se envio la invitacion por correo y tambien se muestra en pantalla.';
+            } elseif ($result['created_user'] && !$result['mail_sent']) {
+                $message .= ' No se pudo enviar el correo; copia el enlace/codigo de invitacion mostrado.';
+            } elseif ($result['invitation_url'] && !$result['mail_sent']) {
+                $message .= ' Se genero un nuevo enlace de invitacion; copialo desde esta pantalla.';
+            } elseif ($result['invitation_url']) {
+                $message .= ' Se muestra el enlace de invitacion en pantalla.';
+            }
+
+            return back()->with('success', $message);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    public function updateAnimalPortalVisibility(Request $request, Customer $customer, CustomerPortalAccessService $portalAccessService)
+    {
+        $this->authorizeTenant($customer);
+
+        $data = $request->validate([
+            'animal_id' => [
+                'required',
+                'integer',
+                Rule::exists('animals', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', auth()->user()->tenant_id)
+                    ->where('customer_id', $customer->id)),
+            ],
+            'is_shared' => ['nullable', 'boolean'],
+            'show_profile' => ['nullable', 'boolean'],
+            'show_history' => ['nullable', 'boolean'],
+            'show_notes' => ['nullable', 'boolean'],
+            'show_services' => ['nullable', 'boolean'],
+            'show_products' => ['nullable', 'boolean'],
+            'show_files' => ['nullable', 'boolean'],
+            'show_videos' => ['nullable', 'boolean'],
+            'show_radiology' => ['nullable', 'boolean'],
+            'show_statement' => ['nullable', 'boolean'],
+            'show_vaccines' => ['nullable', 'boolean'],
+            'show_appointments' => ['nullable', 'boolean'],
+        ]);
+
+        $data['is_shared'] = $request->boolean('is_shared');
+
+        foreach (CustomerPortalAccessService::VISIBILITY_FIELDS as $field) {
+            $data[$field] = $request->boolean($field);
+        }
+
+        try {
+            $portalAccessService->updateAnimalVisibility($customer, (int) $data['animal_id'], auth()->user(), $data);
+
+            return back()
+                ->with('success', 'Visibilidad app/web actualizada para la mascota.')
+                ->with('activeCustomerTab', 'mascotas');
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()
+                ->with('error', $exception->getMessage())
+                ->with('activeCustomerTab', 'mascotas');
         }
     }
 
