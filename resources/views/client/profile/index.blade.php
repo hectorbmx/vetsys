@@ -34,9 +34,10 @@
         <div class="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden h-fit">
             <div class="h-28 theme-gradient-primary"></div>
             <div class="px-6 pb-6 -mt-10">
+                @php($tenantLogoUrl = $tenant->logoUrl())
                 <div class="w-24 h-24 rounded-3xl bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
-                    @if($tenant->logo)
-                        <img src="{{ asset('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="w-full h-full object-cover">
+                    @if($tenantLogoUrl)
+                        <img src="{{ $tenantLogoUrl }}" alt="{{ $tenant->name }}" class="w-full h-full object-cover">
                     @else
                         <div class="w-full h-full theme-surface-dark flex items-center justify-center text-3xl font-black">
                             {{ substr($tenant->name, 0, 1) }}
@@ -192,14 +193,6 @@
             </div>
 
             {{-- Renovacion --}}
-            @php
-                $pendingCheckout = $tenant->payments
-                    ->where('status', 'pending')
-                    ->where('payment_method', 'stripe_checkout')
-                    ->first();
-                $canCheckout = $tenant->plan && $tenant->plan->stripe_price_id;
-            @endphp
-
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <div>

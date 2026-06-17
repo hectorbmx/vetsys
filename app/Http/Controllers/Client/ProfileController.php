@@ -28,7 +28,19 @@ class ProfileController extends Controller
             ->first()
             ?? $tenant->payments->first();
 
-        return view('client.profile.index', compact('tenant', 'currentSubscription', 'lastPayment'));
+        $pendingCheckout = $tenant->payments
+            ->where('status', 'pending')
+            ->where('payment_method', 'stripe_checkout')
+            ->first();
+        $canCheckout = $tenant->plan && $tenant->plan->stripe_price_id;
+
+        return view('client.profile.index', compact(
+            'tenant',
+            'currentSubscription',
+            'lastPayment',
+            'pendingCheckout',
+            'canCheckout',
+        ));
     }
 
     public function update(Request $request)

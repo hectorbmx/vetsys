@@ -66,6 +66,10 @@ class Tenant extends Model
         }
 
         try {
+            if (Storage::disk('public')->exists($this->logo)) {
+                return Storage::disk('public')->url($this->logo);
+            }
+
             return Storage::disk('r2')->temporaryUrl($this->logo, now()->addMinutes(60));
         } catch (Throwable) {
             return null;
