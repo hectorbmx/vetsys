@@ -122,7 +122,7 @@
                     <tr class="border-b border-slate-100 bg-slate-50/20 text-center">
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Animales</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pacientes</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">APP</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
@@ -156,7 +156,7 @@
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center text-[10px] font-black theme-text-primary theme-bg-primary-soft px-2.5 py-1 rounded-full">
                                     {{ $customer->animals_count ?? $customer->animals->count() }}
-                                    {{ ($customer->animals_count ?? $customer->animals->count()) == 1 ? 'mascota' : 'mascotas' }}
+                                    {{ ($customer->animals_count ?? $customer->animals->count()) == 1 ? 'paciente' : 'pacientes' }}
                                 </span>
                             </td>
                             {{-- <td class="px-6 py-4">

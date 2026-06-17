@@ -138,7 +138,7 @@
             <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/20"></div>
             <div class="relative z-10 h-full flex flex-col justify-between">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/80">Mascotas</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/80">Pacientes</p>
                     <div class="text-5xl font-black text-white mt-4">{{ number_format($totalAnimals) }}</div>
                 </div>
                 <div class="flex items-center justify-between pt-6">

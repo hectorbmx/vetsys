@@ -86,7 +86,7 @@
                         ['route' => 'client.dashboard', 'icon' => '▦', 'label' => 'Dashboard'],
                         // ['route' => 'client.profile.index', 'icon' => '◎', 'label' => 'Perfil'],
                         ['route' => 'client.customers.index', 'icon' => '👥', 'label' => 'Clientes'],
-                        ['route' => 'client.animals.index', 'icon' => '🐕', 'label' => 'Mascotas'],
+                        ['route' => 'client.animals.index', 'icon' => '🐕', 'label' => 'Pacientes'],
                         ['route' => 'client.clubes.index', 'icon' => '🏇', 'label' => 'Clubes'],
                         ['route' => 'client.ventas.index', 'icon' => '🛒', 'label' => 'Ventas'],
                         ['route' => 'client.servicios.index', 'icon' => '⚙️', 'label' => 'Servicios'],
