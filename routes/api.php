@@ -53,6 +53,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/patients/{patient}/videos', [CustomerPortalController::class, 'patientVideos']);
                 Route::get('/patients/{patient}/radiology', [CustomerPortalController::class, 'patientRadiology']);
                 Route::get('/patients/{patient}/vaccines', [CustomerPortalController::class, 'patientVaccines']);
+                Route::get('/vaccination-letters/{vaccinationLetter}/pdf', [CustomerPortalController::class, 'vaccinationLetterPdf']);
                 Route::get('/patients/{patient}', [CustomerPortalController::class, 'patient']);
             });
 

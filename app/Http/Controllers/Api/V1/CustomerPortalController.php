@@ -15,6 +15,7 @@ use App\Models\PortalNotification;
 use App\Models\RadiologyImage;
 use App\Models\RadiologyStudy;
 use App\Models\VaccinationLetter;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -340,11 +341,7 @@ class CustomerPortalController extends Controller
                 'id' => $letter->id,
                 'date' => $letter->date?->toDateString(),
                 'image_url' => $this->publicStorageUrl($letter->image_path),
-                'pdf_url' => URL::temporarySignedRoute(
-                    'public.vaccination-letters.print',
-                    now()->addMinutes(30),
-                    ['vaccinationLetter' => $letter]
-                ),
+                'pdf_url' => $this->vaccinationPdfUrl($letter),
                 'published_at' => $letter->published_at?->toISOString(),
                 'updated_at' => $letter->updated_at?->toISOString(),
             ])->values(),
@@ -352,6 +349,37 @@ class CustomerPortalController extends Controller
                 'patient_visibility' => $this->serializeVisibility($visibility),
             ],
         ]);
+    }
+
+    public function vaccinationLetterPdf(Request $request, VaccinationLetter $vaccinationLetter)
+    {
+        $access = $this->portalAccess($request);
+
+        abort_unless($vaccinationLetter->tenant_id === $access->tenant_id, 404);
+        abort_unless($vaccinationLetter->animal, 404);
+
+        $this->authorizePatientSection($access, $vaccinationLetter->animal, 'show_vaccines');
+        abort_unless($this->publicStorageFileExists($vaccinationLetter->image_path), 404);
+
+        $vaccinationLetter->loadMissing(['tenant', 'animal.customer', 'animal.animalType']);
+
+        $pdf = Pdf::loadView('client.animals.vaccination-letter-pdf', [
+            'letter' => $vaccinationLetter,
+            'animal' => $vaccinationLetter->animal,
+            'customer' => $vaccinationLetter->animal->customer,
+            'tenant' => $vaccinationLetter->tenant,
+            'imageDataUri' => $this->publicStorageImageAsDataUri($vaccinationLetter->image_path),
+            'tenantLogoDataUri' => $this->publicStorageImageAsDataUri($vaccinationLetter->tenant?->logo),
+            'generatedDate' => Carbon::now()->format('Y-m-d'),
+        ])
+            ->setPaper('letter', 'portrait')
+            ->setOption('defaultFont', 'DejaVu Sans')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
+
+        $filename = 'carta-vacunacion-' . str($vaccinationLetter->animal->name)->slug() . '-' . $vaccinationLetter->date->format('Ymd') . '.pdf';
+
+        return $pdf->stream($filename);
     }
 
     public function statements(Request $request)
@@ -676,11 +704,54 @@ class CustomerPortalController extends Controller
 
     private function publicStorageUrl(?string $path): ?string
     {
-        if (!$path || !Storage::disk('public')->exists($path)) {
+        if (!$path || !$this->publicStorageFileExists($path)) {
             return null;
         }
 
         return Storage::disk('public')->url($path);
+    }
+
+    private function publicStorageImageAsDataUri(?string $path): ?string
+    {
+        if (!$path || !$this->publicStorageFileExists($path)) {
+            return null;
+        }
+
+        $fullPath = $this->publicStorageFilePath($path);
+        $mime = mime_content_type($fullPath) ?: 'image/jpeg';
+
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
+    }
+
+    private function publicStorageFileExists(?string $path): bool
+    {
+        if (!$path) {
+            return false;
+        }
+
+        return Storage::disk('public')->exists($path)
+            || is_file(public_path('storage/' . ltrim($path, '/')));
+    }
+
+    private function publicStorageFilePath(string $path): string
+    {
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->path($path);
+        }
+
+        return public_path('storage/' . ltrim($path, '/'));
+    }
+
+    private function vaccinationPdfUrl(VaccinationLetter $letter): string
+    {
+        $relativeUrl = URL::temporarySignedRoute(
+            'public.vaccination-letters.print',
+            now()->addMinutes(30),
+            ['vaccinationLetter' => $letter],
+            false
+        );
+
+        return request()->getSchemeAndHttpHost() . $relativeUrl;
     }
 
     private function serializeStatement(CustomerStatement $statement): array

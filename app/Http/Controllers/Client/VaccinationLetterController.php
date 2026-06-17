@@ -16,9 +16,9 @@ class VaccinationLetterController extends Controller
     public function show(VaccinationLetter $vaccinationLetter)
     {
         abort_unless($vaccinationLetter->tenant_id === auth()->user()->tenant_id, 404);
-        abort_unless(Storage::disk('public')->exists($vaccinationLetter->image_path), 404);
+        abort_unless($this->publicStorageFileExists($vaccinationLetter->image_path), 404);
 
-        return response()->file(Storage::disk('public')->path($vaccinationLetter->image_path));
+        return response()->file($this->publicStorageFilePath($vaccinationLetter->image_path));
     }
 
     public function print(VaccinationLetter $vaccinationLetter)
@@ -32,7 +32,7 @@ class VaccinationLetterController extends Controller
 
     public function signedPrint(Request $request, VaccinationLetter $vaccinationLetter)
     {
-        abort_unless($request->hasValidRelativeSignature(), 403);
+        abort_unless($request->hasValidSignature() || $request->hasValidRelativeSignature(), 403);
 
         return $this->renderPdf($vaccinationLetter);
     }
@@ -40,7 +40,7 @@ class VaccinationLetterController extends Controller
     private function renderPdf(VaccinationLetter $vaccinationLetter)
     {
         $vaccinationLetter->load(['tenant', 'animal.customer', 'animal.animalType']);
-        abort_unless(Storage::disk('public')->exists($vaccinationLetter->image_path), 404);
+        abort_unless($this->publicStorageFileExists($vaccinationLetter->image_path), 404);
 
         $imageDataUri = $this->storageImageAsDataUri($vaccinationLetter->image_path);
         $tenantLogoDataUri = $vaccinationLetter->tenant->logo
@@ -113,13 +113,32 @@ class VaccinationLetterController extends Controller
 
     private function storageImageAsDataUri(?string $path): ?string
     {
-        if (!$path || !Storage::disk('public')->exists($path)) {
+        if (!$path || !$this->publicStorageFileExists($path)) {
             return null;
         }
 
-        $fullPath = Storage::disk('public')->path($path);
+        $fullPath = $this->publicStorageFilePath($path);
         $mime = mime_content_type($fullPath) ?: 'image/jpeg';
 
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
+    }
+
+    private function publicStorageFileExists(?string $path): bool
+    {
+        if (!$path) {
+            return false;
+        }
+
+        return Storage::disk('public')->exists($path)
+            || is_file(public_path('storage/' . ltrim($path, '/')));
+    }
+
+    private function publicStorageFilePath(string $path): string
+    {
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->path($path);
+        }
+
+        return public_path('storage/' . ltrim($path, '/'));
     }
 }
