@@ -179,6 +179,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('telemedicina/expedientes/{token}/radiologia/{radiologyImage}', [TelemedicineController::class, 'radiologyImage'])->name('telemedicine.radiology-images.show');
             Route::resource('animals', AnimalController::class);
             Route::patch('animals/{animal}/toggle', [AnimalController::class, 'toggleStatus'])->name('animals.toggle');
+            Route::patch('animals/{animal}/portal-visibility', [AnimalController::class, 'togglePortalVisibility'])->name('animals.portal-visibility.toggle');
             Route::get('api/buscar-animales', [ClubController::class, 'searchAnimals'])->name('api.buscar-animales');
             Route::patch('clubes/{club}/members', [ClubController::class, 'updateMembers'])->name('clubes.members.update');
             Route::post('clubes/{club}/coggins', [ClubController::class, 'storeCoggin'])->name('clubes.coggins.store');

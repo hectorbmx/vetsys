@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\AnimalType;
 use App\Models\Club;
 use App\Services\TenantOnboardingService;
+use App\Services\CustomerPortalAccessService;
 use Illuminate\Validation\Rule;
 
 use Exception;
@@ -21,6 +22,15 @@ class AnimalController extends Controller
     public function index(Request $request)
 {
     $tenantId = auth()->user()->tenant_id;
+    $allowedPerPage = [15, 30, 50, 100];
+    $requestedPerPage = $request->integer('per_page', 15);
+    $perPage = in_array($requestedPerPage, $allowedPerPage, true)
+        ? $requestedPerPage
+        : 15;
+
+    $tenantAnimals = Animal::query()->where('tenant_id', $tenantId);
+    $totalAnimals = (clone $tenantAnimals)->count();
+    $inactiveAnimals = (clone $tenantAnimals)->where('status', 'inactive')->count();
 
     // 1. Cargamos relaciones reales del modelo: customer y animalType
     $animals = Animal::with(['customer', 'animalType', 'club'])
@@ -46,7 +56,7 @@ class AnimalController extends Controller
             });
         })
         ->latest()
-        ->paginate(15)
+        ->paginate($perPage)
         ->withQueryString();
 
     // 2. Clientes activos para el modal
@@ -65,7 +75,15 @@ class AnimalController extends Controller
         ->orderBy('name')
         ->get();
 
-    return view('client.animals.index', compact('animals', 'customers', 'animalTypes', 'clubs'));
+    return view('client.animals.index', compact(
+        'animals',
+        'customers',
+        'animalTypes',
+        'clubs',
+        'totalAnimals',
+        'inactiveAnimals',
+        'perPage'
+    ));
 }
 
     public function toggleStatus(Animal $animal)
@@ -214,7 +232,47 @@ class AnimalController extends Controller
             ->latest()
             ->get();
 
-        return view('client.animals.edit', compact('animal', 'customers', 'animalTypes', 'clubs', 'serviceHistory'));
+        $portalUserIds = $animal->customer?->portalAccesses()
+            ->where('status', 'active')
+            ->pluck('user_id') ?? collect();
+        $hasActivePortalAccess = $portalUserIds->isNotEmpty();
+        $isVisibleInPortal = $hasActivePortalAccess && $animal->finalUserPatientAssignments()
+            ->whereIn('user_id', $portalUserIds)
+            ->whereNull('revoked_at')
+            ->exists();
+
+        return view('client.animals.edit', compact(
+            'animal',
+            'customers',
+            'animalTypes',
+            'clubs',
+            'serviceHistory',
+            'hasActivePortalAccess',
+            'isVisibleInPortal'
+        ));
+    }
+
+    public function togglePortalVisibility(Animal $animal, CustomerPortalAccessService $portalAccessService)
+    {
+        abort_unless($animal->tenant_id === auth()->user()->tenant_id, 404);
+
+        try {
+            $isVisible = $portalAccessService->toggleAnimalVisibility($animal, auth()->user());
+
+            return redirect()
+                ->route('client.animals.edit', $animal)
+                ->with('success', $isVisible
+                    ? 'El paciente ahora es visible en la app del cliente.'
+                    : 'El paciente se oculto de la app del cliente.')
+                ->with('animalTab', 'datos');
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('client.animals.edit', $animal)
+                ->with('error', $exception->getMessage())
+                ->with('animalTab', 'datos');
+        }
     }
 
     /**

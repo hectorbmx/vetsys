@@ -159,6 +159,35 @@
         </div>
 
         <div x-show="tab === 'datos'" class="p-6">
+            <div class="mb-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Visibilidad en app</p>
+                    <p class="mt-1 text-xs font-semibold text-slate-600">
+                        @if(!$hasActivePortalAccess)
+                            El cliente necesita acceso activo antes de mostrar este paciente.
+                        @elseif($isVisibleInPortal)
+                            Este paciente es visible para {{ $animal->customer?->full_name }}.
+                        @else
+                            Este paciente esta oculto en la app del cliente.
+                        @endif
+                    </p>
+                </div>
+
+                @if($hasActivePortalAccess)
+                    <form action="{{ route('client.animals.portal-visibility.toggle', $animal) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors {{ $isVisibleInPortal ? 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100' : 'theme-button-primary' }}">
+                            {{ $isVisibleInPortal ? 'Ocultar de la app' : 'Mostrar en la app' }}
+                        </button>
+                    </form>
+                @elseif($animal->customer)
+                    <a href="{{ route('client.customers.show', $animal->customer) }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-black uppercase tracking-widest theme-text-heading hover:bg-slate-100">
+                        Configurar acceso del cliente
+                    </a>
+                @endif
+            </div>
+
             <form action="{{ route('client.animals.update', $animal) }}" method="POST" @submit="loading = true" class="space-y-6">
                 @csrf
                 @method('PUT')

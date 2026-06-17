@@ -10,6 +10,10 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
+        $unreadCount = TenantNotification::query()
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->whereNull('read_at')
+            ->count();
         $notifications = TenantNotification::query()
             ->where('tenant_id', $request->user()->tenant_id)
             ->latest()
@@ -19,7 +23,7 @@ class NotificationController extends Controller
         return response()->json([
             'data' => $notifications->map(fn (TenantNotification $notification) => $this->serialize($notification)),
             'meta' => [
-                'unread_count' => $notifications->whereNull('read_at')->count(),
+                'unread_count' => $unreadCount,
             ],
         ]);
     }
@@ -31,6 +35,18 @@ class NotificationController extends Controller
 
         return response()->json([
             'data' => $this->serialize($notification->fresh()),
+        ]);
+    }
+
+    public function markAllRead(Request $request)
+    {
+        TenantNotification::query()
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json([
+            'meta' => ['unread_count' => 0],
         ]);
     }
 

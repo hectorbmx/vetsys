@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\TenantUserInvitationMail;
+use App\Models\Animal;
 use App\Models\AnimalPortalVisibilitySetting;
 use App\Models\Customer;
 use App\Models\CustomerPortalAccess;
@@ -285,5 +286,74 @@ class CustomerPortalAccessService
                 );
             }
         });
+    }
+
+    public function toggleAnimalVisibility(Animal $animal, User $actor): bool
+    {
+        if ($animal->tenant_id !== $actor->tenant_id) {
+            throw new RuntimeException('No puedes actualizar un paciente de otro tenant.');
+        }
+
+        $customer = $animal->customer;
+
+        if (! $customer) {
+            throw new RuntimeException('El paciente no tiene un cliente propietario.');
+        }
+
+        $portalUserIds = $customer->portalAccesses()
+            ->where('status', 'active')
+            ->pluck('user_id');
+
+        if ($portalUserIds->isEmpty()) {
+            throw new RuntimeException('Primero activa el acceso app/web del cliente.');
+        }
+
+        $isCurrentlyShared = FinalUserPatientAssignment::query()
+            ->where('tenant_id', $customer->tenant_id)
+            ->where('animal_id', $animal->id)
+            ->whereIn('user_id', $portalUserIds)
+            ->whereNull('revoked_at')
+            ->exists();
+        $shouldShare = ! $isCurrentlyShared;
+
+        DB::transaction(function () use ($customer, $animal, $actor, $portalUserIds, $shouldShare) {
+            foreach ($portalUserIds as $userId) {
+                $assignment = FinalUserPatientAssignment::firstOrNew([
+                    'tenant_id' => $customer->tenant_id,
+                    'user_id' => $userId,
+                    'animal_id' => $animal->id,
+                ]);
+
+                $assignment->fill([
+                    'customer_id' => $customer->id,
+                    'assigned_by' => $actor->id,
+                    'assigned_at' => $assignment->assigned_at ?: now(),
+                    'revoked_at' => $shouldShare ? null : now(),
+                ])->save();
+
+                if (! $shouldShare) {
+                    continue;
+                }
+
+                $visibility = AnimalPortalVisibilitySetting::firstOrNew([
+                    'tenant_id' => $customer->tenant_id,
+                    'user_id' => $userId,
+                    'animal_id' => $animal->id,
+                ]);
+
+                if (! $visibility->exists) {
+                    foreach (self::VISIBILITY_FIELDS as $field) {
+                        $visibility->{$field} = true;
+                    }
+                }
+
+                $visibility->fill([
+                    'customer_id' => $customer->id,
+                    'updated_by' => $actor->id,
+                ])->save();
+            }
+        });
+
+        return $shouldShare;
     }
 }

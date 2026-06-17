@@ -80,6 +80,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/notes/{note}/payment-links', [NoteController::class, 'createPaymentLink']);
         Route::post('/notes/{note}/manual-payment', [NoteController::class, 'storeManualPayment']);
         Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::get('/customers/{customer}/payments/preview', [PaymentController::class, 'preview']);
         Route::post('/customers/{customer}/payment-links', [PaymentController::class, 'createPaymentLink']);

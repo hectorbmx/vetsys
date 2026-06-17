@@ -156,7 +156,7 @@
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center text-[10px] font-black theme-text-primary theme-bg-primary-soft px-2.5 py-1 rounded-full">
                                     {{ $customer->animals_count ?? $customer->animals->count() }}
-                                    {{ ($customer->animals_count ?? $customer->animals->count()) == 1 ? 'paciente' : 'pacientes' }}
+                                    {{ ($customer->animals_count ?? $customer->animals->count()) == 1 ? 'paciente' : 'pacientes ' }}
                                 </span>
                             </td>
                             {{-- <td class="px-6 py-4">
