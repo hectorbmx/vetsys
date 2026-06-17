@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\VaccinationLetter;
+use App\Services\PortalNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -96,12 +97,14 @@ class VaccinationLetterController extends Controller
             'public'
         );
 
-        VaccinationLetter::create([
+        $letter = VaccinationLetter::create([
             'tenant_id' => $tenantId,
             'animal_id' => $animal->id,
             'image_path' => $path,
             'date' => $data['date'],
         ]);
+
+        app(PortalNotificationService::class)->vaccinationLetterPublished($letter);
 
         return redirect()
             ->route('client.animals.edit', $animal)

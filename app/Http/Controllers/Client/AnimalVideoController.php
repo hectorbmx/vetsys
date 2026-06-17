@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\AnimalVideo;
+use App\Services\PortalNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -47,7 +48,7 @@ class AnimalVideoController extends Controller
             $this->deleteTempFile($processedVideo['delete_path']);
         }
 
-        AnimalVideo::create([
+        $video = AnimalVideo::create([
             'tenant_id' => $tenantId,
             'animal_id' => $animal->id,
             'disk' => 'r2',
@@ -58,6 +59,8 @@ class AnimalVideoController extends Controller
             'video_date' => $data['video_date'],
             'notes' => $data['notes'] ?? null,
         ]);
+
+        app(PortalNotificationService::class)->videoPublished($video);
 
         return redirect()
             ->route('client.animals.edit', $animal)

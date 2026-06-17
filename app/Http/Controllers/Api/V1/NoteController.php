@@ -8,6 +8,7 @@ use App\Models\NotePaymentLink;
 use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
 use App\Services\InventoryService;
+use App\Services\PortalNotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -145,6 +146,8 @@ class NoteController extends Controller
 
             return $note;
         });
+
+        app(PortalNotificationService::class)->notePublished($note->fresh(['customer', 'details']));
 
         return response()->json([
             'data' => $this->serializeNote($note->load(['customer', 'details.catalogItem', 'details.animal', 'payments.paymentMethod'])),

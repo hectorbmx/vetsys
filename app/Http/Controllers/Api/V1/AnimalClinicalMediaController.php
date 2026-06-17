@@ -11,6 +11,7 @@ use App\Models\RadiologyStudy;
 use App\Models\Tenant;
 use App\Models\TenantNotification;
 use App\Models\VaccinationLetter;
+use App\Services\PortalNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -49,12 +50,14 @@ class AnimalClinicalMediaController extends Controller
             'public'
         );
 
-        VaccinationLetter::create([
+        $letter = VaccinationLetter::create([
             'tenant_id' => $animal->tenant_id,
             'animal_id' => $animal->id,
             'image_path' => $path,
             'date' => $data['date'],
         ]);
+
+        app(PortalNotificationService::class)->vaccinationLetterPublished($letter);
 
         return response()->json(['data' => $this->serialize($animal)], 201);
     }
@@ -84,7 +87,7 @@ class AnimalClinicalMediaController extends Controller
         $path = "tenants/{$animal->tenant_id}/animals/{$animal->id}/videos/" . Str::uuid() . ".{$extension}";
         Storage::disk('r2')->put($path, fopen($file->getRealPath(), 'rb'), ['mimetype' => $file->getMimeType()]);
 
-        AnimalVideo::create([
+        $video = AnimalVideo::create([
             'tenant_id' => $animal->tenant_id,
             'animal_id' => $animal->id,
             'disk' => 'r2',
@@ -95,6 +98,8 @@ class AnimalClinicalMediaController extends Controller
             'video_date' => $data['video_date'],
             'notes' => $data['notes'] ?? null,
         ]);
+
+        app(PortalNotificationService::class)->videoPublished($video);
 
         return response()->json(['data' => $this->serialize($animal)], 201);
     }
@@ -108,11 +113,13 @@ class AnimalClinicalMediaController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        RadiologyStudy::create([
+        $study = RadiologyStudy::create([
             'tenant_id' => $animal->tenant_id,
             'animal_id' => $animal->id,
             ...$data,
         ]);
+
+        app(PortalNotificationService::class)->radiologyStudyPublished($study);
 
         return response()->json(['data' => $this->serialize($animal)], 201);
     }
@@ -127,12 +134,15 @@ class AnimalClinicalMediaController extends Controller
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
         ]);
 
+        $imageCount = 0;
+        $lastImageId = null;
+
         foreach ($request->file('images', []) as $image) {
             $extension = strtolower($image->getClientOriginalExtension() ?: 'jpg');
             $path = "tenants/{$radiologyStudy->tenant_id}/animals/{$radiologyStudy->animal_id}/radiology/{$radiologyStudy->id}/" . Str::uuid() . ".{$extension}";
             Storage::disk('r2')->put($path, fopen($image->getRealPath(), 'rb'), ['mimetype' => $image->getMimeType()]);
 
-            RadiologyImage::create([
+            $radiologyImage = RadiologyImage::create([
                 'tenant_id' => $radiologyStudy->tenant_id,
                 'animal_id' => $radiologyStudy->animal_id,
                 'radiology_study_id' => $radiologyStudy->id,
@@ -144,7 +154,12 @@ class AnimalClinicalMediaController extends Controller
                 'label' => $data['label'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            $imageCount++;
+            $lastImageId = $radiologyImage->id;
         }
+
+        app(PortalNotificationService::class)->radiologyImagesPublished($radiologyStudy, $imageCount, $lastImageId);
 
         return response()->json(['data' => $this->serialize($radiologyStudy->animal)], 201);
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\RadiologyImage;
 use App\Models\RadiologyStudy;
+use App\Services\PortalNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -24,13 +25,15 @@ class RadiologyController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        RadiologyStudy::create([
+        $study = RadiologyStudy::create([
             'tenant_id' => $tenantId,
             'animal_id' => $animal->id,
             'name' => $data['name'],
             'study_date' => $data['study_date'],
             'notes' => $data['notes'] ?? null,
         ]);
+
+        app(PortalNotificationService::class)->radiologyStudyPublished($study);
 
         return redirect()
             ->route('client.animals.edit', $animal)
@@ -52,6 +55,9 @@ class RadiologyController extends Controller
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
         ]);
 
+        $imageCount = 0;
+        $lastImageId = null;
+
         foreach ($request->file('images', []) as $image) {
             $extension = strtolower($image->getClientOriginalExtension() ?: $image->extension() ?: 'jpg');
             $filename = Str::uuid() . '.' . $extension;
@@ -69,7 +75,7 @@ class RadiologyController extends Controller
                 }
             }
 
-            RadiologyImage::create([
+            $radiologyImage = RadiologyImage::create([
                 'tenant_id' => $tenantId,
                 'animal_id' => $radiologyStudy->animal_id,
                 'radiology_study_id' => $radiologyStudy->id,
@@ -81,7 +87,12 @@ class RadiologyController extends Controller
                 'label' => $data['label'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            $imageCount++;
+            $lastImageId = $radiologyImage->id;
         }
+
+        app(PortalNotificationService::class)->radiologyImagesPublished($radiologyStudy, $imageCount, $lastImageId);
 
         return redirect()
             ->route('client.animals.edit', $radiologyStudy->animal)

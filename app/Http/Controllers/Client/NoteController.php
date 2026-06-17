@@ -10,6 +10,7 @@ use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
 use App\Services\CustomerPaymentService;
 use App\Services\InventoryService;
+use App\Services\PortalNotificationService;
 use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -293,6 +294,7 @@ class NoteController extends Controller
         });
 
         app(TenantOnboardingService::class)->reconcileSafely($tenant);
+        app(PortalNotificationService::class)->notePublished($note->fresh(['customer', 'details']));
 
         $redirect = redirect()->route('client.ventas.show', $note);
 
