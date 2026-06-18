@@ -1,6 +1,6 @@
 para la creacion del reporte necesitamos
 
-en la configuyracion del tenant, agregar un campo configurable para que agreguen su firma digitalizada y su membrete
+en la configuracion del tenant, agregar un campo configurable para que agreguen su firma digitalizada y su membrete
 
  dentro del paciente agregar un boton para llenar un reporte, un reporte es como un parte medico en el cual el doctor
  va a agregar lo que vio en su consulta el veterinario podra agregar imagenes (Rx) queda guardado el pdf como reporte imprimible para historial
