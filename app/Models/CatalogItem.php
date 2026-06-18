@@ -30,6 +30,8 @@ class CatalogItem extends Model
     // Inventario (Relación 1 a 1 opcional)
     public function inventory() { return $this->hasOne(Inventory::class); }
 
+    public function inventoryMovements() { return $this->hasMany(InventoryMovement::class); }
+
     protected static function booted()
     {
         static::creating(function ($item) {

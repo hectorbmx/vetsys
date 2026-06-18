@@ -227,7 +227,7 @@
                                     <a href="{{ route('client.customers.show', $customer->id) }}" 
                                         class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
                                         title="Ver ficha">🔍</a>
-                                    <!-- <button class="p-1.5 text-slate-400 hover:theme-text-heading transition-colors" title="Editar">✏️</button> -->
+                                    <!-- <button class="p-1.5 text-slate-400 theme-hover-text-heading transition-colors" title="Editar">✏️</button> -->
                                 </div>
                             </td>
                         </tr>

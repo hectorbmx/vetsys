@@ -498,24 +498,24 @@ Revisar cada pantalla principal con las cuatro paletas:
 
 ## Revision responsive
 
-- [ ] Escritorio grande.
-- [ ] Laptop.
-- [ ] Tablet.
-- [ ] Movil.
-- [ ] Sidebar abierto y cerrado.
-- [ ] Scroll horizontal de tabs.
+- [ ] Escritorio grande. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Laptop. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Tablet. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Movil. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Sidebar abierto y cerrado. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Scroll horizontal de tabs. Pendiente manual: navegador interno bloqueado por sandbox local.
 
 ## Revision funcional
 
-- [ ] Login y navegacion.
-- [ ] Formularios y validaciones.
-- [ ] Modales.
-- [ ] Notificaciones.
-- [ ] Onboarding.
-- [ ] Cambio y restauracion de paleta.
-- [ ] Sesiones de dos tenants distintos.
-- [ ] Panel administrativo.
-- [ ] Vistas publicas.
+- [ ] Login y navegacion. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Formularios y validaciones. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Modales. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Notificaciones. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [ ] Onboarding. Pendiente manual: navegador interno bloqueado por sandbox local.
+- [x] Cambio y restauracion de paleta cubierto por pruebas automatizadas.
+- [x] Sesiones de dos tenants distintos cubierto por pruebas automatizadas.
+- [x] Panel administrativo sin aplicacion de paleta cubierto por pruebas automatizadas.
+- [x] Vistas publicas fuera del alcance del tema.
 
 ## Verificacion tecnica final
 
@@ -525,6 +525,16 @@ php artisan test
 php vendor\bin\pint --test
 git diff --check
 ```
+
+Resultado del cierre tecnico del dia 7:
+
+- `npm run build`: aprobado.
+- `php artisan view:cache`: aprobado.
+- `php artisan test`: aprobado, 44 pruebas.
+- `git diff --check`: aprobado.
+- Auditoria de colores directos: aprobada; quedan solo tokens CSS y documentos imprimibles excluidos.
+- Browser interno: bloqueado por sandbox local (`helper_unknown_error: apply deny-read ACLs`).
+- `php vendor\bin\pint --test`: falla en ejecucion completa por deuda historica amplia fuera del feature. El archivo modificado `tests/Feature/ExampleTest.php` pasa Pint.
 
 ## Estrategia de despliegue
 
@@ -559,17 +569,17 @@ git diff --check
 
 El feature se considera terminado cuando:
 
-- [ ] Un administrador puede seleccionar una paleta fija.
-- [ ] La paleta aplica a todos los usuarios de su tenant.
-- [ ] La seleccion no afecta otros tenants.
-- [ ] Solo se aceptan paletas registradas.
-- [ ] Existe fallback a `ocean`.
-- [ ] El panel administrativo no cambia.
-- [ ] Las vistas publicas e imprimibles no cambian.
-- [ ] Los colores de exito, error, advertencia y estados no cambian.
-- [ ] Las pruebas automatizadas pasan.
+- [x] Un administrador puede seleccionar una paleta fija.
+- [x] La paleta aplica a todos los usuarios de su tenant.
+- [x] La seleccion no afecta otros tenants.
+- [x] Solo se aceptan paletas registradas.
+- [x] Existe fallback a `ocean`.
+- [x] El panel administrativo no cambia.
+- [x] Las vistas publicas e imprimibles no cambian.
+- [x] Los colores de exito, error, advertencia y estados no cambian.
+- [x] Las pruebas automatizadas pasan.
 - [ ] La revision visual de escritorio y movil esta aprobada.
-- [ ] El comportamiento queda documentado en `SISTEMA.md`.
+- [x] El comportamiento queda documentado en `SISTEMA.md`.
 
 # Registro diario
 
@@ -583,4 +593,4 @@ Usar esta tabla al cerrar cada jornada.
 | 4 | 15/06/2026 | Codex | CRUD principales cerrados: servicios, clientes, mascotas, clubes y notificaciones usan tokens semanticos; estados funcionales preservados; estado de cuenta imprimible excluido por alcance | Build Vite aprobado; 5 pruebas de onboarding aprobadas; suite con 31 aprobadas y 1 fallo heredado en `Tests\Feature\ExampleTest` | Pendiente | Revision visual en navegador interno bloqueada por sandbox local |
 | 5 | 15/06/2026 | Codex | Modulos complejos cerrados: ventas, telemedicina autenticada y facturacion autenticada usan tokens semanticos; Stripe, estados y ticket imprimible preservados | Build Vite aprobado; 5 pruebas de onboarding aprobadas; suite con 31 aprobadas y 1 fallo heredado en `Tests\Feature\ExampleTest` | Pendiente | Revision visual en navegador interno bloqueada por sandbox local |
 | 6 | 15/06/2026 | Codex | Persistencia y selector de apariencia implementados; deuda autenticada de colores limpiada; cuatro paletas disponibles con fallback `ocean` | Migracion aplicada; build Vite aprobado; 5 pruebas de paleta aprobadas; 5 pruebas de onboarding aprobadas; suite con 36 aprobadas y 1 fallo heredado en `Tests\Feature\ExampleTest` | Pendiente | Revision visual multi-paleta queda para dia 7 por bloqueo del navegador interno |
-| 7 |  |  |  |  |  |  |
+| 7 | 18/06/2026 | Codex | Cierre tecnico final: helpers semanticos residuales corregidos, test raiz alineado al redirect real, auditoria de colores directa limpia salvo tokens e imprimibles excluidos | Build Vite aprobado; Blade cache aprobado; suite completa aprobada con 44 pruebas; `git diff --check` aprobado; Pint acotado al test modificado aprobado | Pendiente | Revision visual multi-paleta queda pendiente manual por bloqueo del navegador interno; Pint completo conserva deuda historica fuera del feature |

@@ -21,4 +21,6 @@ class Inventory extends Model
     ];
 
     public function catalogItem() { return $this->belongsTo(CatalogItem::class); }
+
+    public function movements() { return $this->hasMany(InventoryMovement::class); }
 }

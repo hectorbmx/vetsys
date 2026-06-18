@@ -348,7 +348,7 @@
 
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Imagen *</label>
-                        <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:theme-surface-dark file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                        <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white">
                         <p class="text-[10px] text-slate-400 font-semibold">Formatos: JPG, PNG o WEBP. Maximo 5 MB.</p>
                     </div>
 
@@ -498,7 +498,7 @@
 
                         <div class="space-y-2">
                             <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Video *</label>
-                            <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska" required @change="validateVideoFile($event)" class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:theme-surface-dark file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                            <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-matroska" required @change="validateVideoFile($event)" class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white">
                             <p class="text-[10px] text-slate-400 font-semibold">Formatos: MP4, MOV, AVI, WEBM o MKV. Maximo 100 MB.</p>
                         </div>
 
@@ -609,7 +609,7 @@
             </div>
 
             @foreach($animal->radiologyStudies as $study)
-                <div x-show="radiologyStudyOpen === {{ $study->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-surface-dark/75 px-4 py-6 backdrop-blur-sm">
+                <div x-show="radiologyStudyOpen === {{ $study->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
                     <div @click.outside="radiologyStudyOpen = null; radiologyImageUrl = ''" class="relative flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
                         <div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div class="min-w-0">
@@ -695,7 +695,7 @@
                                     <div class="space-y-2">
                                         <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Imagenes RX *</label>
                                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                            <input type="file" name="images[]" accept="image/png,image/jpeg,image/webp" multiple required class="block min-w-0 flex-1 text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:theme-surface-dark file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white hover:file:bg-slate-800">
+                                            <input type="file" name="images[]" accept="image/png,image/jpeg,image/webp" multiple required class="block min-w-0 flex-1 text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white">
                                             <button type="submit" class="shrink-0 theme-button-primary px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">Guardar RX</button>
                                         </div>
                                         <p class="text-[10px] text-slate-400 font-semibold">Formatos: JPG, PNG o WEBP. Maximo 20 MB por imagen.</p>
@@ -707,7 +707,7 @@
                             </div>
                         </div>
 
-                        <div x-show="radiologyImageUrl" x-cloak x-transition.opacity class="absolute inset-0 z-[112] flex items-center justify-center theme-surface-dark/85 px-4 py-6 backdrop-blur-sm">
+                        <div x-show="radiologyImageUrl" x-cloak x-transition.opacity class="absolute inset-0 z-[112] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
                             <div @click.outside="radiologyImageUrl = ''" class="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
                                 <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
                                     <p class="truncate text-sm font-black theme-text-heading" x-text="radiologyImageTitle"></p>

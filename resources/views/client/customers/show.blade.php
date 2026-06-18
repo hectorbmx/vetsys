@@ -955,7 +955,7 @@
                                 </td>
                                 <td class="px-5 py-4 text-right">
                                     @if($statement->pdf_path)
-                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="text-[10px] font-black uppercase tracking-widest theme-text-primary hover:theme-text-heading">Abrir</a>
+                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="text-[10px] font-black uppercase tracking-widest theme-text-primary theme-hover-text-heading">Abrir</a>
                                     @else
                                         <span class="text-[10px] font-bold text-slate-300">Sin PDF</span>
                                     @endif

@@ -12,7 +12,7 @@
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="divide-y divide-slate-100">
             @forelse($notifications as $notification)
-                <div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 {{ $notification->read_at ? '' : 'theme-bg-primary/5' }}">
+                <div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 {{ $notification->read_at ? '' : 'theme-bg-primary-soft' }}">
                     <a href="{{ route('client.notifications.open', $notification) }}" class="flex-1 group">
                         <div class="flex items-start gap-3">
                             @if(!$notification->read_at)

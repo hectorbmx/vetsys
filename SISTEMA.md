@@ -493,7 +493,8 @@ de pago si se pretende completar todo el onboarding sin utilizar el portal web.
 
 ## 11.1 Feature activo: personalizacion visual por tenant
 
-**Estado:** activo en panel cliente; pendiente revision visual multi-paleta.
+**Estado:** activo en panel cliente; cierre tecnico aprobado; pendiente revision
+visual manual multi-paleta por bloqueo del navegador interno local.
 
 ### Objetivo
 
@@ -538,6 +539,16 @@ cliente sin alterar colores funcionales ni vistas publicas o imprimibles.
 | Aplicacion de paleta | `resources/views/layouts/client.blade.php` |
 | Tokens y paletas | `resources/css/app.css` |
 | Pruebas | `tests/Feature/TenantThemePaletteTest.php` |
+
+### Estado de cierre
+
+- Build Vite, cache de Blade, suite automatizada y `git diff --check` aprobados
+  en el cierre de fase 7.
+- La suite completa queda en 44 pruebas aprobadas.
+- La auditoria de colores directos del panel cliente solo conserva tokens CSS y
+  documentos imprimibles excluidos del alcance.
+- La revision visual de escritorio/movil y de las cuatro paletas queda pendiente
+  de ejecucion manual porque el navegador interno local fallo por sandbox.
 
 ## 12. Trabajos futuros y roadmap
 

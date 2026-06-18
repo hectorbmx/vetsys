@@ -194,8 +194,11 @@ Route::middleware(['auth', 'role:super-admin'])
             |*/
             Route::get('servicios', [CatalogItemController::class, 'index'])->name('servicios.index');
             Route::post('servicios', [CatalogItemController::class, 'store'])->name('servicios.store');
+            Route::get('servicios/inventario', [CatalogItemController::class, 'inventoryIndex'])->name('servicios.inventory');
+            Route::get('servicios/{catalogItem}', [CatalogItemController::class, 'show'])->name('servicios.show');
             Route::put('servicios/{catalogItem}', [CatalogItemController::class, 'update'])->name('servicios.update');
             Route::patch('servicios/{catalogItem}/price', [CatalogItemController::class, 'updatePrice'])->name('servicios.update-price');
+            Route::post('servicios/{catalogItem}/movements', [CatalogItemController::class, 'storeMovement'])->name('servicios.movements.store');
             Route::patch('servicios/{catalogItem}/toggle', [CatalogItemController::class, 'toggleStatus'])->name('servicios.toggle');
             Route::patch('servicios/{catalogItem}/negative-stock', [CatalogItemController::class, 'toggleNegativeStock'])->name('servicios.toggle-negative-stock');
 

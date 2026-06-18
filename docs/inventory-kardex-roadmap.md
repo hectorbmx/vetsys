@@ -378,22 +378,23 @@ Cambios obligatorios:
 
 - [ ] Confirmar ubicacion de `inventory_enabled`.
 - [ ] Crear migracion de preferencia del tenant.
-- [ ] Crear `inventory_movements`.
-- [ ] Crear modelo y relaciones.
-- [ ] Crear backfill idempotente de saldos existentes.
-- [ ] Probar migracion y rollback en base de prueba.
+- [x] Crear `inventory_movements`.
+- [x] Crear modelo y relaciones.
+- [x] Crear backfill idempotente de saldos existentes.
+- [x] Probar migracion en base local.
+- [ ] Probar rollback en base de prueba.
 
 Resultado: datos preparados sin cambiar todavia el comportamiento visible.
 
 ### Fase 2: motor transaccional
 
-- [ ] Crear `recordMovement()`.
-- [ ] Validar tipos y direcciones permitidos.
-- [ ] Aplicar bloqueo pesimista.
-- [ ] Aplicar politica de negativos.
-- [ ] Refactorizar `consumeForSale()`.
-- [ ] Conservar alertas de stock.
-- [ ] Agregar idempotencia para ventas.
+- [x] Crear `recordMovement()`.
+- [x] Validar tipos y direcciones permitidos.
+- [x] Aplicar bloqueo pesimista.
+- [x] Aplicar politica de negativos.
+- [x] Refactorizar `consumeForSale()`.
+- [x] Conservar alertas de stock.
+- [x] Agregar idempotencia para ventas.
 
 Resultado: toda venta genera kardex y saldo en una sola transaccion.
 
@@ -532,5 +533,4 @@ Estos puntos pueden construirse despues sobre el mismo kardex.
 
 | Fecha | Fase | Trabajo realizado | Pruebas | Pendientes |
 | --- | --- | --- | --- | --- |
-|  |  |  |  |  |
-
+| 18/06/2026 | 1 y base de 2 | `inventory_movements`, modelo `InventoryMovement`, relaciones, backfill idempotente, movimiento `initial` al crear producto y movimiento `sale` al vender sin cambiar UI | Migraciones aplicadas; `InventoryServiceTest` aprobado; suite completa aprobada con 46 pruebas; Pint acotado aprobado | Definir `inventory_enabled`, probar rollback, construir administracion web de Kardex y eliminar edicion directa de `stock_actual` |

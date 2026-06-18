@@ -218,4 +218,9 @@ public function portalNotifications()
 {
     return $this->hasMany(PortalNotification::class);
 }
+
+public function inventoryMovements()
+{
+    return $this->hasMany(InventoryMovement::class);
+}
 }

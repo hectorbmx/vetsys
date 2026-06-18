@@ -4,13 +4,97 @@ namespace App\Services;
 
 use App\Models\CatalogItem;
 use App\Models\Inventory;
+use App\Models\InventoryMovement;
 use App\Models\Note;
 use App\Models\Tenant;
 use App\Models\TenantNotification;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
+    private const IN_TYPES = [
+        'initial',
+        'purchase',
+        'return',
+        'adjustment_in',
+    ];
+
+    private const OUT_TYPES = [
+        'sale',
+        'adjustment_out',
+    ];
+
+    public function recordMovement(
+        Tenant $tenant,
+        Inventory $inventory,
+        string $type,
+        float $quantity,
+        ?Model $reference = null,
+        ?int $userId = null,
+        ?string $reason = null,
+        ?string $notes = null,
+        ?string $idempotencyKey = null
+    ): InventoryMovement {
+        if ($quantity <= 0) {
+            throw ValidationException::withMessages([
+                'quantity' => 'La cantidad del movimiento debe ser mayor a cero.',
+            ]);
+        }
+
+        $direction = $this->movementDirection($type);
+
+        if ($idempotencyKey) {
+            $existing = InventoryMovement::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+        }
+
+        $inventory = Inventory::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereKey($inventory->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $stockBefore = (float) $inventory->stock_actual;
+        $stockAfter = $direction === 'in'
+            ? $stockBefore + $quantity
+            : $stockBefore - $quantity;
+
+        if ($stockAfter < 0 && ! $inventory->allow_negative_stock) {
+            $catalogItem = $inventory->catalogItem;
+
+            throw ValidationException::withMessages([
+                'items' => "No hay existencias suficientes de {$catalogItem->name}. Disponible: {$stockBefore}; requerido: {$quantity}.",
+            ]);
+        }
+
+        $inventory->update(['stock_actual' => $stockAfter]);
+
+        return InventoryMovement::create([
+            'tenant_id' => $tenant->id,
+            'inventory_id' => $inventory->id,
+            'catalog_item_id' => $inventory->catalog_item_id,
+            'user_id' => $userId,
+            'type' => $type,
+            'direction' => $direction,
+            'quantity' => $quantity,
+            'stock_before' => $stockBefore,
+            'stock_after' => $stockAfter,
+            'reason' => $reason,
+            'notes' => $notes,
+            'reference_type' => $reference?->getMorphClass(),
+            'reference_id' => $reference?->getKey(),
+            'idempotency_key' => $idempotencyKey,
+            'occurred_at' => now(),
+        ]);
+    }
+
     /**
      * Validate and consume the inventory required by a note.
      *
@@ -39,12 +123,12 @@ class InventoryService
         foreach ($requestedByItem as $catalogItemId => $quantity) {
             $catalogItem = $catalogItems->get($catalogItemId);
 
-            if (!$catalogItem?->has_inventory) {
+            if (! $catalogItem?->has_inventory) {
                 continue;
             }
 
             $inventory = $inventories->get($catalogItemId);
-            if (!$inventory) {
+            if (! $inventory) {
                 throw ValidationException::withMessages([
                     'items' => "El producto {$catalogItem->name} controla inventario, pero no tiene existencias configuradas.",
                 ]);
@@ -53,7 +137,7 @@ class InventoryService
             $currentStock = (float) $inventory->stock_actual;
             $resultingStock = $currentStock - $quantity;
 
-            if ($resultingStock < 0 && !$inventory->allow_negative_stock) {
+            if ($resultingStock < 0 && ! $inventory->allow_negative_stock) {
                 throw ValidationException::withMessages([
                     'items' => "No hay existencias suficientes de {$catalogItem->name}. Disponible: {$currentStock}; requerido: {$quantity}.",
                 ]);
@@ -64,7 +148,7 @@ class InventoryService
             $catalogItem = $catalogItems->get($catalogItemId);
             $inventory = $inventories->get($catalogItemId);
 
-            if (!$catalogItem?->has_inventory || !$inventory) {
+            if (! $catalogItem?->has_inventory || ! $inventory) {
                 continue;
             }
 
@@ -73,12 +157,38 @@ class InventoryService
             $previousLevel = $this->stockLevel($previousStock, (float) $inventory->stock_minimo);
             $resultingLevel = $this->stockLevel($resultingStock, (float) $inventory->stock_minimo);
 
-            $inventory->update(['stock_actual' => $resultingStock]);
+            $movement = $this->recordMovement(
+                $tenant,
+                $inventory,
+                'sale',
+                (float) $quantity,
+                $note,
+                auth()->id(),
+                'Venta',
+                "Descuento automatico por nota {$note->folio}.",
+                "sale:{$note->id}:catalog-item:{$catalogItemId}"
+            );
 
-            if ($this->levelRank($resultingLevel) > $this->levelRank($previousLevel)) {
+            if ($movement->wasRecentlyCreated && $this->levelRank($resultingLevel) > $this->levelRank($previousLevel)) {
+                $inventory->refresh();
                 $this->notifyStockLevel($tenant, $catalogItem, $inventory, $note, $resultingLevel);
             }
         }
+    }
+
+    private function movementDirection(string $type): string
+    {
+        if (in_array($type, self::IN_TYPES, true)) {
+            return 'in';
+        }
+
+        if (in_array($type, self::OUT_TYPES, true)) {
+            return 'out';
+        }
+
+        throw ValidationException::withMessages([
+            'type' => "Tipo de movimiento de inventario no soportado: {$type}.",
+        ]);
     }
 
     private function stockLevel(float $stock, float $minimum): string
@@ -124,7 +234,7 @@ class InventoryService
         TenantNotification::create([
             'tenant_id' => $tenant->id,
             'actor_user_id' => auth()->id(),
-            'type' => 'inventory.' . $level,
+            'type' => 'inventory.'.$level,
             'title' => $titles[$level],
             'body' => "{$catalogItem->name} quedó con {$inventory->stock_actual} unidades después de la nota {$note->folio}. Mínimo configurado: {$inventory->stock_minimo}.",
             'url' => route('client.servicios.index'),

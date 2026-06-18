@@ -5,7 +5,7 @@
 @section('contextual-tour', 'services')
 
 @section('content')
-<div x-data="{ openForm: false, type: 'service', hasInventory: false, priceModal: false, editingItem: { name: '', price: '', url: '' } }" class="p-6 max-w-7xl mx-auto space-y-6">
+<div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
     <div data-tour="services-header" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -26,6 +26,10 @@
                     <a href="{{ route('client.servicios.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                 @endif
             </form>
+
+            <a href="{{ route('client.servicios.inventory') }}" class="theme-bg-primary-soft theme-text-primary-strong border theme-border-primary-soft theme-hover-border-primary-soft px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+                Inventario
+            </a>
 
             <button data-tour="add-service" @click="openForm = !openForm" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
                 <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
@@ -232,11 +236,9 @@
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button type="button"
-                                            @click="editingItem = { name: @js($item->name), price: '{{ number_format($item->current_price, 2, '.', '') }}', url: '{{ route('client.servicios.update-price', $item) }}' }; priceModal = true"
-                                            class="px-2.5 py-1.5 theme-bg-primary-soft border theme-border-primary-soft theme-hover-border-primary-soft rounded-lg text-[11px] font-bold theme-text-primary-strong transition-colors shadow-sm">
-                                        Editar Precio
-                                    </button>
+                                    <a href="{{ route('client.servicios.show', $item) }}"
+                                       class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors text-xl leading-none"
+                                       title="Ver detalle">🔍</a>
                                 </div>
                             </td>
                         </tr>
@@ -249,52 +251,6 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
-    </div>
-
-    {{-- MODAL: EDITAR PRECIO --}}
-    <div x-show="priceModal"
-         x-transition
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center px-4"
-         style="display: none;">
-        <div class="absolute inset-0 theme-overlay backdrop-blur-sm" @click="priceModal = false"></div>
-
-        <div class="relative bg-white w-full max-w-md rounded-[24px] shadow-2xl border border-slate-100 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/70 flex items-start justify-between gap-4">
-                <div>
-                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Editar Precio</h3>
-                    <p class="text-[11px] font-semibold text-slate-400 mt-1" x-text="editingItem.name"></p>
-                </div>
-                <button type="button" @click="priceModal = false" class="text-slate-400 hover:text-rose-500 text-sm font-black">x</button>
-            </div>
-
-            <form :action="editingItem.url" method="POST" class="p-6 space-y-5">
-                @csrf
-                @method('PATCH')
-
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Nuevo Precio Vigente</label>
-                    <div class="relative flex items-center">
-                        <span class="absolute left-4 text-xs font-black text-slate-400">$</span>
-                        <input type="number"
-                               step="0.01"
-                               min="0"
-                               name="price"
-                               x-model="editingItem.price"
-                               required
-                               class="w-full text-sm font-black theme-text-heading bg-slate-50 border border-slate-200 rounded-xl py-3 pr-4 pl-8 focus:outline-none theme-input focus:ring-4 theme-ring-primary transition-all">
-                    </div>
-                    <p class="text-[11px] font-semibold text-slate-400 mt-2">Se cerrara el precio anterior y se creara un nuevo registro vigente en el historial.</p>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2">
-                    <button type="button" @click="priceModal = false" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-                    <button type="submit" class="theme-button-dark px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
-                        Guardar Precio
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 

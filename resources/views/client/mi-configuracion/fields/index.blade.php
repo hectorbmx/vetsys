@@ -9,7 +9,7 @@
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <div class="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                <a href="{{ route('client.mi-configuracion.index') }}" class="hover:theme-text-primary transition-colors">Configuración</a>
+                <a href="{{ route('client.mi-configuracion.index') }}" class="theme-hover-text-primary transition-colors">Configuración</a>
                 <span>/</span>
                 <span class="text-slate-600">Campos Personalizados</span>
             </div>

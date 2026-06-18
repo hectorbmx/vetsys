@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\CatalogItem;
+use App\Services\InventoryService;
 use App\Services\TenantOnboardingService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CatalogItemController extends Controller
@@ -29,6 +30,30 @@ class CatalogItemController extends Controller
             ->get();
 
         return view('client.servicios.index', compact('items', 'search'));
+    }
+
+    public function inventoryIndex()
+    {
+        $items = auth()->user()->tenant->catalogItems()
+            ->where('type', 'product')
+            ->where('has_inventory', true)
+            ->with(['inventory.movements' => fn ($query) => $query->latest('occurred_at')->latest('id')])
+            ->orderBy('name')
+            ->get();
+
+        return view('client.servicios.inventory', compact('items'));
+    }
+
+    public function show(CatalogItem $catalogItem)
+    {
+        $this->authorizeCatalogItem($catalogItem);
+
+        $catalogItem->load([
+            'inventory.movements' => fn ($query) => $query->latest('occurred_at')->latest('id')->limit(50),
+            'priceHistories' => fn ($query) => $query->latest('start_date')->latest('id'),
+        ]);
+
+        return view('client.servicios.show', compact('catalogItem'));
     }
 
     /**
@@ -83,12 +108,28 @@ class CatalogItemController extends Controller
 
             // 3. Crear registro de inventario si aplica
             if ($hasInventory) {
-                $item->inventory()->create([
+                $inventory = $item->inventory()->create([
                     'tenant_id' => $tenant->id,
-                    'stock_actual' => $request->stock_actual ?? 0,
+                    'stock_actual' => 0,
                     'stock_minimo' => $request->stock_minimo ?? 0,
                     'allow_negative_stock' => $request->boolean('allow_negative_stock'),
                 ]);
+
+                $initialStock = (float) ($request->stock_actual ?? 0);
+
+                if ($initialStock > 0) {
+                    app(InventoryService::class)->recordMovement(
+                        $tenant,
+                        $inventory,
+                        'initial',
+                        $initialStock,
+                        $item,
+                        auth()->id(),
+                        'Existencia inicial',
+                        'Stock inicial capturado al crear el producto.',
+                        "initial:catalog-item:{$item->id}"
+                    );
+                }
             }
         });
 
@@ -104,7 +145,9 @@ class CatalogItemController extends Controller
     public function update(Request $request, CatalogItem $catalogItem)
     {
         // Seguridad SaaS preventiva
-        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) { abort(403); }
+        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
 
         $request->validate([
             'name' => 'required|string|max:150',
@@ -166,10 +209,12 @@ class CatalogItemController extends Controller
      */
     public function toggleStatus(CatalogItem $catalogItem)
     {
-        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) { abort(403); }
+        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
 
         $catalogItem->update([
-            'is_active' => !$catalogItem->is_active
+            'is_active' => ! $catalogItem->is_active,
         ]);
 
         if ($catalogItem->is_active) {
@@ -184,16 +229,18 @@ class CatalogItemController extends Controller
      */
     public function toggleNegativeStock(CatalogItem $catalogItem)
     {
-        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) { abort(403); }
+        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
 
-        if (!$catalogItem->has_inventory || !$catalogItem->inventory) {
+        if (! $catalogItem->has_inventory || ! $catalogItem->inventory) {
             return back()->withErrors([
                 'inventory' => 'Solo los productos que controlan inventario pueden cambiar esta política.',
             ]);
         }
 
         $catalogItem->inventory->update([
-            'allow_negative_stock' => !$catalogItem->inventory->allow_negative_stock,
+            'allow_negative_stock' => ! $catalogItem->inventory->allow_negative_stock,
         ]);
 
         return back()->with('success', 'Política de venta sin existencias actualizada.');
@@ -204,7 +251,7 @@ class CatalogItemController extends Controller
      */
     public function updatePrice(Request $request, CatalogItem $catalogItem)
     {
-        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) { abort(403); }
+        $this->authorizeCatalogItem($catalogItem);
 
         $request->validate([
             'price' => 'required|numeric|min:0',
@@ -229,7 +276,55 @@ class CatalogItemController extends Controller
             ]);
         });
 
-        return redirect()->route('client.servicios.index')
+        return back()
             ->with('success', 'Precio actualizado correctamente.');
+    }
+
+    public function storeMovement(Request $request, CatalogItem $catalogItem)
+    {
+        $this->authorizeCatalogItem($catalogItem);
+
+        if (! $catalogItem->has_inventory || ! $catalogItem->inventory) {
+            return back()->withErrors([
+                'inventory' => 'Solo los productos que controlan inventario pueden registrar movimientos.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'type' => 'required|in:purchase,adjustment_in,adjustment_out',
+            'quantity' => 'required|numeric|min:0.01',
+            'reason' => 'nullable|string|max:150',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        app(InventoryService::class)->recordMovement(
+            auth()->user()->tenant,
+            $catalogItem->inventory,
+            $data['type'],
+            (float) $data['quantity'],
+            $catalogItem,
+            auth()->id(),
+            $data['reason'] ?? $this->movementLabel($data['type']),
+            $data['notes'] ?? null,
+            'manual:'.uniqid('', true)
+        );
+
+        return back()->with('success', 'Movimiento de inventario registrado correctamente.');
+    }
+
+    private function authorizeCatalogItem(CatalogItem $catalogItem): void
+    {
+        if ($catalogItem->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+    }
+
+    private function movementLabel(string $type): string
+    {
+        return [
+            'purchase' => 'Entrada / reposicion',
+            'adjustment_in' => 'Ajuste positivo',
+            'adjustment_out' => 'Ajuste negativo',
+        ][$type] ?? 'Movimiento manual';
     }
 }

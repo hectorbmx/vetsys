@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CatalogItem;
 use App\Models\Inventory;
+use App\Models\InventoryMovement;
 use App\Models\Note;
 use App\Models\Tenant;
 use App\Models\TenantNotification;
@@ -52,6 +53,15 @@ class InventoryServiceTest extends TestCase
         );
 
         $this->assertSame('-2.00', $inventory->fresh()->stock_actual);
+        $this->assertDatabaseHas('inventory_movements', [
+            'tenant_id' => $tenant->id,
+            'catalog_item_id' => $item->id,
+            'type' => 'sale',
+            'direction' => 'out',
+            'quantity' => '12.00',
+            'stock_before' => '10.00',
+            'stock_after' => '-2.00',
+        ]);
         $this->assertDatabaseHas('tenant_notifications', [
             'tenant_id' => $tenant->id,
             'type' => 'inventory.negative',
@@ -76,6 +86,62 @@ class InventoryServiceTest extends TestCase
         ]);
     }
 
+    public function test_it_records_initial_stock_as_an_inventory_movement(): void
+    {
+        [$tenant, $item, $inventory] = $this->inventoryScenario(0, 2, false);
+
+        app(InventoryService::class)->recordMovement(
+            $tenant,
+            $inventory,
+            'initial',
+            10,
+            $item,
+            null,
+            'Existencia inicial',
+            'Stock inicial capturado al crear el producto.',
+            "initial:catalog-item:{$item->id}"
+        );
+
+        $this->assertSame('10.00', $inventory->fresh()->stock_actual);
+        $this->assertDatabaseHas('inventory_movements', [
+            'tenant_id' => $tenant->id,
+            'catalog_item_id' => $item->id,
+            'type' => 'initial',
+            'direction' => 'in',
+            'quantity' => '10.00',
+            'stock_before' => '0.00',
+            'stock_after' => '10.00',
+        ]);
+    }
+
+    public function test_sale_inventory_movement_is_idempotent_per_note_and_product(): void
+    {
+        [$tenant, $item, $inventory, $note] = $this->inventoryScenario(10, 2, false);
+
+        app(InventoryService::class)->consumeForSale(
+            $tenant,
+            [['id' => $item->id, 'quantity' => 3]],
+            1,
+            $note
+        );
+
+        app(InventoryService::class)->consumeForSale(
+            $tenant,
+            [['id' => $item->id, 'quantity' => 3]],
+            1,
+            $note
+        );
+
+        $this->assertSame('7.00', $inventory->fresh()->stock_actual);
+        $this->assertSame(
+            1,
+            InventoryMovement::where('tenant_id', $tenant->id)
+                ->where('catalog_item_id', $item->id)
+                ->where('type', 'sale')
+                ->count()
+        );
+    }
+
     private function inventoryScenario(
         float $stock,
         float $minimum,
@@ -83,13 +149,13 @@ class InventoryServiceTest extends TestCase
     ): array {
         $tenant = Tenant::create([
             'name' => 'Inventory Test Tenant',
-            'slug' => 'inventory-test-' . uniqid(),
+            'slug' => 'inventory-test-'.uniqid(),
         ]);
 
         $item = CatalogItem::create([
             'tenant_id' => $tenant->id,
             'name' => 'Inventory Test Product',
-            'sku' => 'TEST-' . uniqid(),
+            'sku' => 'TEST-'.uniqid(),
             'type' => 'product',
             'has_inventory' => true,
             'is_active' => true,
