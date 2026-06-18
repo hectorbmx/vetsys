@@ -159,7 +159,7 @@ class AnimalController extends Controller
     if ($request->filled('redirect_to')) {
         return redirect()
             ->to($request->redirect_to)
-            ->with('success', '¡Mascota registrada con éxito!');
+            ->with('success', 'Paciente registrado con éxito!');
     }
 
     return redirect()
@@ -170,7 +170,7 @@ class AnimalController extends Controller
     return redirect()
         ->back()
         ->withInput()
-        ->with('error', 'Hubo un problema al guardar la mascota: ' . $e->getMessage());
+        ->with('error', 'Hubo un problema al guardar el paciente: ' . $e->getMessage());
 }
 }
 

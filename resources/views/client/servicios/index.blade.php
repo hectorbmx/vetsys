@@ -7,35 +7,103 @@
 @section('content')
 <div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="p-6 max-w-7xl mx-auto space-y-6">
 
-    {{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
-    <div data-tour="services-header" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
-            <p class="text-xs text-slate-400 font-medium mt-0.5">Administra los servicios clínicos, estéticos y productos comerciales de tu veterinaria.</p>
-        </div>
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <form method="GET" action="{{ route('client.servicios.index') }}" class="relative w-full sm:w-80">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input type="text"
-                       name="q"
-                       value="{{ $search }}"
-                       placeholder="Buscar servicio, producto o SKU..."
-                       class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+{{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
+<div data-tour="services-header" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+        <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
+        <p class="text-xs text-slate-400 font-medium mt-0.5">Administra los servicios clínicos, estéticos y productos comerciales de tu veterinaria.</p>
+    </div>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+        <form method="GET" action="{{ route('client.servicios.index') }}" class="relative w-full sm:w-80">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
+            <input type="text"
+                   name="q"
+                   value="{{ $search }}"
+                   placeholder="Buscar servicio, producto o SKU..."
+                   class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
 
-                @if($search !== '')
-                    <a href="{{ route('client.servicios.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+            @if($search !== '')
+                <a href="{{ route('client.servicios.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+            @endif
+        </form>
+
+        <a href="{{ route('client.servicios.inventory') }}" class="theme-bg-primary-soft theme-text-primary-strong border theme-border-primary-soft theme-hover-border-primary-soft px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+            Inventario
+        </a>
+
+        <button data-tour="add-service" @click="openForm = !openForm" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+            <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
+        </button>
+    </div>
+</div>
+
+{{-- CARDS / TRES KPIS SUPERIORES --}}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    {{-- KPI 1: PRODUCTO ESTRELLA --}}
+    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full theme-bg-primary-soft"></div>
+        <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Producto Estrella</p>
+                <div class="flex items-baseline gap-2">
+                    @if($starProduct)
+                        <span class="text-sm font-bold text-white truncate max-w-[140px]">{{ $starProduct->catalogItem->name }}</span>
+                    @else
+                        <span class="text-sm font-bold text-white">N/A</span>
+                    @endif
+                </div>
+                @if($starProduct)
+                    <p class="text-[10px] font-semibold text-slate-300">Vendido {{ $starProduct->total_quantity_sold }} veces este mes</p>
+                @else
+                    <p class="text-[10px] font-semibold text-slate-300">Sin ventas este mes</p>
                 @endif
-            </form>
-
-            <a href="{{ route('client.servicios.inventory') }}" class="theme-bg-primary-soft theme-text-primary-strong border theme-border-primary-soft theme-hover-border-primary-soft px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
-                Inventario
-            </a>
-
-            <button data-tour="add-service" @click="openForm = !openForm" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
-                <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
-            </button>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⭐</div>
         </div>
     </div>
+
+    {{-- KPI 2: PRODUCTOS CON INVENTARIO --}}
+    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/20"></div>
+        <div class="absolute -left-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Productos con Inventario</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $inventoryProductsCount }}</span>
+                </div>
+                <p class="text-[10px] font-medium text-white/80">productos inventariables</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📦</div>
+        </div>
+    </div>
+
+    {{-- KPI 3: ÚLTIMO MOVIMIENTO / VENTA --}}
+    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/15"></div>
+        <div class="absolute left-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Último Movimiento</p>
+                <div class="flex items-baseline gap-2">
+                    @if($lastCatalogItemMovement)
+                        <span class="text-sm font-bold theme-text-heading truncate max-w-[140px]">{{ $lastCatalogItemMovement->name }}</span>
+                    @else
+                        <span class="text-sm font-bold theme-text-heading">N/A</span>
+                    @endif
+                </div>
+                @if($lastCatalogItemMovement)
+                    <p class="text-[10px] font-semibold text-slate-400">Tipo: {{ $lastCatalogItemMovement->type }}</p>
+                @else
+                    <p class="text-[10px] font-semibold text-slate-400">Sin movimientos</p>
+                @endif
+            </div>
+            <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🔄</div>
+        </div>
+    </div>
+</div>
 
     {{-- FORMULARIO DE ALTA --}}
     <div x-show="openForm" x-collapse class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

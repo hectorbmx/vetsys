@@ -12,12 +12,19 @@ use Illuminate\Validation\Rule;
 
 class ClubController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $tenantId = auth()->user()->tenant_id;
+        $search = $request->get('q');
 
         $clubs = Club::query()
             ->where('tenant_id', $tenantId)
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) {
+                    $q->where('name', 'LIKE', "%" . request('q') . "%")
+                      ->orWhere('description', 'LIKE', "%" . request('q') . "%");
+                });
+            })
             ->withCount('animals')
             ->with(['animals' => fn ($query) => $query
                 ->with(['customer', 'animalType'])

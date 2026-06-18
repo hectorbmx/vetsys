@@ -114,7 +114,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Administrar Miembros</h3>
-                        <p class="text-[11px] text-slate-400 font-semibold mt-1">Busca y agrega nuevas mascotas al club o remueve las existentes.</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-1">Busca y agrega nuevos pacientes al club o remueve los existentes.</p>
                     </div>
                 </div>
 
@@ -126,7 +126,7 @@
                     <input type="text" 
                            x-model="animalQuery" 
                            @input.debounce.300ms="searchAnimals()"
-                           placeholder="Buscar mascota por nombre..." 
+                           placeholder="Buscar paciente por nombre..." 
                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary outline-none transition-all">
                     
                     {{-- Search Results Dropdown --}}

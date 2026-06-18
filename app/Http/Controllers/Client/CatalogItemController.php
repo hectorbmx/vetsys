@@ -29,7 +29,63 @@ class CatalogItemController extends Controller
             ->latest()
             ->get();
 
-        return view('client.servicios.index', compact('items', 'search'));
+        // KPIs
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        // 1. Producto Estrella (más vendido del mes)
+        $starProduct = \App\Models\NoteDetail::query()
+            ->whereHas('note', fn ($q) => $q
+                ->where('tenant_id', auth()->user()->tenant_id)
+                ->whereBetween('date_at', [$startOfMonth, $endOfMonth])
+                ->where('status', '!=', 'CANCELADA')
+            )
+            ->select('catalog_item_id', DB::raw('SUM(quantity) as total_quantity_sold'))
+            ->groupBy('catalog_item_id')
+            ->orderByDesc('total_quantity_sold')
+            ->with('catalogItem')
+            ->first();
+
+        // 2. Productos que manejan inventario
+        $inventoryProductsCount = auth()->user()->tenant->catalogItems()
+            ->where('has_inventory', true)
+            ->where('type', 'product')
+            ->count();
+
+        // 3. Último producto/servicio con movimiento o venta
+        $lastCatalogItemMovement = null;
+
+        $latestSaleDetail = \App\Models\NoteDetail::query()
+            ->whereHas('note', fn ($q) => $q->where('tenant_id', auth()->user()->tenant_id))
+            ->orderByDesc('created_at')
+            ->with('catalogItem')
+            ->first();
+
+        $latestInventoryMovement = \App\Models\InventoryMovement::query()
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id') // Fallback for same occurred_at
+            ->with('catalogItem')
+            ->first();
+        
+        if ($latestSaleDetail && $latestInventoryMovement) {
+            $lastCatalogItemMovement = ($latestSaleDetail->created_at->greaterThanOrEqualTo($latestInventoryMovement->occurred_at))
+                ? $latestSaleDetail->catalogItem
+                : $latestInventoryMovement->catalogItem;
+        } elseif ($latestSaleDetail) {
+            $lastCatalogItemMovement = $latestSaleDetail->catalogItem;
+        } elseif ($latestInventoryMovement) {
+            $lastCatalogItemMovement = $latestInventoryMovement->catalogItem;
+        }
+
+
+        return view('client.servicios.index', compact(
+            'items',
+            'search',
+            'starProduct',
+            'inventoryProductsCount',
+            'lastCatalogItemMovement'
+        ));
     }
 
     public function inventoryIndex()

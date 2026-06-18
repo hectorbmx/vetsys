@@ -21,12 +21,23 @@ class NoteController extends Controller
     /**
      * Listado historico de notas de venta de la clinica.
      */
-    public function index()
+    public function index(Request $request)
     {
         $tenant = auth()->user()->tenant;
+        $search = $request->get('q');
 
         $notes = $tenant->notes()
             ->with('customer')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('folio', 'LIKE', "%{$search}%")
+                      ->orWhereHas('customer', function ($subQuery) use ($search) {
+                          $subQuery->where('name', 'LIKE', "%{$search}%")
+                                   ->orWhere('last_name', 'LIKE', "%{$search}%")
+                                   ->orWhere('phone', 'LIKE', "%{$search}%");
+                      });
+                });
+            })
             ->latest()
             ->get();
 

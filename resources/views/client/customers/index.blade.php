@@ -42,7 +42,7 @@
     <div data-tour="customers-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Clientes</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus mascotas.</p>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus pacientes.</p>
         </div>
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
@@ -69,39 +69,51 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
     {{-- CARD 1: CUSTOMERS --}}
-    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-        <div class="space-y-1">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Clientes</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-white tracking-tight">{{ $customers->total() }}</span>
+    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full theme-bg-primary-soft"></div>
+        <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Clientes</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $customers->total() }}</span>
+                </div>
             </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
     </div>
 
     {{-- CARD 2: PÁGINA ACTUAL --}}
-    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-        <div class="space-y-1">
-            <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Página Actual</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-white tracking-tight">{{ $customers->count() }}</span>
-                <span class="text-[10px] font-medium text-white/80">registros aquí</span>
+    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/20"></div>
+        <div class="absolute -left-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Página Actual</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $customers->count() }}</span>
+                    <span class="text-[10px] font-medium text-white/80">registros aquí</span>
+                </div>
             </div>
+            <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✓</div>
         </div>
-        <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✓</div>
     </div>
 
     {{-- CARD 3: ÚLTIMO REGISTRO --}}
-    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-        <div class="space-y-1">
-            <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Último Registro</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-sm font-bold theme-text-heading truncate max-w-[140px]">
-                    {{ $customers->first()->name ?? 'Ninguno' }}
-                </span>
+    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/15"></div>
+        <div class="absolute left-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Último Registro</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-sm font-bold theme-text-heading truncate max-w-[140px]">
+                        {{ $customers->first()->name ?? 'Ninguno' }}
+                    </span>
+                </div>
             </div>
+            <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
         </div>
-        <div class="w-12 h-12 rounded-2xl theme-bg-primary text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
     </div>
 </div>
 

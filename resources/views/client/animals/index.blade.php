@@ -49,7 +49,7 @@
             <form method="GET" action="{{ route('client.animals.index') }}" class="relative w-full sm:w-80">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar mascota, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar paciente, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
                 @if(request()->filled('q'))
                     <a href="{{ route('client.animals.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                 @endif
@@ -66,40 +66,52 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
     {{-- KPI 1: TOTAL PACIENTES (VIOLETA OSCURO) --}}
-    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-        <div class="space-y-1">
-            <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Total Pacientes</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-white tracking-tight">{{ $totalAnimals }}</span>
+    <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full theme-bg-primary-soft"></div>
+        <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Total Pacientes</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $totalAnimals }}</span>
+                </div>
+                <p class="text-[10px] font-semibold text-slate-300">{{ $inactiveAnimals }} inactivos</p>
             </div>
-            <p class="text-[10px] font-semibold text-slate-300">{{ $inactiveAnimals }} inactivos</p>
+            <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐕</div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐕</div>
     </div>
 
     {{-- KPI 2: REGISTROS (AMBAR / NARANJA) --}}
-    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-        <div class="space-y-1">
-            <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Registros esta Página</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-white tracking-tight">{{ $animals->count() }}</span>
-                <span class="text-[10px] font-medium text-white/80">pacientes</span>
+    <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/20"></div>
+        <div class="absolute -left-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Registros esta Página</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-white tracking-tight">{{ $animals->count() }}</span>
+                    <span class="text-[10px] font-medium text-white/80">pacientes</span>
+                </div>
             </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⚡</div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⚡</div>
     </div>
 
     {{-- KPI 3: ÚLTIMO PACIENTE (TURQUESA DE MARCA) --}}
-    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-        <div class="space-y-1">
-            <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Último Paciente</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-sm font-bold theme-text-heading truncate max-w-[140px]">
-                    {{ $animals->first()->name ?? 'Ninguno' }}
-                </span>
+    <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/15"></div>
+        <div class="absolute left-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+        <div class="relative z-10 flex items-center justify-between w-full">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Último Paciente</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-sm font-bold theme-text-heading truncate max-w-[140px]">
+                        {{ $animals->first()->name ?? 'Ninguno' }}
+                    </span>
+                </div>
             </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
         </div>
-        <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
     </div>
 </div>
 
@@ -226,7 +238,7 @@
                     @empty
                         <tr>
                             <td colspan="7" class="px-6 py-12 text-center">
-                                <p class="text-sm font-bold text-slate-400">No hay mascotas registradas para los criterios de búsqueda.</p>
+                                <p class="text-sm font-bold text-slate-400">No hay pacientes registrados para los criterios de búsqueda.</p>
                             </td>
                         </tr>
                     @endforelse

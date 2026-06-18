@@ -4,70 +4,92 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- ENCABEZADO --}}
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Historial de Ventas</h1>
-            <p class="text-xs text-slate-400 font-medium mt-0.5">Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.</p>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Historial de Ventas</h1>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.</p>
         </div>
-        <a href="{{ route('client.ventas.create') }}" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center gap-2">
-            + Nueva Nota de Venta
-        </a>
+        
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <form method="GET" action="{{ route('client.ventas.index') }}" class="relative w-full sm:w-80">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar folio, cliente o teléfono..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+                @if(request()->filled('q'))
+                    <a href="{{ route('client.ventas.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                @endif
+            </form>
+            <a href="{{ route('client.ventas.create') }}" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all whitespace-nowrap">
+                + Nueva Nota de Venta
+            </a>
+        </div>
     </div>
 
     {{-- CARDS / TRES KPIS SUPERIORES --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {{-- KPI 1: VENTAS DEL MES (VIOLETA) --}}
-        <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Ventas del Mes</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-white tracking-tight">${{ number_format($totalSalesMonth, 2) }}</span>
-                </div>
-                @if($totalPending > 0)
-                    <div class="flex items-center gap-1.5 mt-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
-                        <p class="text-[10px] font-bold text-slate-300 uppercase">Adeudo total pendiente: ${{ number_format($totalPending, 2) }}</p>
+        <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full theme-bg-primary-soft"></div>
+            <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+            <div class="relative z-10 flex items-center justify-between w-full">
+                <div class="space-y-1">
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Ventas del Mes</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-black text-white tracking-tight">${{ number_format($totalSalesMonth, 2) }}</span>
                     </div>
-                @else
-                    <p class="text-[10px] font-bold text-emerald-300 uppercase mt-2">✓ Cartera al día</p>
-                @endif
+                    @if($totalPending > 0)
+                        <div class="flex items-center gap-1.5 mt-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
+                            <p class="text-[10px] font-bold text-slate-300 uppercase">Adeudo total pendiente: ${{ number_format($totalPending, 2) }}</p>
+                        </div>
+                    @else
+                        <p class="text-[10px] font-bold text-emerald-300 uppercase mt-2">✓ Cartera al día</p>
+                    @endif
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💰</div>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💰</div>
         </div>
 
         {{-- KPI 2: NOTAS GENERADAS (AMBAR) --}}
-        <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Notas Generadas</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black text-white tracking-tight">{{ $totalNotesMonth }}</span>
-                    <span class="text-[10px] font-medium text-white/80">este mes</span>
-                </div>
-                <div class="flex gap-3 mt-2">
-                    <div class="flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                        <span class="text-[9px] font-bold text-white uppercase">{{ $paidNotesMonth }} Pagadas</span>
+        <div class="group theme-gradient-primary theme-border-primary rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/20"></div>
+            <div class="absolute -left-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+            <div class="relative z-10 flex items-center justify-between w-full">
+                <div class="space-y-1">
+                    <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Notas Generadas</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-black text-white tracking-tight">{{ $totalNotesMonth }}</span>
+                        <span class="text-[10px] font-medium text-white/80">este mes</span>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-                        <span class="text-[9px] font-bold text-white uppercase">{{ $pendingNotesMonth }} Pendientes</span>
+                    <div class="flex gap-3 mt-2">
+                        <div class="flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="text-[9px] font-bold text-white uppercase">{{ $paidNotesMonth }} Pagadas</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                            <span class="text-[9px] font-bold text-white uppercase">{{ $pendingNotesMonth }} Pendientes</span>
+                        </div>
                     </div>
                 </div>
+                <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📄</div>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📄</div>
         </div>
 
         {{-- KPI 3: PACIENTES ATENDIDOS (TURQUESA) --}}
-        <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Pacientes Atendidos Este Mes</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black theme-text-heading tracking-tight">{{ $animalsAttendedMonth }}</span>
-                    <span class="text-[10px] font-medium theme-text-primary-strong">animales únicos</span>
+        <div class="group theme-bg-primary-soft border theme-border-primary-soft rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/15"></div>
+            <div class="absolute left-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+            <div class="relative z-10 flex items-center justify-between w-full">
+                <div class="space-y-1">
+                    <p class="text-[10px] font-black theme-text-primary-strong uppercase tracking-widest">Pacientes Atendidos Este Mes</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-black theme-text-heading tracking-tight">{{ $animalsAttendedMonth }}</span>
+                        <span class="text-[10px] font-medium theme-text-primary-strong">animales únicos</span>
+                    </div>
                 </div>
+                <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
         </div>
     </div>
 

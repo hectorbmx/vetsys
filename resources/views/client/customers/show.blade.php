@@ -422,7 +422,7 @@
         >
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h3 class="text-sm font-black theme-text-heading">Nueva Mascota</h3>
+                <h3 class="text-sm font-black theme-text-heading">Nuevo Paciente</h3>
                 <button @click="open = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -560,7 +560,7 @@
                         type="submit"
                         class="px-5 py-2 theme-button-primary text-xs font-black rounded-xl transition-colors"
                     >
-                        Guardar mascota
+                        Guardar Paciente
                     </button>
                 </div>
             </form>
@@ -579,7 +579,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Agregar mascota
+                Agregar Paciente
             </button>
         </div>
 

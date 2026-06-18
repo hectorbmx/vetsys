@@ -111,7 +111,7 @@
 
                     <template x-if="selectedCustomer && selectedCustomer.animals.length === 0">
                         <div class="border border-amber-200 bg-amber-50 rounded-xl px-4 py-3 text-xs font-bold text-amber-800">
-                            Este cliente no tiene mascotas registradas. Para generar la nota primero registra al menos una mascota.
+                            Este cliente no tiene mascotas registradas. Para generar la nota primero registra al menos un paciente.
                         </div>
                     </template>
 
