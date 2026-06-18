@@ -25,6 +25,8 @@ class Animal extends Model
         'color',
         'weight',
         'microchip',
+        'microchip_image_path',
+        'microchip_print_token',
         'status',
         'notes',
     ];
@@ -78,6 +80,11 @@ public function videos()
 public function radiologyStudies()
 {
     return $this->hasMany(RadiologyStudy::class);
+}
+
+public function reports()
+{
+    return $this->hasMany(AnimalReport::class);
 }
 
 public function shares()

@@ -10,6 +10,9 @@ use App\Models\AnimalType;
 use App\Models\Club;
 use App\Services\TenantOnboardingService;
 use App\Services\CustomerPortalAccessService;
+use App\Services\MicrochipImageOptimizer;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 use Exception;
@@ -209,6 +212,11 @@ class AnimalController extends Controller
                 ->with(['images' => fn ($imageQuery) => $imageQuery->latest('id')])
                 ->latest('study_date')
                 ->latest('id'),
+            'reports' => fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->with(['author', 'images'])
+                ->latest('report_date')
+                ->latest('id'),
         ]);
 
         $customers = Customer::where('tenant_id', $tenantId)
@@ -278,7 +286,7 @@ class AnimalController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Animal $animal)
+    public function update(Request $request, Animal $animal, MicrochipImageOptimizer $imageOptimizer)
     {
         $tenantId = auth()->user()->tenant_id;
 
@@ -303,12 +311,38 @@ class AnimalController extends Controller
             'color' => ['nullable', 'string', 'max:100'],
             'weight' => ['nullable', 'numeric', 'between:0,999.99'],
             'microchip' => ['nullable', 'string', 'max:255'],
+            'microchip_image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:10240'],
             'status' => ['required', 'in:active,inactive,deceased,transferred'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $newImagePath = null;
+
         try {
+            $oldImagePath = null;
+
+            if ($request->hasFile('microchip_image')) {
+                $path = "tenants/{$tenantId}/animals/{$animal->id}/microchip/".Str::uuid().'.webp';
+                $contents = $imageOptimizer->optimize($request->file('microchip_image'));
+                Storage::disk('r2')->put($path, $contents, ['mimetype' => 'image/webp']);
+
+                $newImagePath = $path;
+                $oldImagePath = $animal->microchip_image_path;
+                $data['microchip_image_path'] = $path;
+                $data['microchip_print_token'] = $animal->microchip_print_token ?: (string) Str::uuid();
+            }
+
+            unset($data['microchip_image']);
+
             $animal->update($data);
+
+            if ($oldImagePath) {
+                try {
+                    Storage::disk('r2')->delete($oldImagePath);
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            }
 
             if ($animal->status === 'active') {
                 app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
@@ -318,11 +352,56 @@ class AnimalController extends Controller
                 ->route('client.animals.edit', $animal)
                 ->with('success', 'Paciente actualizado correctamente.');
         } catch (Exception $e) {
+            if ($newImagePath && $animal->microchip_image_path !== $newImagePath) {
+                try {
+                    Storage::disk('r2')->delete($newImagePath);
+                } catch (\Throwable $cleanupException) {
+                    report($cleanupException);
+                }
+            }
+
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('error', 'Hubo un problema al actualizar la mascota: ' . $e->getMessage());
         }
+    }
+
+    public function destroyMicrochipImage(Animal $animal)
+    {
+        abort_unless($animal->tenant_id === auth()->user()->tenant_id, 404);
+
+        if ($animal->microchip_image_path) {
+            Storage::disk('r2')->delete($animal->microchip_image_path);
+            $animal->update([
+                'microchip_image_path' => null,
+                'microchip_print_token' => null,
+            ]);
+        }
+
+        return redirect()
+            ->route('client.animals.edit', $animal)
+            ->with('success', 'La foto del microchip fue eliminada.')
+            ->with('animalTab', 'datos');
+    }
+
+    public function publicMicrochipLetter(string $token)
+    {
+        $animal = Animal::query()
+            ->with(['tenant', 'customer', 'animalType'])
+            ->where('microchip_print_token', $token)
+            ->whereNotNull('microchip_image_path')
+            ->firstOrFail();
+
+        abort_unless(Storage::disk('r2')->exists($animal->microchip_image_path), 404);
+
+        return view('client.animals.microchip-letter', [
+            'animal' => $animal,
+            'microchipImageUrl' => Storage::disk('r2')->temporaryUrl(
+                $animal->microchip_image_path,
+                now()->addMinutes(30)
+            ),
+        ]);
     }
 
     /**

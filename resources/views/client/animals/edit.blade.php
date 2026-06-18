@@ -5,8 +5,11 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
-    tab: @js(session('animalTab', 'datos')),
+    tab: @js(session('animalTab', old('intent') ? 'reportes' : 'datos')),
     loading: false,
+    microchipUploading: false,
+    reportFormOpen: @js((bool) old('intent')),
+    reportSaving: false,
     videoUploading: false,
     maxVideoUploadBytes: 100 * 1024 * 1024,
     videoFormOpen: false,
@@ -72,8 +75,30 @@
         this.selectedTenant = null;
         this.tenantQuery = '';
         this.tenantResults = [];
+    },
+    submitAnimalData(event) {
+        this.loading = true;
+        this.microchipUploading = Boolean(event.target.elements.microchip_image?.files[0]);
     }
 }">
+    <div x-show="reportSaving" x-cloak x-transition.opacity class="fixed inset-0 z-[130] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Procesando reporte</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Guardando contenido, optimizando imagenes y generando el PDF.</p>
+        </div>
+    </div>
+
+    <div x-show="microchipUploading" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="microchip-upload-title">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full theme-bg-primary-soft">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            </div>
+            <p id="microchip-upload-title" class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando microchip</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Optimizando la foto y subiendola al expediente. No cierres esta ventana.</p>
+        </div>
+    </div>
+
     <div x-show="videoUploading" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
         <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full theme-bg-primary-soft">
@@ -149,8 +174,8 @@
                 <button data-tour="patient-tab-radiology" type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Radiologia
                 </button>
-                <button type="button" @click="tab = 'extra'" :class="tab === 'extra' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
-                    Mas Informacion
+                <button type="button" @click="tab = 'reportes'" :class="tab === 'reportes' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                    Reportes
                 </button>
                 <button data-tour="patient-tab-telemedicine" type="button" @click="tab = 'telemedicina'" :class="tab === 'telemedicina' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
                     Telemedicina
@@ -188,7 +213,7 @@
                 @endif
             </div>
 
-            <form action="{{ route('client.animals.update', $animal) }}" method="POST" @submit="loading = true" class="space-y-6">
+            <form id="animal-data-form" action="{{ route('client.animals.update', $animal) }}" method="POST" enctype="multipart/form-data" @submit="submitAnimalData($event)" class="space-y-6">
                 @csrf
                 @method('PUT')
 
@@ -252,7 +277,25 @@
 
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Microchip</label>
-                        <input type="text" name="microchip" value="{{ old('microchip', $animal->microchip) }}" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
+                        <div class="flex flex-col gap-2 sm:flex-row">
+                            <input type="text" name="microchip" value="{{ old('microchip', $animal->microchip) }}" class="min-w-0 flex-1 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
+                            @if($animal->microchip_image_path)
+                                <a href="{{ route('public.microchip-letters.print', $animal->microchip_print_token) }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                                    Imprimir chip
+                                </a>
+                                <button type="submit" form="delete-microchip-image-form" onclick="return confirm('¿Eliminar la foto del microchip?')" class="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-100">
+                                    Eliminar
+                                </button>
+                            @else
+                                <label class="inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                                    <span>Subir foto</span>
+                                    <input type="file" name="microchip_image" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange="this.previousElementSibling.textContent = this.files[0]?.name || 'Subir foto'">
+                                </label>
+                            @endif
+                        </div>
+                        @error('microchip_image')
+                            <p class="text-xs font-semibold text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="space-y-2">
@@ -278,6 +321,12 @@
                     </button>
                 </div>
             </form>
+            @if($animal->microchip_image_path)
+                <form id="delete-microchip-image-form" action="{{ route('client.animals.microchip-image.destroy', $animal) }}" method="POST" class="hidden">
+                    @csrf
+                    @method('DELETE')
+                </form>
+            @endif
         </div>
 
         <div x-show="tab === 'historial'" class="p-6" x-cloak>
@@ -723,10 +772,77 @@
             @endforeach
         </div>
 
-        <div x-show="tab === 'extra'" class="p-6" x-cloak>
-            <div class="border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
-                <p class="text-sm font-black theme-text-heading">Mas informacion del paciente</p>
-                <p class="text-xs font-semibold text-slate-400 mt-2">Este espacio queda listo para vacunas, archivos, signos vitales o campos clinicos extendidos.</p>
+        <div x-show="tab === 'reportes'" class="p-6 space-y-5" x-cloak>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm font-black theme-text-heading">Reportes clinicos</p>
+                    <p class="mt-1 text-[11px] font-semibold text-slate-400">Partes medicos, hallazgos e imagenes del paciente.</p>
+                </div>
+                <button type="button" @click="reportFormOpen = true" class="rounded-xl theme-button-primary px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Nuevo reporte
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                @forelse($animal->reports as $report)
+                    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-sm font-black theme-text-heading">{{ $report->title }}</h3>
+                                    <span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest {{ $report->isDraft() ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
+                                        {{ $report->isDraft() ? 'Borrador' : 'Finalizado' }}
+                                    </span>
+                                </div>
+                                <p class="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                    {{ $report->report_date->format('d/m/Y') }} &middot; {{ $report->author?->name ?? 'Veterinario' }} &middot; {{ $report->images->count() }} imagenes
+                                </p>
+                                <p class="mt-3 text-xs font-semibold leading-5 text-slate-600">{{ \Illuminate\Support\Str::limit(trim(strip_tags($report->content_html)), 220) }}</p>
+                            </div>
+                            <div class="flex shrink-0 flex-wrap gap-2">
+                                @if($report->isDraft())
+                                    <a href="{{ route('client.animal-reports.edit', $report) }}" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-200">Editar</a>
+                                    <form action="{{ route('client.animal-reports.destroy', $report) }}" method="POST" onsubmit="return confirm('Eliminar este borrador?')">
+                                        @csrf @method('DELETE')
+                                        <button class="rounded-xl bg-rose-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100">Eliminar</button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('client.animal-reports.pdf', $report) }}" target="_blank" rel="noopener" class="rounded-xl theme-button-dark px-4 py-2.5 text-[10px] font-black uppercase tracking-widest">Abrir PDF</a>
+                                    @if($animal->customer?->phone)
+                                        @php
+                                            $publicReportUrl = route('public.animal-reports.pdf', $report->public_token);
+                                            $reportWhatsappMessage = 'Hola '.$animal->customer->name.', adjunto el reporte clinico de '.$animal->name.' en '.auth()->user()->tenant->name.': '.$publicReportUrl;
+                                            $reportWhatsappUrl = 'https://wa.me/'.preg_replace('/[^0-9]/', '', $animal->customer->phone).'?text='.urlencode($reportWhatsappMessage);
+                                        @endphp
+                                        <a href="{{ $reportWhatsappUrl }}" target="_blank" rel="noopener" class="flex items-center rounded-xl bg-[#25D366] px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#128C7E]">
+                                            WhatsApp
+                                        </a>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    </article>
+                @empty
+                    <div class="rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
+                        <p class="text-sm font-black theme-text-heading">Sin reportes clinicos</p>
+                        <p class="mt-2 text-xs font-semibold text-slate-400">Crea el primer parte medico de este paciente.</p>
+                    </div>
+                @endforelse
+            </div>
+
+            <div x-show="reportFormOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[115] flex items-start justify-center overflow-y-auto theme-overlay px-4 py-6 backdrop-blur-sm">
+                <div @click.outside="reportFormOpen = false" class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                        <div>
+                            <p class="text-sm font-black theme-text-heading">Nuevo reporte clinico</p>
+                            <p class="mt-1 text-[11px] font-semibold text-slate-400">{{ $animal->name }} &middot; {{ $animal->customer?->full_name }}</p>
+                        </div>
+                        <button type="button" @click="reportFormOpen = false" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                    </div>
+                    <div class="max-h-[82vh] overflow-y-auto p-6">
+                        @include('client.animals.reports.form', ['animal' => $animal, 'report' => null])
+                    </div>
+                </div>
             </div>
         </div>
 

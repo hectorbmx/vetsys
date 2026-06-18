@@ -21,6 +21,7 @@ use App\Http\Controllers\PublicCustomerPaymentController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\CustomerController;
 use App\Http\Controllers\Client\AnimalController;
+use App\Http\Controllers\Client\AnimalReportController;
 use App\Http\Controllers\Client\ConfiguracionController as ClientConfiguracionController;
 use App\Http\Controllers\Client\PaymentMethodController;
 use App\Http\Controllers\Client\CatalogItemController;
@@ -112,6 +113,12 @@ Route::get('/pagar-cuenta/{token}', [PublicCustomerPaymentController::class, 'sh
 Route::post('/pagar-cuenta/{token}/stripe', [PublicCustomerPaymentController::class, 'checkout'])->name('public.customer-payments.checkout');
 Route::get('/cartas-vacunacion/{vaccinationLetter}/pdf', [VaccinationLetterController::class, 'signedPrint'])
     ->name('public.vaccination-letters.print');
+Route::get('/cartas-microchip/{token}', [AnimalController::class, 'publicMicrochipLetter'])
+    ->whereUuid('token')
+    ->name('public.microchip-letters.print');
+Route::get('/reportes-clinicos/{token}', [AnimalReportController::class, 'publicPdf'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->name('public.animal-reports.pdf');
 
 Route::middleware(['auth', 'role:super-admin'])
     ->prefix('admin')
@@ -162,6 +169,13 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'show'])->name('vaccination-letters.show');
             Route::get('vaccination-letters/{vaccinationLetter}/print', [VaccinationLetterController::class, 'print'])->name('vaccination-letters.print');
             Route::post('animals/{animal}/vaccination-letters', [VaccinationLetterController::class, 'store'])->name('animals.vaccination-letters.store');
+            Route::post('animals/{animal}/reports', [AnimalReportController::class, 'store'])->name('animals.reports.store');
+            Route::get('animal-reports/{animalReport}/edit', [AnimalReportController::class, 'edit'])->name('animal-reports.edit');
+            Route::put('animal-reports/{animalReport}', [AnimalReportController::class, 'update'])->name('animal-reports.update');
+            Route::get('animal-reports/{animalReport}/pdf', [AnimalReportController::class, 'pdf'])->name('animal-reports.pdf');
+            Route::delete('animal-reports/{animalReport}', [AnimalReportController::class, 'destroy'])->name('animal-reports.destroy');
+            Route::get('animal-report-images/{animalReportImage}', [AnimalReportController::class, 'image'])->name('animal-report-images.show');
+            Route::delete('animal-report-images/{animalReportImage}', [AnimalReportController::class, 'destroyImage'])->name('animal-report-images.destroy');
             Route::post('animals/{animal}/videos', [AnimalVideoController::class, 'store'])->name('animals.videos.store');
             Route::get('animal-videos/{animalVideo}', [AnimalVideoController::class, 'show'])->name('animal-videos.show');
             Route::delete('animal-videos/{animalVideo}', [AnimalVideoController::class, 'destroy'])->name('animal-videos.destroy');
@@ -178,6 +192,7 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::get('telemedicina/expedientes/{token}/videos/{animalVideo}', [TelemedicineController::class, 'video'])->name('telemedicine.animal-videos.show');
             Route::get('telemedicina/expedientes/{token}/radiologia/{radiologyImage}', [TelemedicineController::class, 'radiologyImage'])->name('telemedicine.radiology-images.show');
             Route::resource('animals', AnimalController::class);
+            Route::delete('animals/{animal}/microchip-image', [AnimalController::class, 'destroyMicrochipImage'])->name('animals.microchip-image.destroy');
             Route::patch('animals/{animal}/toggle', [AnimalController::class, 'toggleStatus'])->name('animals.toggle');
             Route::patch('animals/{animal}/portal-visibility', [AnimalController::class, 'togglePortalVisibility'])->name('animals.portal-visibility.toggle');
             Route::get('api/buscar-animales', [ClubController::class, 'searchAnimals'])->name('api.buscar-animales');
