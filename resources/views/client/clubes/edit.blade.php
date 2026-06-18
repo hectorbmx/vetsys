@@ -152,27 +152,50 @@
                     @csrf
                     @method('PATCH')
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <template x-for="(animal, index) in selectedAnimals" :key="animal.id">
-                            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group theme-hover-border-primary-soft transition-all">
-                                <input type="hidden" name="animal_ids[]" :value="animal.id">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center theme-text-heading font-black text-sm">
-                                        <span x-text="animal.name.charAt(0)"></span>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="text-xs font-black theme-text-heading truncate" x-text="animal.name"></p>
-                                        <p class="text-[10px] text-slate-400 font-semibold truncate" x-text="animal.customer"></p>
-                                    </div>
-                                </div>
-                                <button type="button" @click="removeAnimal(index)" class="w-8 h-8 rounded-lg bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-                                    ✕
-                                </button>
-                            </div>
-                        </template>
-                        <div x-show="selectedAnimals.length === 0" class="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-[24px]">
-                            <p class="text-sm font-bold text-slate-300">No hay miembros en este club.</p>
-                        </div>
+                    <div class="overflow-hidden border border-slate-100 rounded-2xl">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Especie</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dueño</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <template x-for="(animal, index) in selectedAnimals" :key="animal.id">
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <input type="hidden" name="animal_ids[]" :value="animal.id">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm">
+                                                    <span x-text="animal.name.charAt(0)"></span>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-bold theme-text-heading leading-tight" x-text="animal.name"></p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs font-bold theme-text-heading">
+                                            <span x-text="animal.type"></span>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs font-bold text-slate-500">
+                                            <span x-text="animal.customer"></span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button type="button" @click="removeAnimal(index)" class="px-3 py-2 rounded-xl bg-rose-50 text-rose-500 text-[9px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all">
+                                                Remover
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="selectedAnimals.length === 0">
+                                    <td colspan="4" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
+                                        No hay miembros en este club.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="flex justify-end pt-4">
