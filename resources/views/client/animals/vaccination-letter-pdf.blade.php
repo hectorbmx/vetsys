@@ -134,6 +134,8 @@
             padding: 0;
         }
         .date-badge {
+            position: relative;
+            z-index: 3;
             width: 122px;
             height: 23px;
             background: #a20000;
@@ -168,15 +170,28 @@
             color: #000000;
         }
         .vaccine-image-wrap {
+            position: relative;
+            z-index: 1;
             width: 210px;
-            height: 150px;
-            border: 4px solid #eedb00;
+            height: 140px;
+            /* border: 4px solid #eedb00; */
             background: #f8fafc;
-            margin-top: 0;
+            margin-top: 20px;
         }
         .vaccine-image {
+            position: relative;
+            z-index: 1;
             width: 210px;
             height: 150px;
+        }
+        .date-cell {
+            position: relative;
+            z-index: 2;
+            background: #ffffff;
+        }
+        .image-cell {
+            position: relative;
+            z-index: 1;
         }
         .footer-zone {
             margin-top: 36px;
@@ -239,7 +254,7 @@
             <table class="main-table">
                 <tr>
                     <td style="width: 150px;"></td>
-                    <td style="width: 242px;">
+                    <td class="date-cell" style="width: 242px;">
                         <div class="date-badge">{{ $letter->date->translatedFormat('d F Y') }}</div>
                     </td>
                 </tr>
@@ -264,7 +279,7 @@
                             </tr>
                         </table>
                     </td>
-                    <td style="width: 242px;">
+                    <td class="image-cell" style="width: 238px;">
                         <div class="vaccine-image-wrap">
                             @if($imageDataUri)
                                 <img src="{{ $imageDataUri }}" width="210" height="150" class="vaccine-image" alt="Carta de vacunacion">

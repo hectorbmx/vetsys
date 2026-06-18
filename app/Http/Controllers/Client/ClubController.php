@@ -135,7 +135,7 @@ class ClubController extends Controller
         ]);
 
         return redirect()
-            ->route('client.clubes.edit', $club)
+            ->route('client.clubes.edit', [$club, 'tab' => 'coggins'])
             ->with('success', 'Archivo Coggin subido correctamente.');
     }
 

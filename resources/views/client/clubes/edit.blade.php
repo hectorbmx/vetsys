@@ -4,12 +4,14 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
-    tab: '{{ request('tab', 'datos') }}',
+    tab: @js($errors->has('file') ? 'coggins' : request('tab', 'datos')),
     animalQuery: '',
     animalResults: [],
     selectedAnimals: @js($club->animals->map(fn($a) => ['id' => $a->id, 'name' => $a->name, 'customer' => $a->customer->full_name ?? 'N/A', 'type' => $a->animalType->name ?? 'N/A'])),
     searchUrl: @js(route('client.api.buscar-animales')),
-    cogginModal: false,
+    cogginModal: @js($errors->has('file')),
+    cogginUploading: false,
+    selectedCogginFile: '',
 
     searchAnimals() {
         if (this.animalQuery.length < 2) {
@@ -231,8 +233,16 @@
                                             <span x-text="copied ? '¡Copiado!' : 'WhatsApp'"></span>
                                         </button>
 
-                                        <a href="{{ Storage::url($coggin->file_path) }}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
-                                            Ver PDF
+                                        <a href="{{ Storage::url($coggin->file_path) }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           aria-label="Ver PDF {{ $coggin->file_name }}"
+                                           title="Ver PDF"
+                                           class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                                                <circle cx="12" cy="12" r="2.5" />
+                                            </svg>
                                         </a>
                                         <form action="{{ route('client.clubes.coggins.destroy', [$club, $coggin]) }}" method="POST" onsubmit="return confirm('¿Eliminar este archivo?')">
                                             @csrf
@@ -260,9 +270,9 @@
     {{-- MODAL COGGINS --}}
     <div x-show="cogginModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
-            <div class="fixed inset-0 transition-opacity theme-overlay backdrop-blur-sm" @click="cogginModal = false"></div>
+            <div class="fixed inset-0 transition-opacity theme-overlay backdrop-blur-sm" @click="if (!cogginUploading) cogginModal = false"></div>
             <div class="relative inline-block w-full max-w-lg overflow-hidden text-left align-middle bg-white rounded-[24px] shadow-2xl border border-slate-100">
-                <form action="{{ route('client.clubes.coggins.store', $club) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('client.clubes.coggins.store', $club) }}" method="POST" enctype="multipart/form-data" @submit="cogginUploading = true">
                     @csrf
                     <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <h3 class="text-lg font-black theme-text-heading tracking-tighter">Subir archivo Coggins</h3>
@@ -278,20 +288,34 @@
                                         <p class="text-xs font-black theme-text-heading uppercase tracking-widest mb-1">Haz clic para subir</p>
                                         <p class="text-[10px] text-slate-400 font-semibold">Solo archivos PDF (Max. 10MB)</p>
                                     </div>
-                                    <input type="file" name="file" accept=".pdf" required class="hidden" />
+                                    <input type="file" name="file" accept="application/pdf,.pdf" required class="hidden" @change="selectedCogginFile = $event.target.files?.[0]?.name || ''" />
                                 </label>
                             </div>
+                            <p x-show="selectedCogginFile" x-text="selectedCogginFile" class="truncate text-center text-[11px] font-bold theme-text-primary"></p>
+                            @error('file')
+                                <p class="text-center text-[11px] font-bold text-rose-500">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                     <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
-                        <button type="button" @click="cogginModal = false" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancelar</button>
-                        <button type="submit" class="theme-button-primary px-6 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg theme-shadow-primary">
+                        <button type="button" @click="cogginModal = false" :disabled="cogginUploading" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all disabled:opacity-40">Cancelar</button>
+                        <button type="submit" :disabled="cogginUploading" class="theme-button-primary px-6 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg theme-shadow-primary disabled:cursor-wait disabled:opacity-70">
                             Subir archivo
                         </button>
                     </div>
                 </form>
             </div>
         </div>
+    </div>
+
+    <div x-show="cogginUploading" x-cloak class="fixed inset-0 z-[70] grid place-items-center theme-overlay backdrop-blur-md" role="status" aria-live="assertive">
+        <section class="mx-4 grid w-full max-w-sm justify-items-center gap-4 rounded-[24px] border border-white/20 bg-white px-8 py-10 text-center shadow-2xl">
+            <span class="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 theme-border-primary" style="border-top-color: transparent" aria-hidden="true"></span>
+            <div>
+                <p class="text-sm font-black uppercase tracking-widest theme-text-heading">Subiendo archivo</p>
+                <p class="mt-2 text-[11px] font-semibold text-slate-400">Espera mientras guardamos el PDF. No cierres esta ventana.</p>
+            </div>
+        </section>
     </div>
 </div>
 @endsection
