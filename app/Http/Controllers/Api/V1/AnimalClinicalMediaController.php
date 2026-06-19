@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Animal;
+use App\Models\AnimalReport;
+use App\Models\AnimalReportImage;
 use App\Models\AnimalShare;
 use App\Models\AnimalVideo;
 use App\Models\RadiologyImage;
@@ -12,11 +14,17 @@ use App\Models\Tenant;
 use App\Models\TenantNotification;
 use App\Models\VaccinationLetter;
 use App\Services\PortalNotificationService;
+use App\Services\AnimalReportImageOptimizer;
+use App\Services\AnimalReportPdfService;
+use App\Services\MicrochipImageOptimizer;
+use App\Services\MicrochipLetterPdfService;
+use App\Services\RichTextSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AnimalClinicalMediaController extends Controller
 {
@@ -71,6 +79,116 @@ class AnimalClinicalMediaController extends Controller
                 'url' => $this->vaccinationPdfUrl($vaccinationLetter),
             ],
         ]);
+    }
+
+    public function storeMicrochip(
+        Request $request,
+        Animal $animal,
+        MicrochipImageOptimizer $imageOptimizer,
+        MicrochipLetterPdfService $pdfService
+    ) {
+        $this->authorizeAnimal($request, $animal);
+        $data = $request->validate([
+            'microchip' => ['required', 'string', 'max:255'],
+            'image' => [$animal->microchip_image_path ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+        ]);
+
+        $oldImagePath = null;
+        $newImagePath = null;
+
+        try {
+            if ($request->hasFile('image')) {
+                $newImagePath = "tenants/{$animal->tenant_id}/animals/{$animal->id}/microchip/".Str::uuid().'.webp';
+                $contents = $imageOptimizer->optimize($request->file('image'));
+                Storage::disk('r2')->put($newImagePath, $contents, ['mimetype' => 'image/webp']);
+                $oldImagePath = $animal->microchip_image_path;
+            }
+
+            $animal->update([
+                'microchip' => trim($data['microchip']),
+                'microchip_image_path' => $newImagePath ?: $animal->microchip_image_path,
+                'microchip_print_token' => $animal->microchip_print_token ?: (string) Str::uuid(),
+                'microchip_issued_by' => $request->user()->id,
+            ]);
+
+            $pdfService->finalize($animal->fresh());
+
+            if ($oldImagePath && $oldImagePath !== $newImagePath) {
+                Storage::disk('r2')->delete($oldImagePath);
+            }
+        } catch (\Throwable $exception) {
+            if ($newImagePath && $animal->fresh()->microchip_image_path !== $newImagePath) {
+                Storage::disk('r2')->delete($newImagePath);
+            }
+            throw $exception;
+        }
+
+        return response()->json(['data' => $this->serialize($animal->fresh())], 201);
+    }
+
+    public function storeReport(
+        Request $request,
+        Animal $animal,
+        RichTextSanitizer $sanitizer,
+        AnimalReportImageOptimizer $imageOptimizer,
+        AnimalReportPdfService $pdfService
+    ) {
+        $this->authorizeAnimal($request, $animal);
+        $data = $this->validatedReportData($request, $sanitizer);
+        $report = AnimalReport::create([
+            'tenant_id' => $animal->tenant_id,
+            'animal_id' => $animal->id,
+            'author_id' => $request->user()->id,
+            'title' => $data['title'],
+            'report_date' => $data['report_date'],
+            'content_html' => $data['content_html'],
+            'status' => 'draft',
+        ]);
+
+        $this->storeReportImages($request, $report, $imageOptimizer);
+        if ($data['intent'] === 'finalize') {
+            $pdfService->finalize($report);
+        }
+
+        return response()->json(['data' => $this->serialize($animal)], 201);
+    }
+
+    public function updateReport(
+        Request $request,
+        AnimalReport $animalReport,
+        RichTextSanitizer $sanitizer,
+        AnimalReportImageOptimizer $imageOptimizer,
+        AnimalReportPdfService $pdfService
+    ) {
+        $this->authorizeReport($request, $animalReport);
+        abort_unless($animalReport->isDraft(), 409, 'Los reportes finalizados no se pueden editar.');
+        $data = $this->validatedReportData($request, $sanitizer);
+
+        $animalReport->update([
+            'title' => $data['title'],
+            'report_date' => $data['report_date'],
+            'content_html' => $data['content_html'],
+        ]);
+        $this->storeReportImages($request, $animalReport, $imageOptimizer);
+        if ($data['intent'] === 'finalize') {
+            $pdfService->finalize($animalReport);
+        }
+
+        return response()->json(['data' => $this->serialize($animalReport->animal)], 200);
+    }
+
+    public function destroyReport(Request $request, AnimalReport $animalReport)
+    {
+        $this->authorizeReport($request, $animalReport);
+        abort_unless($animalReport->isDraft(), 409, 'Un reporte finalizado no se puede eliminar.');
+        $animal = $animalReport->animal;
+        $animalReport->load('images');
+        foreach ($animalReport->images as $image) {
+            Storage::disk($image->disk)->delete($image->path);
+        }
+        $animalReport->delete();
+
+        return response()->json(['data' => $this->serialize($animal)]);
     }
 
     public function storeVideo(Request $request, Animal $animal)
@@ -238,9 +356,21 @@ class AnimalClinicalMediaController extends Controller
             'videos' => fn ($query) => $query->latest('video_date')->latest('id'),
             'radiologyStudies' => fn ($query) => $query->with('images')->latest('study_date')->latest('id'),
             'shares' => fn ($query) => $query->with('sharedWithTenant')->where('is_active', true)->latest('id'),
+            'reports' => fn ($query) => $query->with(['author', 'images'])->latest('report_date')->latest('id'),
         ]);
 
         return [
+            'microchip' => [
+                'number' => $animal->microchip,
+                'has_image' => filled($animal->microchip_image_path),
+                'image_url' => $animal->microchip_image_path
+                    ? Storage::disk('r2')->temporaryUrl($animal->microchip_image_path, now()->addMinutes(30))
+                    : null,
+                'pdf_url' => $animal->microchip_print_token && $animal->microchip_pdf_path
+                    ? route('public.microchip-letters.print', $animal->microchip_print_token)
+                    : null,
+                'finalized_at' => $animal->microchip_finalized_at?->toISOString(),
+            ],
             'vaccination_letters' => $animal->vaccinationLetters->map(fn ($letter) => [
                 'id' => $letter->id,
                 'date' => $letter->date?->toDateString(),
@@ -271,7 +401,79 @@ class AnimalClinicalMediaController extends Controller
                 'tenant_name' => $share->sharedWithTenant?->name,
                 'url' => route('client.telemedicine.animals.show', $share->token),
             ])->values(),
+            'reports' => $animal->reports->map(fn ($report) => [
+                'id' => $report->id,
+                'title' => $report->title,
+                'report_date' => $report->report_date?->toDateString(),
+                'content_html' => $report->content_html,
+                'content_text' => trim(strip_tags($report->content_html)),
+                'status' => $report->status,
+                'author_name' => $report->author?->name,
+                'images_count' => $report->images->count(),
+                'pdf_url' => $report->status === 'finalized' && $report->public_token
+                    ? route('public.animal-reports.pdf', $report->public_token)
+                    : null,
+            ])->values(),
         ];
+    }
+
+    private function validatedReportData(Request $request, RichTextSanitizer $sanitizer): array
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'report_date' => ['required', 'date', 'before_or_equal:today'],
+            'content_html' => ['required', 'string', 'max:200000'],
+            'images' => ['nullable', 'array', 'max:10'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:15360'],
+            'intent' => ['required', 'in:draft,finalize'],
+        ]);
+        $data['content_html'] = $sanitizer->sanitize($data['content_html']);
+        $plainText = trim(str_replace("\xc2\xa0", ' ', html_entity_decode(strip_tags($data['content_html']))));
+        if ($plainText === '') {
+            throw ValidationException::withMessages(['content_html' => 'Escribe el contenido clinico del reporte.']);
+        }
+
+        return $data;
+    }
+
+    private function storeReportImages(
+        Request $request,
+        AnimalReport $report,
+        AnimalReportImageOptimizer $imageOptimizer
+    ): void {
+        $files = $request->file('images', []);
+        if ($report->images()->count() + count($files) > 10) {
+            throw ValidationException::withMessages(['images' => 'El reporte puede contener un maximo de 10 imagenes.']);
+        }
+
+        $position = (int) $report->images()->max('position');
+        foreach ($files as $file) {
+            $position++;
+            $path = "tenants/{$report->tenant_id}/animals/{$report->animal_id}/reports/{$report->id}/images/".Str::uuid().'.webp';
+            $contents = $imageOptimizer->optimize($file);
+            Storage::disk('r2')->put($path, $contents, ['mimetype' => 'image/webp']);
+            try {
+                AnimalReportImage::create([
+                    'tenant_id' => $report->tenant_id,
+                    'animal_report_id' => $report->id,
+                    'disk' => 'r2',
+                    'path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => 'image/webp',
+                    'size' => strlen($contents),
+                    'position' => $position,
+                ]);
+            } catch (\Throwable $exception) {
+                Storage::disk('r2')->delete($path);
+                throw $exception;
+            }
+        }
+    }
+
+    private function authorizeReport(Request $request, AnimalReport $report): void
+    {
+        abort_unless($report->tenant_id === $request->user()->tenant_id, 404);
+        abort_unless($report->animal?->tenant_id === $request->user()->tenant_id, 404);
     }
 
     private function vaccinationPdfUrl(VaccinationLetter $letter): string

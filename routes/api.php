@@ -66,6 +66,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/clubs', [ClubController::class, 'index']);
         Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
         Route::get('/animals/{animal}/clinical-media', [AnimalClinicalMediaController::class, 'index']);
+        Route::post('/animals/{animal}/microchip', [AnimalClinicalMediaController::class, 'storeMicrochip']);
+        Route::post('/animals/{animal}/reports', [AnimalClinicalMediaController::class, 'storeReport']);
+        Route::post('/animal-reports/{animalReport}', [AnimalClinicalMediaController::class, 'updateReport']);
+        Route::delete('/animal-reports/{animalReport}', [AnimalClinicalMediaController::class, 'destroyReport']);
         Route::post('/animals/{animal}/vaccination-letters', [AnimalClinicalMediaController::class, 'storeVaccination']);
         Route::get('/vaccination-letters/{vaccinationLetter}/share-link', [AnimalClinicalMediaController::class, 'vaccinationShareLink']);
         Route::post('/animals/{animal}/videos', [AnimalClinicalMediaController::class, 'storeVideo']);
