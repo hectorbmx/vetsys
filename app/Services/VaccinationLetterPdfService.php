@@ -76,7 +76,7 @@ class VaccinationLetterPdfService
 
     public function temporaryUrl(VaccinationLetter $letter): string
     {
-        $this->ensureFinalized($letter);
+        $this->finalize($letter);
         $letter->refresh();
 
         return Storage::disk($letter->pdf_disk ?: 'r2')->temporaryUrl(

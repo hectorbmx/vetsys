@@ -16,9 +16,9 @@
         .meta { line-height: 1.65; margin-bottom: 28px; }
         .content p { margin: 0 0 12px; text-align: justify; }
         .content h1, .content h2, .content h3 { color: #111827; margin: 14px 0 7px; }
-        .evidence-title { border-top: 1px solid #e2e8f0; font-weight: bold; margin-top: 24px; padding-top: 14px; }
-        .evidence { margin-top: 14px; text-align: center; }
-        .evidence img { max-height: 280px; max-width: 78%; }
+        .evidence-title { border-top: 1px solid #e2e8f0; font-weight: bold; margin-top: 20px; padding-top: 14px; }
+        .evidence { margin-top: 10px; text-align: center; }
+        .evidence img { max-height: 200px; max-width: 78%; }
         .signature { margin-top: 35px; page-break-inside: avoid; width: 270px; }
         .signature img { display: block; max-height: 90px; max-width: 190px; }
         .signature-name { font-weight: bold; margin-top: 3px; }
@@ -42,7 +42,7 @@
     <div class="meta">
         <div><strong>Propietario:</strong> {{ $letter->animal->customer?->full_name }}</div>
         <div><strong>Paciente:</strong> {{ $letter->animal->name }}</div>
-        <div><strong>Vacuna:</strong> {{ $letter->vaccine_name ?: 'No especificada' }}</div>
+        <div><strong>Vacuna:</strong> {{ $letter    ->vaccine_name ?: 'No especificada' }}</div>
     </div>
 
     <section class="content">{!! $documentPresentation['body_html'] !!}</section>

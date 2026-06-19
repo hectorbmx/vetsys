@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Animal;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\VeterinarianProfile;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -25,10 +26,7 @@ class DocumentPresentationService
         $animal->loadMissing(['customer', 'animalType']);
         $veterinarian?->loadMissing('veterinarianProfile');
 
-        $profile = $veterinarian?->veterinarianProfile;
-        if ($profile && ! $profile->is_active) {
-            $profile = null;
-        }
+        $profile = $this->resolveSigningProfile($tenant, $veterinarian);
 
         $years = $animal->birthdate?->diffInYears($documentDate);
         $sexLabels = ['male' => 'Macho', 'female' => 'Hembra', 'unknown' => 'Desconocido'];
@@ -103,6 +101,26 @@ class DocumentPresentationService
         }
 
         return null;
+    }
+
+    private function resolveSigningProfile(Tenant $tenant, ?User $veterinarian): ?VeterinarianProfile
+    {
+        $profile = $veterinarian?->veterinarianProfile;
+
+        if ($profile?->is_active && $profile->signature_path) {
+            return $profile;
+        }
+
+        $fallbackQuery = VeterinarianProfile::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->whereNotNull('signature_path');
+
+        if ($veterinarian) {
+            $fallbackQuery->orderByRaw('CASE WHEN user_id = ? THEN 0 ELSE 1 END', [$veterinarian->id]);
+        }
+
+        return $fallbackQuery->orderBy('id')->first();
     }
 
     private function mimeTypeFromPath(string $path): string

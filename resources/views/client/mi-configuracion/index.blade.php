@@ -359,9 +359,17 @@
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-black uppercase tracking-widest theme-text-heading">Firmas profesionales</p>
-                            <p class="mt-2 text-[11px] font-semibold leading-5 text-slate-400">Las firmas se administran individualmente desde Usuarios / Equipo.</p>
+                            <p class="mt-2 text-[11px] font-semibold leading-5 text-slate-400">Las cartas toman automaticamente la firma del veterinario que emite el documento.</p>
                         </div>
                         <span class="rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black text-slate-600">{{ $configuredSignaturesCount }}/{{ $professionalProfilesCount }}</span>
+                    </div>
+                    <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Aparece al final de cada carta</p>
+                        <div class="mt-3 w-44 border-b border-slate-300 pb-2">
+                            <div class="h-10 w-32 rounded bg-slate-200/80"></div>
+                        </div>
+                        <p class="mt-2 text-xs font-black theme-text-heading">MVZ Nombre del veterinario</p>
+                        <p class="text-[11px] font-semibold text-slate-400">Cedula profesional</p>
                     </div>
                     <button type="button" @click="currentTab = 'usuarios'" class="mt-4 text-[9px] font-black uppercase tracking-widest theme-text-primary hover:underline">Administrar veterinarios</button>
                 </div>
@@ -457,7 +465,7 @@
 
                             <div class="space-y-2">
                                 <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Texto de cierre</label>
-                                <textarea name="closing_text" rows="2" maxlength="2000" class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">{{ $templateClosing }}</textarea>
+                                <textarea name="closing_text" rows="2" maxlength="2000" data-template-closing class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">{{ $templateClosing }}</textarea>
                             </div>
 
                             <div class="space-y-2">
@@ -480,6 +488,12 @@
                                     <p class="absolute bottom-3 right-5 z-20 text-right text-sm font-black text-white">{{ $documentTemplate['label'] }}</p>
                                 </div>
                                 <div data-template-preview class="prose prose-sm max-w-none text-xs leading-6 text-slate-700"></div>
+                                <div class="mt-8 w-52 border-t border-slate-200 pt-4">
+                                    <p data-template-closing-preview class="text-[10px] font-semibold text-slate-500">{{ $templateClosing ?: 'Cualquier duda estoy a sus ordenes.' }}</p>
+                                    <div class="mt-3 h-10 w-32 rounded bg-slate-200"></div>
+                                    <p class="mt-2 text-xs font-black theme-text-heading">MVZ Carlos Gorozpe</p>
+                                    <p class="text-[10px] font-semibold text-slate-400">Cedula: 10176347</p>
+                                </div>
                             </div>
 
                             <div class="mt-5 flex flex-wrap justify-end gap-3">
@@ -1577,6 +1591,8 @@
                 const headerColor = form.querySelector('[data-template-header-color]');
                 const headerColorValue = form.querySelector('[data-template-header-color-value]');
                 const headerPreview = form.querySelector('[data-template-header-preview]');
+                const closingInput = form.querySelector('[data-template-closing]');
+                const closingPreview = form.querySelector('[data-template-closing-preview]');
                 let quill = null;
 
                 const syncHeaderColor = () => {
@@ -1594,6 +1610,13 @@
                     }
                     preview.textContent = rendered;
                 };
+
+                const syncClosingPreview = () => {
+                    const closingText = closingInput.value || 'Cualquier duda estoy a sus ordenes.';
+                    closingPreview.textContent = closingText.replace(/\{\{([a-z_]+)\}\}/g, (match, key) => sampleData[key] ?? match);
+                };
+                closingInput.addEventListener('input', syncClosingPreview);
+                syncClosingPreview();
 
                 if (typeof Quill !== 'undefined') {
                     editorElement.classList.remove('hidden');
