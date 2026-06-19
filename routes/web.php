@@ -113,6 +113,9 @@ Route::get('/pagar-cuenta/{token}', [PublicCustomerPaymentController::class, 'sh
 Route::post('/pagar-cuenta/{token}/stripe', [PublicCustomerPaymentController::class, 'checkout'])->name('public.customer-payments.checkout');
 Route::get('/cartas-vacunacion/{vaccinationLetter}/pdf', [VaccinationLetterController::class, 'signedPrint'])
     ->name('public.vaccination-letters.print');
+Route::get('/cartas-vacunacion-publicas/{token}', [VaccinationLetterController::class, 'publicPrint'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->name('public.vaccination-letters.share');
 Route::get('/cartas-microchip/{token}', [AnimalController::class, 'publicMicrochipLetter'])
     ->whereUuid('token')
     ->name('public.microchip-letters.print');
@@ -230,6 +233,14 @@ Route::middleware(['auth', 'role:super-admin'])
             Route::patch('mi-configuracion/apariencia', [ClientConfiguracionController::class, 'updateThemePalette'])->name('mi-configuracion.appearance.update');
             Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
             Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
+            Route::put('mi-configuracion/users/{teamUser}/veterinarian-profile', [ClientConfiguracionController::class, 'updateVeterinarianProfile'])->name('mi-configuracion.veterinarian-profiles.update');
+            Route::get('mi-configuracion/veterinarian-profiles/{veterinarianProfile}/signature', [ClientConfiguracionController::class, 'veterinarianSignature'])->name('mi-configuracion.veterinarian-profiles.signature');
+            Route::delete('mi-configuracion/veterinarian-profiles/{veterinarianProfile}/signature', [ClientConfiguracionController::class, 'destroyVeterinarianSignature'])->name('mi-configuracion.veterinarian-profiles.signature.destroy');
+            Route::put('mi-configuracion/documentos', [ClientConfiguracionController::class, 'updateDocumentSettings'])->name('mi-configuracion.documents.update');
+            Route::get('mi-configuracion/documentos/{tenantDocumentSetting}/membrete', [ClientConfiguracionController::class, 'letterhead'])->name('mi-configuracion.documents.letterhead');
+            Route::delete('mi-configuracion/documentos/{tenantDocumentSetting}/membrete', [ClientConfiguracionController::class, 'destroyLetterhead'])->name('mi-configuracion.documents.letterhead.destroy');
+            Route::put('mi-configuracion/documentos/plantillas/{type}', [ClientConfiguracionController::class, 'updateDocumentTemplate'])->name('mi-configuracion.document-templates.update');
+            Route::delete('mi-configuracion/documentos/plantillas/{type}', [ClientConfiguracionController::class, 'restoreDocumentTemplate'])->name('mi-configuracion.document-templates.restore');
             Route::post('mi-configuracion/plan', [ClientConfiguracionController::class, 'requestPlanChange'])->name('mi-configuracion.plan.request');
             Route::post('mi-configuracion/importar-clientes', [ClientConfiguracionController::class, 'importCustomers'])->name('mi-configuracion.import-customers');
             Route::post('mi-configuracion/importar-servicios', [ClientConfiguracionController::class, 'importServices'])->name('mi-configuracion.import-services');

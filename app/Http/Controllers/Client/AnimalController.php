@@ -11,6 +11,7 @@ use App\Models\Club;
 use App\Services\TenantOnboardingService;
 use App\Services\CustomerPortalAccessService;
 use App\Services\MicrochipImageOptimizer;
+use App\Services\MicrochipLetterPdfService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -286,7 +287,12 @@ class AnimalController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Animal $animal, MicrochipImageOptimizer $imageOptimizer)
+    public function update(
+        Request $request,
+        Animal $animal,
+        MicrochipImageOptimizer $imageOptimizer,
+        MicrochipLetterPdfService $microchipPdfService
+    )
     {
         $tenantId = auth()->user()->tenant_id;
 
@@ -330,6 +336,9 @@ class AnimalController extends Controller
                 $oldImagePath = $animal->microchip_image_path;
                 $data['microchip_image_path'] = $path;
                 $data['microchip_print_token'] = $animal->microchip_print_token ?: (string) Str::uuid();
+                $data['microchip_issued_by'] = auth()->id();
+            } elseif ($animal->microchip_image_path && ! $animal->microchip_issued_by) {
+                $data['microchip_issued_by'] = auth()->id();
             }
 
             unset($data['microchip_image']);
@@ -342,6 +351,15 @@ class AnimalController extends Controller
                 } catch (\Throwable $exception) {
                     report($exception);
                 }
+            }
+
+            $microchipDocumentFields = [
+                'name', 'customer_id', 'animal_type_id', 'birthdate', 'color', 'sex',
+                'microchip', 'microchip_image_path', 'microchip_issued_by',
+            ];
+            if ($animal->microchip_image_path
+                && (! $animal->microchip_pdf_path || $animal->wasChanged($microchipDocumentFields))) {
+                $microchipPdfService->finalize($animal);
             }
 
             if ($animal->status === 'active') {
@@ -373,9 +391,16 @@ class AnimalController extends Controller
 
         if ($animal->microchip_image_path) {
             Storage::disk('r2')->delete($animal->microchip_image_path);
+            if ($animal->microchip_pdf_path) {
+                Storage::disk($animal->microchip_pdf_disk ?: 'r2')->delete($animal->microchip_pdf_path);
+            }
             $animal->update([
                 'microchip_image_path' => null,
                 'microchip_print_token' => null,
+                'microchip_issued_by' => null,
+                'microchip_pdf_disk' => null,
+                'microchip_pdf_path' => null,
+                'microchip_finalized_at' => null,
             ]);
         }
 
@@ -385,23 +410,14 @@ class AnimalController extends Controller
             ->with('animalTab', 'datos');
     }
 
-    public function publicMicrochipLetter(string $token)
+    public function publicMicrochipLetter(string $token, MicrochipLetterPdfService $pdfService)
     {
         $animal = Animal::query()
-            ->with(['tenant', 'customer', 'animalType'])
             ->where('microchip_print_token', $token)
             ->whereNotNull('microchip_image_path')
             ->firstOrFail();
 
-        abort_unless(Storage::disk('r2')->exists($animal->microchip_image_path), 404);
-
-        return view('client.animals.microchip-letter', [
-            'animal' => $animal,
-            'microchipImageUrl' => Storage::disk('r2')->temporaryUrl(
-                $animal->microchip_image_path,
-                now()->addMinutes(30)
-            ),
-        ]);
+        return redirect()->away($pdfService->temporaryUrl($animal));
     }
 
     /**

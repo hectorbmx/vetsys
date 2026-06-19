@@ -5,10 +5,18 @@
 @section('contextual-tour', 'configuration')
 
 @section('content')
+@php
+    $profileUserId = (int) old('professional_profile_user_id', session('professionalProfileUserId', 0));
+@endphp
 {{-- Centralizamos el estado de las pestañas y del modal de especies con Alpine --}}
 <div class="space-y-8" x-data="{
-    currentTab: @js(request('tab', session('activeTab', 'animales'))),
+    currentTab: @js(request('tab', session('activeTab', (old('document_settings_form') || old('document_template_type')) ? 'documentos' : 'animales'))),
     typeModal: false,
+    professionalProfileOpen: @js($profileUserId ?: null),
+    profileSaving: false,
+    letterheadSaving: false,
+    documentTemplateOpen: @js(old('document_template_type', session('documentTemplateOpen'))),
+    templateSaving: false,
     selectedThemePalette: @js($activeThemePalette),
     savedThemePalette: @js($activeThemePalette),
     previewThemePalette(palette) {
@@ -22,6 +30,27 @@
         this.previewThemePalette(this.savedThemePalette);
     }
 }">
+    <div x-show="profileSaving" x-cloak class="fixed inset-0 z-[130] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando perfil</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Optimizando la firma y actualizando los datos profesionales.</p>
+        </div>
+    </div>
+    <div x-show="letterheadSaving" x-cloak class="fixed inset-0 z-[130] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando membrete</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Optimizando la imagen y subiendola a los documentos de la clinica.</p>
+        </div>
+    </div>
+    <div x-show="templateSaving" x-cloak class="fixed inset-0 z-[130] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando plantilla</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Validando el texto y las variables del documento.</p>
+        </div>
+    </div>
     
     {{-- SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -99,6 +128,11 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             👥 Usuarios / Equipo
         </button>
+        <button @click="currentTab = 'clientes-app'"
+                :class="currentTab === 'clientes-app' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            📱 Clientes en app
+        </button>
         <button @click="currentTab = 'bancos'" 
                 :class="currentTab === 'bancos' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
@@ -114,6 +148,11 @@
                 :class="currentTab === 'apariencia' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             🎨 Apariencia
+        </button>
+        <button @click="currentTab = 'documentos'"
+                :class="currentTab === 'documentos' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            📄 Documentos / Cartas
         </button>
         <button @click="currentTab = 'facturacion'"
                 :class="currentTab === 'facturacion' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
@@ -164,7 +203,9 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                    @php($tenantLogoUrl = $tenant?->logoUrl())
+                    @php
+                        $tenantLogoUrl = $tenant?->logoUrl();
+                    @endphp
                     <div class="h-20 w-20 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
                         @if($tenantLogoUrl)
                             <img src="{{ $tenantLogoUrl }}" alt="{{ $tenant->name }}" class="h-full w-full object-contain p-2">
@@ -234,6 +275,230 @@
                 @endif
             </div>
         </form>
+    </div>
+
+    {{-- TAB: DOCUMENTOS / CARTAS --}}
+    <div x-show="currentTab === 'documentos'" x-transition:enter="transition duration-200" class="space-y-6" x-cloak>
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
+            <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm xl:col-span-3">
+                <div class="border-b border-slate-100 bg-slate-50/50 p-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Identidad para documentos</h3>
+                    <p class="mt-1 text-[11px] font-medium text-slate-400">Configura el encabezado que identificara las cartas y reportes de la clinica.</p>
+                </div>
+
+                <form action="{{ route('client.mi-configuracion.documents.update') }}" method="POST" enctype="multipart/form-data" @submit="letterheadSaving = true" class="space-y-5 p-6">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="document_settings_form" value="1">
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Membrete de la clinica *</label>
+                        <input type="file" name="letterhead" accept="image/png,image/jpeg,image/webp" required @disabled(!$canManageDocuments) class="block w-full text-xs font-semibold text-slate-500 file:mr-4 file:rounded-xl file:border-0 theme-file-input file:px-5 file:py-3 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:text-white disabled:opacity-50">
+                        <p class="text-[10px] font-semibold text-slate-400">PNG, JPG o WEBP. Maximo 10 MB. Recomendado: 2000 px o mas de ancho, proporcion horizontal cercana a 6:1 y fondo transparente para integrarse sobre el cintillo.</p>
+                        @error('letterhead')<p class="text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    @if($documentSettings?->letterhead_path)
+                        <div class="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-emerald-700">Membrete configurado</p>
+                            <p class="mt-1 text-[11px] font-semibold text-emerald-700/80">
+                                {{ $documentSettings->letterhead_original_name ?: 'Imagen optimizada' }}
+                                @if($documentSettings->letterhead_size)
+                                    &middot; {{ number_format($documentSettings->letterhead_size / 1024) }} KB
+                                @endif
+                            </p>
+                        </div>
+                    @endif
+
+                    <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
+                        @if($canManageDocuments)
+                            <button type="submit" class="rounded-xl theme-button-primary px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em]">
+                                {{ $documentSettings?->letterhead_path ? 'Reemplazar membrete' : 'Guardar membrete' }}
+                            </button>
+                        @else
+                            <p class="text-[11px] font-semibold text-slate-400">Solo un administrador o responsable del tenant puede modificar los documentos.</p>
+                        @endif
+                    </div>
+                </form>
+
+                @if($documentSettings?->letterhead_path && $canManageDocuments)
+                    <form action="{{ route('client.mi-configuracion.documents.letterhead.destroy', $documentSettings) }}" method="POST" class="border-t border-slate-100 px-6 py-4 text-right" onsubmit="return confirm('Eliminar el membrete actual?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-rose-600 hover:underline">Eliminar membrete</button>
+                    </form>
+                @endif
+            </div>
+
+            <div class="space-y-6 xl:col-span-2">
+                <div class="rounded-[24px] border border-slate-200 bg-slate-100 p-5 shadow-sm">
+                    <div class="mx-auto aspect-[8.5/11] w-full max-w-sm bg-white p-5 shadow-md">
+                        <div class="flex min-h-16 items-center justify-center border-b border-slate-200 pb-4">
+                            @if($documentSettings?->letterhead_path)
+                                <img src="{{ route('client.mi-configuracion.documents.letterhead', $documentSettings) }}" alt="Membrete de {{ $tenant->name }}" class="max-h-24 w-full object-contain">
+                            @elseif($tenantLogoUrl)
+                                <div class="flex w-full items-center gap-3">
+                                    <img src="{{ $tenantLogoUrl }}" alt="{{ $tenant->name }}" class="h-10 w-10 object-contain">
+                                    <p class="text-xs font-black theme-text-heading">{{ $tenant->name }}</p>
+                                </div>
+                            @else
+                                <p class="text-xs font-black theme-text-heading">{{ $tenant->name }}</p>
+                            @endif
+                        </div>
+                        <div class="mt-5 space-y-2">
+                            <div class="h-2 w-1/3 rounded bg-slate-300"></div>
+                            <div class="h-1.5 w-full rounded bg-slate-100"></div>
+                            <div class="h-1.5 w-5/6 rounded bg-slate-100"></div>
+                            <div class="h-1.5 w-full rounded bg-slate-100"></div>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">Vista previa aproximada</p>
+                </div>
+
+                <div class="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-widest theme-text-heading">Firmas profesionales</p>
+                            <p class="mt-2 text-[11px] font-semibold leading-5 text-slate-400">Las firmas se administran individualmente desde Usuarios / Equipo.</p>
+                        </div>
+                        <span class="rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black text-slate-600">{{ $configuredSignaturesCount }}/{{ $professionalProfilesCount }}</span>
+                    </div>
+                    <button type="button" @click="currentTab = 'usuarios'" class="mt-4 text-[9px] font-black uppercase tracking-widest theme-text-primary hover:underline">Administrar veterinarios</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 bg-slate-50/50 p-6">
+                <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Plantillas de texto</h3>
+                <p class="mt-1 text-[11px] font-medium text-slate-400">Personaliza la redaccion y utiliza variables para insertar los datos del paciente automaticamente.</p>
+            </div>
+            <div class="grid grid-cols-1 gap-4 p-6 lg:grid-cols-3">
+                @foreach($documentTemplates as $documentTemplate)
+                    <article class="flex flex-col rounded-2xl border border-slate-200 bg-white p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-black theme-text-heading">{{ $documentTemplate['label'] }}</h4>
+                                <p class="mt-2 text-[11px] font-semibold leading-5 text-slate-400">{{ $documentTemplate['description'] }}</p>
+                            </div>
+                            <span class="shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest {{ $documentTemplate['customized'] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
+                                {{ $documentTemplate['customized'] ? 'Personalizada' : 'Predeterminada' }}
+                            </span>
+                        </div>
+                        <p class="mt-4 line-clamp-4 text-xs font-semibold leading-5 text-slate-600">
+                            {{ trim(strip_tags($documentTemplate['body_html'])) ?: 'El contenido principal se captura al crear cada reporte.' }}
+                        </p>
+                        <div class="mt-auto pt-5">
+                            <button type="button" @click="documentTemplateOpen = @js($documentTemplate['type'])" class="rounded-xl theme-button-primary px-4 py-2.5 text-[9px] font-black uppercase tracking-widest">
+                                Editar texto
+                            </button>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+
+        @foreach($documentTemplates as $documentTemplate)
+            @php
+                $templateIsReopened = old('document_template_type') === $documentTemplate['type'];
+                $templateBody = $templateIsReopened
+                    ? app(\App\Services\RichTextSanitizer::class)->sanitize(old('body_html', $documentTemplate['body_html']))
+                    : $documentTemplate['body_html'];
+                $templateHeaderColor = $templateIsReopened ? old('header_color', $documentTemplate['header_color']) : $documentTemplate['header_color'];
+                $templateClosing = $templateIsReopened ? old('closing_text', $documentTemplate['closing_text']) : $documentTemplate['closing_text'];
+                $templateImageTitle = $templateIsReopened ? old('image_section_title', $documentTemplate['image_section_title']) : $documentTemplate['image_section_title'];
+            @endphp
+            <div x-show="documentTemplateOpen === @js($documentTemplate['type'])" x-cloak x-transition.opacity class="fixed inset-0 z-[116] flex items-start justify-center overflow-y-auto theme-overlay px-4 py-6 backdrop-blur-sm">
+                <div @click.outside="documentTemplateOpen = null" class="w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                        <div>
+                            <p class="text-sm font-black theme-text-heading">{{ $documentTemplate['label'] }}</p>
+                            <p class="mt-1 text-[11px] font-semibold text-slate-400">Edita el texto y agrega variables desde la lista permitida.</p>
+                        </div>
+                        <button type="button" @click="documentTemplateOpen = null" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                    </div>
+
+                    <form action="{{ route('client.mi-configuracion.document-templates.update', $documentTemplate['type']) }}" method="POST" data-document-template-form @submit="templateSaving = true" class="grid max-h-[82vh] grid-cols-1 overflow-y-auto lg:grid-cols-2">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="document_template_type" value="{{ $documentTemplate['type'] }}">
+
+                        <div class="space-y-5 border-r border-slate-100 p-6">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Texto principal {{ $documentTemplate['type'] === 'clinical_report' ? '(opcional)' : '*' }}</label>
+                                <div data-template-editor class="hidden min-h-[230px] bg-white">{!! $templateBody !!}</div>
+                                <textarea name="body_html" data-template-content rows="10" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:ring-4">{{ $templateBody }}</textarea>
+                                @if($templateIsReopened) @error('body_html')<p class="text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror @endif
+                            </div>
+
+                            <div>
+                                <p class="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Insertar variable</p>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($documentTemplate['variables'] as $variable)
+                                        @php
+                                            $variableToken = chr(123).chr(123).$variable.chr(125).chr(125);
+                                        @endphp
+                                        <button type="button" data-template-variable="{{ $variable }}" class="rounded-lg bg-slate-100 px-2.5 py-1.5 font-mono text-[9px] font-bold text-slate-600 hover:bg-slate-200">{{ $variableToken }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Color del encabezado</label>
+                                <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <input type="color" name="header_color" value="{{ $templateHeaderColor }}" data-template-header-color required class="h-10 w-14 cursor-pointer rounded-lg border border-slate-200 bg-white p-1">
+                                    <div>
+                                        <p class="text-xs font-black theme-text-heading" data-template-header-color-value>{{ strtoupper($templateHeaderColor) }}</p>
+                                        <p class="mt-0.5 text-[10px] font-semibold text-slate-400">Se mostrara debajo del membrete.</p>
+                                    </div>
+                                </div>
+                                @if($templateIsReopened) @error('header_color')<p class="text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror @endif
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Texto de cierre</label>
+                                <textarea name="closing_text" rows="2" maxlength="2000" class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">{{ $templateClosing }}</textarea>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Titulo de la seccion de imagenes</label>
+                                <input type="text" name="image_section_title" value="{{ $templateImageTitle }}" maxlength="255" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col bg-slate-50/70 p-6">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Vista previa con datos de ejemplo</p>
+                            <div class="mt-4 min-h-[330px] flex-1 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                                <div data-template-header-preview class="relative mb-5 flex h-[113px] items-center overflow-hidden px-5" style="background-color: {{ $templateHeaderColor }}">
+                                    @if($documentSettings?->letterhead_path)
+                                        <img src="{{ route('client.mi-configuracion.documents.letterhead', $documentSettings) }}" alt="Membrete de {{ $tenant->name }}" class="relative z-10 max-h-[94px] max-w-[70%] object-contain object-left">
+                                    @elseif($tenantLogoUrl)
+                                        <img src="{{ $tenantLogoUrl }}" alt="{{ $tenant->name }}" class="relative z-10 max-h-[82px] max-w-[55%] object-contain object-left">
+                                    @else
+                                        <p class="relative z-10 text-sm font-black text-white">{{ $tenant->name }}</p>
+                                    @endif
+                                    <p class="absolute bottom-3 right-5 z-20 text-right text-sm font-black text-white">{{ $documentTemplate['label'] }}</p>
+                                </div>
+                                <div data-template-preview class="prose prose-sm max-w-none text-xs leading-6 text-slate-700"></div>
+                            </div>
+
+                            <div class="mt-5 flex flex-wrap justify-end gap-3">
+                                <button type="button" @click="documentTemplateOpen = null" class="rounded-xl bg-white px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100">Cancelar</button>
+                                <button type="submit" class="rounded-xl theme-button-primary px-5 py-3 text-[9px] font-black uppercase tracking-[0.2em]">Guardar plantilla</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    @if($documentTemplate['customized'])
+                        <form action="{{ route('client.mi-configuracion.document-templates.restore', $documentTemplate['type']) }}" method="POST" class="border-t border-slate-100 px-6 py-4 text-right" onsubmit="return confirm('Restaurar el texto predeterminado de esta carta?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-rose-600 hover:underline">Restaurar predeterminada</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        @endforeach
     </div>
     
     {{-- TAB 1: TIPOS DE ANIMALES --}}
@@ -329,6 +594,7 @@
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuario</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rol</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Perfil profesional</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Invitacion</th>
                             </tr>
                         </thead>
@@ -347,7 +613,9 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        @php($roleName = $teamUser->roles->pluck('name')->first())
+                                        @php
+                                            $roleName = $teamUser->roles->pluck('name')->first();
+                                        @endphp
                                         <span class="inline-flex text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
                                             {{ $roleOptions[$roleName] ?? ($roleName ?? 'Sin rol') }}
                                         </span>
@@ -357,13 +625,28 @@
                                             {{ $teamUser->is_active ? 'Activo' : 'Pendiente' }}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4">
+                                        @php
+                                            $professionalProfile = $teamUser->veterinarianProfile;
+                                        @endphp
+                                        <div class="flex flex-col items-start gap-2">
+                                            <span class="inline-flex rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest {{ $professionalProfile?->isComplete() ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
+                                                {{ $professionalProfile?->isComplete() ? 'Completo' : ($professionalProfile ? 'Incompleto' : 'Sin configurar') }}
+                                            </span>
+                                            @if($canManageTeam)
+                                                <button type="button" @click="professionalProfileOpen = {{ $teamUser->id }}" class="text-[9px] font-black uppercase tracking-widest theme-text-primary hover:underline">
+                                                    {{ $professionalProfile ? 'Editar datos' : 'Configurar' }}
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 text-xs text-slate-500 font-semibold">
                                         {{ $teamUser->invitation_accepted_at ? $teamUser->invitation_accepted_at->format('d/m/Y') : 'Sin aceptar' }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
+                                    <td colspan="5" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
                                         Todavia no hay usuarios registrados para este tenant.
                                     </td>
                                 </tr>
@@ -422,6 +705,177 @@
                         </p>
                     </div>
                 @endif
+            </div>
+        </div>
+
+        @foreach($teamUsers as $teamUser)
+            @php
+                $professionalProfile = $teamUser->veterinarianProfile;
+                $reopeningThisProfile = $profileUserId === $teamUser->id;
+            @endphp
+            <div x-show="professionalProfileOpen === {{ $teamUser->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[115] flex items-start justify-center overflow-y-auto theme-overlay px-4 py-6 backdrop-blur-sm">
+                <div @click.outside="professionalProfileOpen = null" class="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                        <div>
+                            <p class="text-sm font-black theme-text-heading">Datos profesionales</p>
+                            <p class="mt-1 text-[11px] font-semibold text-slate-400">{{ $teamUser->name }} &middot; {{ $teamUser->email }}</p>
+                        </div>
+                        <button type="button" @click="professionalProfileOpen = null" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                    </div>
+
+                    <form action="{{ route('client.mi-configuracion.veterinarian-profiles.update', $teamUser) }}" method="POST" enctype="multipart/form-data" @submit="profileSaving = true" class="max-h-[82vh] space-y-5 overflow-y-auto p-6">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="professional_profile_user_id" value="{{ $teamUser->id }}">
+
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Nombre profesional *</label>
+                                <input type="text" name="professional_name" value="{{ $reopeningThisProfile ? old('professional_name', $professionalProfile?->professional_name ?? $teamUser->name) : ($professionalProfile?->professional_name ?? $teamUser->name) }}" required maxlength="255" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Titulo profesional *</label>
+                                <input type="text" name="professional_title" value="{{ $reopeningThisProfile ? old('professional_title', $professionalProfile?->professional_title) : $professionalProfile?->professional_title }}" required maxlength="100" placeholder="Ej. MVZ" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Cedula profesional *</label>
+                                <input type="text" name="license_number" value="{{ $reopeningThisProfile ? old('license_number', $professionalProfile?->license_number) : $professionalProfile?->license_number }}" required maxlength="100" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Especialidad</label>
+                                <input type="text" name="specialty" value="{{ $reopeningThisProfile ? old('specialty', $professionalProfile?->specialty) : $professionalProfile?->specialty }}" maxlength="255" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Celular profesional</label>
+                                <input type="text" name="professional_phone" value="{{ $reopeningThisProfile ? old('professional_phone', $professionalProfile?->professional_phone ?? $teamUser->phone) : ($professionalProfile?->professional_phone ?? $teamUser->phone) }}" maxlength="50" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Correo profesional</label>
+                                <input type="email" name="professional_email" value="{{ $reopeningThisProfile ? old('professional_email', $professionalProfile?->professional_email ?? $teamUser->email) : ($professionalProfile?->professional_email ?? $teamUser->email) }}" maxlength="255" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Domicilio profesional</label>
+                            <textarea name="professional_address" rows="2" maxlength="1000" class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold theme-text-heading outline-none theme-input focus:bg-white focus:ring-4">{{ $reopeningThisProfile ? old('professional_address', $professionalProfile?->professional_address) : $professionalProfile?->professional_address }}</textarea>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <div class="flex h-28 w-40 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                    @if($professionalProfile?->signature_path)
+                                        <img src="{{ route('client.mi-configuracion.veterinarian-profiles.signature', $professionalProfile) }}" alt="Firma de {{ $teamUser->name }}" class="max-h-full max-w-full object-contain p-2">
+                                    @else
+                                        <span class="px-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin firma</span>
+                                    @endif
+                                </div>
+                                <div class="min-w-0 flex-1 space-y-2">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Firma del veterinario</label>
+                                    <input type="file" name="signature" accept="image/png,image/jpeg,image/webp" class="block w-full text-xs font-semibold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:text-white">
+                                    <p class="text-[10px] font-semibold text-slate-400">Se recomienda PNG transparente. Maximo 5 MB.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" @checked($reopeningThisProfile ? old('is_active', $professionalProfile?->is_active ?? true) : ($professionalProfile?->is_active ?? true)) class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
+                            <span class="text-xs font-black uppercase tracking-widest theme-text-heading">Autorizado para firmar documentos</span>
+                        </label>
+
+                        <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
+                            <button type="button" @click="professionalProfileOpen = null" class="rounded-xl bg-slate-100 px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-200">Cancelar</button>
+                            <button type="submit" class="rounded-xl theme-button-primary px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em]">Guardar perfil</button>
+                        </div>
+                    </form>
+
+                    @if($professionalProfile?->signature_path)
+                        <form action="{{ route('client.mi-configuracion.veterinarian-profiles.signature.destroy', $professionalProfile) }}" method="POST" class="border-t border-slate-100 px-6 py-4 text-right" onsubmit="return confirm('Eliminar la firma de este veterinario?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-rose-600 hover:underline">Eliminar firma actual</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- CLIENTES CON ACCESO A LA APP --}}
+    <div x-show="currentTab === 'clientes-app'" x-transition:enter="transition duration-200" class="space-y-6" style="display: none;">
+        <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+            <div class="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/50 p-6 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Clientes en app</h3>
+                    <p class="mt-1 text-[11px] font-medium text-slate-400">Propietarios que tienen o tuvieron acceso al portal y la aplicacion movil.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="rounded-xl bg-emerald-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-700">{{ $activePortalClients }} activos</span>
+                    <span class="rounded-xl bg-slate-100 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600">{{ $portalAccesses->count() }} accesos</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse text-left">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/10">
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Acceso</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Pacientes</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Ultimo ingreso</th>
+                            <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($portalAccesses as $portalAccess)
+                            @php
+                                $portalCustomer = $portalAccess->customer;
+                                $portalUser = $portalAccess->user;
+                                $portalStatusLabels = [
+                                    'active' => 'Activo',
+                                    'suspended' => 'Suspendido',
+                                    'invited' => 'Invitado',
+                                    'revoked' => 'Revocado',
+                                    'expired' => 'Vencido',
+                                ];
+                            @endphp
+                            <tr class="transition-colors hover:bg-slate-50/50">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-600">
+                                            {{ strtoupper(substr($portalCustomer->full_name ?: ($portalUser?->name ?? 'C'), 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-black theme-text-heading">{{ $portalCustomer->full_name ?: $portalUser?->name }}</p>
+                                            <p class="text-[11px] font-semibold text-slate-400">{{ $portalCustomer->email ?: $portalUser?->email }}</p>
+                                            @if($portalCustomer->phone ?: $portalUser?->phone)
+                                                <p class="mt-0.5 text-[10px] font-semibold text-slate-400">{{ $portalCustomer->phone ?: $portalUser?->phone }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest {{ $portalAccess->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($portalAccess->status === 'invited' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600') }}">
+                                        {{ $portalStatusLabels[$portalAccess->status] ?? ucfirst($portalAccess->status) }}
+                                    </span>
+                                    <p class="mt-1.5 text-[10px] font-semibold text-slate-400">{{ $portalAccess->activated_at?->format('d/m/Y') ?? 'Sin activar' }}</p>
+                                </td>
+                                <td class="px-6 py-4 text-xs font-black theme-text-heading">{{ $portalCustomer->animals_count }}</td>
+                                <td class="px-6 py-4 text-xs font-semibold text-slate-500">{{ $portalUser?->last_login_at?->format('d/m/Y H:i') ?? 'Sin ingreso' }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="{{ route('client.customers.show', $portalCustomer) }}" class="inline-flex rounded-xl bg-slate-100 px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-200">Administrar</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-14 text-center">
+                                    <p class="text-sm font-black theme-text-heading">Sin clientes con acceso a la app</p>
+                                    <p class="mt-2 text-xs font-semibold text-slate-400">Activa el acceso desde el perfil de un cliente.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -1084,3 +1538,112 @@
 
 </div>
 @endsection
+
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        [data-document-template-form] .ql-toolbar.ql-snow { border-color: #e2e8f0; border-radius: 0.75rem 0.75rem 0 0; }
+        [data-document-template-form] .ql-container.ql-snow { border-color: #e2e8f0; border-radius: 0 0 0.75rem 0.75rem; font-family: inherit; font-size: 0.875rem; }
+        [data-document-template-form] .ql-editor { min-height: 230px; }
+    </style>
+@endpush
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sampleData = {
+                patient_name: 'Bianca Van Komkommer',
+                owner_name: 'Jose Arevalo Salgado',
+                species: 'Equino',
+                breed: 'PRE',
+                color: 'Alazan',
+                sex: 'Hembra',
+                age: '6 anos',
+                document_date: '18/06/2026',
+                vaccination_date: '02/01/2026',
+                vaccine_name: 'Influenza equina',
+                microchip_number: '939000001637122',
+                veterinarian_name: 'Carlos Gorozpe',
+                veterinarian_title: 'MVZ',
+                license_number: '10176347',
+                clinic_name: 'Clinica Veterinaria'
+            };
+
+            document.querySelectorAll('[data-document-template-form]').forEach((form) => {
+                const editorElement = form.querySelector('[data-template-editor]');
+                const contentInput = form.querySelector('[data-template-content]');
+                const preview = form.querySelector('[data-template-preview]');
+                const headerColor = form.querySelector('[data-template-header-color]');
+                const headerColorValue = form.querySelector('[data-template-header-color-value]');
+                const headerPreview = form.querySelector('[data-template-header-preview]');
+                let quill = null;
+
+                const syncHeaderColor = () => {
+                    headerPreview.style.backgroundColor = headerColor.value;
+                    headerColorValue.textContent = headerColor.value.toUpperCase();
+                };
+                headerColor.addEventListener('input', syncHeaderColor);
+                syncHeaderColor();
+
+                const renderPreview = (html, richText = false) => {
+                    const rendered = html.replace(/\{\{([a-z_]+)\}\}/g, (match, key) => sampleData[key] ?? match);
+                    if (richText) {
+                        preview.innerHTML = rendered;
+                        return;
+                    }
+                    preview.textContent = rendered;
+                };
+
+                if (typeof Quill !== 'undefined') {
+                    editorElement.classList.remove('hidden');
+                    contentInput.classList.add('hidden');
+                    quill = new Quill(editorElement, {
+                        theme: 'snow',
+                        placeholder: 'Escribe el texto que aparecera en el documento...',
+                        modules: {
+                            toolbar: [
+                                [{ header: [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline'],
+                                [{ list: 'ordered' }, { list: 'bullet' }],
+                                [{ align: [] }],
+                                ['blockquote', 'link'],
+                                ['clean']
+                            ]
+                        }
+                    });
+
+                    const sync = () => {
+                        contentInput.value = quill.root.innerHTML;
+                        renderPreview(contentInput.value, true);
+                    };
+                    quill.on('text-change', sync);
+                    sync();
+                } else {
+                    renderPreview(contentInput.value);
+                    contentInput.addEventListener('input', () => renderPreview(contentInput.value));
+                }
+
+                form.querySelectorAll('[data-template-variable]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const token = '{' + '{' + button.dataset.templateVariable + '}' + '}';
+                        if (quill) {
+                            const selection = quill.getSelection(true);
+                            quill.insertText(selection.index, token, 'user');
+                            quill.setSelection(selection.index + token.length, 0, 'silent');
+                            return;
+                        }
+
+                        const start = contentInput.selectionStart ?? contentInput.value.length;
+                        contentInput.setRangeText(token, start, contentInput.selectionEnd ?? start, 'end');
+                        contentInput.dispatchEvent(new Event('input'));
+                    });
+                });
+
+                form.addEventListener('submit', () => {
+                    if (quill) contentInput.value = quill.root.innerHTML;
+                });
+            });
+        });
+    </script>
+@endpush

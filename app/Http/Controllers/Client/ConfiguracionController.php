@@ -15,13 +15,19 @@ use App\Models\Animal;
 use App\Models\CatalogItem;
 use App\Models\Club;
 use App\Models\Customer;
+use App\Models\CustomerPortalAccess;
 use App\Models\Plan;
 use App\Models\PriceHistory;
 use App\Models\Tenant;
 use App\Models\TenantPayment;
 use App\Models\TenantSubscription;
+use App\Models\TenantDocumentSetting;
+use App\Models\TenantDocumentTemplate;
 use App\Models\User;
+use App\Models\VeterinarianProfile;
+use App\Services\VeterinarianSignatureOptimizer;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -34,6 +40,8 @@ use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Models\TenantBillingProfile;
 use App\Services\TenantOnboardingService;
+use App\Services\LetterheadImageOptimizer;
+use App\Services\TenantDocumentTemplateService;
 use App\Support\TenantThemePalettes;
 
 class ConfiguracionController extends Controller
@@ -50,14 +58,30 @@ class ConfiguracionController extends Controller
     $tenantId = $user->tenant_id;
     $tenant = $user->tenant()->with('plan')->first();
     $billingProfile = $tenant?->billingProfile;
+    $documentSettings = $tenant?->documentSetting;
+    $documentTemplates = app(TenantDocumentTemplateService::class)->forTenant($tenantId);
     $animalTypes = AnimalType::where('tenant_id', $tenantId)
         ->latest()
         ->get();
 
-    $teamUsers = User::where('tenant_id', $tenantId)
-        ->with('roles')
+    $teamUsers = $this->teamUsersQuery($tenantId)
+        ->with(['roles', 'veterinarianProfile'])
         ->latest()
         ->get();
+
+    $portalAccesses = CustomerPortalAccess::query()
+        ->where('tenant_id', $tenantId)
+        ->whereHas('customer')
+        ->with([
+            'customer' => fn ($query) => $query->withCount('animals'),
+            'user',
+        ])
+        ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
+        ->latest('activated_at')
+        ->get();
+    $activePortalClients = $portalAccesses->where('status', 'active')->count();
+    $professionalProfilesCount = $teamUsers->filter(fn ($teamUser) => $teamUser->veterinarianProfile)->count();
+    $configuredSignaturesCount = $teamUsers->filter(fn ($teamUser) => filled($teamUser->veterinarianProfile?->signature_path))->count();
 
     $activePlans = Plan::query()
         ->where('is_active', true)
@@ -93,6 +117,7 @@ class ConfiguracionController extends Controller
     $roleDescriptions = $this->tenantRoleDescriptions();
     $canManageTeam = $this->isTenantAdmin($user);
     $canManageAppearance = $this->canManageTenantAppearance($user, $tenant);
+    $canManageDocuments = $this->canManageTenantAppearance($user, $tenant);
     $themePalettes = TenantThemePalettes::all();
     $activeThemePalette = TenantThemePalettes::normalize($tenant?->theme_palette);
 
@@ -102,7 +127,13 @@ class ConfiguracionController extends Controller
         'animalTypes',
         'tenant',
         'billingProfile',
+        'documentSettings',
+        'documentTemplates',
         'teamUsers',
+        'portalAccesses',
+        'activePortalClients',
+        'professionalProfilesCount',
+        'configuredSignaturesCount',
         'maxUsers',
         'usersUsed',
         'canInviteUsers',
@@ -110,6 +141,7 @@ class ConfiguracionController extends Controller
         'roleDescriptions',
         'canManageTeam',
         'canManageAppearance',
+        'canManageDocuments',
         'activePlans',
         'subscriptionPayments',
         'pendingPlanRequest',
@@ -324,7 +356,7 @@ public function storeUser(Request $request)
     abort_unless($this->isTenantAdmin(auth()->user()), 403);
 
     $tenant = auth()->user()->tenant()->with('plan')->firstOrFail();
-    $usersUsed = $tenant->users()->count();
+    $usersUsed = $this->teamUsersQuery($tenant->id)->count();
     $maxUsers = $tenant->plan?->max_users;
     $roleOptions = $this->tenantRoleOptions();
 
@@ -397,6 +429,296 @@ public function storeUser(Request $request)
     }
 }
 
+public function updateVeterinarianProfile(
+    Request $request,
+    User $teamUser,
+    VeterinarianSignatureOptimizer $signatureOptimizer
+) {
+    $actor = $request->user();
+    abort_unless($this->isTenantAdmin($actor), 403);
+    abort_unless($teamUser->tenant_id === $actor->tenant_id, 404);
+    abort_unless($this->teamUsersQuery($actor->tenant_id)->whereKey($teamUser->id)->exists(), 404);
+
+    $profile = VeterinarianProfile::firstOrNew([
+        'tenant_id' => $actor->tenant_id,
+        'user_id' => $teamUser->id,
+    ]);
+
+    $data = $request->validate([
+        'professional_name' => ['required', 'string', 'max:255'],
+        'professional_title' => ['required', 'string', 'max:100'],
+        'license_number' => [
+            'required',
+            'string',
+            'max:100',
+            Rule::unique('veterinarian_profiles', 'license_number')
+                ->where(fn ($query) => $query->where('tenant_id', $actor->tenant_id))
+                ->ignore($profile->id),
+        ],
+        'specialty' => ['nullable', 'string', 'max:255'],
+        'professional_phone' => ['nullable', 'string', 'max:50'],
+        'professional_email' => ['nullable', 'email', 'max:255'],
+        'professional_address' => ['nullable', 'string', 'max:1000'],
+        'signature' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        'is_active' => ['nullable', 'boolean'],
+    ]);
+
+    $newSignaturePath = null;
+    $profileSaved = false;
+    $oldSignaturePath = $profile->signature_path;
+    $oldSignatureDisk = $profile->signature_disk;
+
+    try {
+        if ($request->hasFile('signature')) {
+            $newSignaturePath = "tenants/{$actor->tenant_id}/users/{$teamUser->id}/professional/signature-".
+                Str::uuid().'.webp';
+            $contents = $signatureOptimizer->optimize($request->file('signature'));
+            Storage::disk('r2')->put($newSignaturePath, $contents, ['mimetype' => 'image/webp']);
+
+            $data['signature_disk'] = 'r2';
+            $data['signature_path'] = $newSignaturePath;
+        }
+
+        unset($data['signature']);
+        $data['is_active'] = $request->boolean('is_active');
+        $profile->fill($data)->save();
+        $profileSaved = true;
+
+        if ($newSignaturePath && $oldSignaturePath) {
+            try {
+                Storage::disk($oldSignatureDisk ?: 'r2')->delete($oldSignaturePath);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+    } catch (\Throwable $exception) {
+        if ($newSignaturePath && !$profileSaved) {
+            try {
+                Storage::disk('r2')->delete($newSignaturePath);
+            } catch (\Throwable $cleanupException) {
+                report($cleanupException);
+            }
+        }
+
+        report($exception);
+
+        return back()
+            ->withInput()
+            ->with('activeTab', 'usuarios')
+            ->with('professionalProfileUserId', $teamUser->id)
+            ->with('error', 'No se pudo guardar el perfil profesional. Intenta nuevamente.');
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'usuarios')
+        ->with('success', 'Perfil profesional actualizado correctamente.');
+}
+
+public function updateDocumentSettings(
+    Request $request,
+    LetterheadImageOptimizer $letterheadOptimizer
+) {
+    $user = $request->user();
+    $tenant = $user->tenant;
+    abort_unless($tenant && $this->canManageTenantAppearance($user, $tenant), 403);
+
+    $request->validate([
+        'letterhead' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+    ]);
+
+    $settings = TenantDocumentSetting::firstOrNew(['tenant_id' => $tenant->id]);
+    $oldPath = $settings->letterhead_path;
+    $oldDisk = $settings->letterhead_disk;
+    $newPath = "tenants/{$tenant->id}/documents/letterhead-".Str::uuid().'.webp';
+    $stored = false;
+    $settingsSaved = false;
+
+    try {
+        $contents = $letterheadOptimizer->optimize($request->file('letterhead'));
+        Storage::disk('r2')->put($newPath, $contents, ['mimetype' => 'image/webp']);
+        $stored = true;
+
+        $settings->fill([
+            'letterhead_disk' => 'r2',
+            'letterhead_path' => $newPath,
+            'letterhead_original_name' => $request->file('letterhead')->getClientOriginalName(),
+            'letterhead_size' => strlen($contents),
+        ])->save();
+        $settingsSaved = true;
+
+        if ($oldPath) {
+            try {
+                Storage::disk($oldDisk ?: 'r2')->delete($oldPath);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+    } catch (\Throwable $exception) {
+        if ($stored && !$settingsSaved) {
+            try {
+                Storage::disk('r2')->delete($newPath);
+            } catch (\Throwable $cleanupException) {
+                report($cleanupException);
+            }
+        }
+
+        report($exception);
+
+        return back()
+            ->withInput()
+            ->with('activeTab', 'documentos')
+            ->with('error', 'No se pudo guardar el membrete. Intenta nuevamente.');
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'documentos')
+        ->with('success', 'Membrete actualizado correctamente.');
+}
+
+public function letterhead(TenantDocumentSetting $tenantDocumentSetting)
+{
+    abort_unless($tenantDocumentSetting->tenant_id === auth()->user()->tenant_id, 404);
+    abort_unless($tenantDocumentSetting->letterhead_path, 404);
+    abort_unless(Storage::disk($tenantDocumentSetting->letterhead_disk)->exists($tenantDocumentSetting->letterhead_path), 404);
+
+    return redirect()->away(
+        Storage::disk($tenantDocumentSetting->letterhead_disk)
+            ->temporaryUrl($tenantDocumentSetting->letterhead_path, now()->addMinutes(30))
+    );
+}
+
+public function destroyLetterhead(TenantDocumentSetting $tenantDocumentSetting)
+{
+    $user = auth()->user();
+    abort_unless($tenantDocumentSetting->tenant_id === $user->tenant_id, 404);
+    abort_unless($this->canManageTenantAppearance($user, $user->tenant), 403);
+
+    if ($tenantDocumentSetting->letterhead_path) {
+        $disk = $tenantDocumentSetting->letterhead_disk;
+        $path = $tenantDocumentSetting->letterhead_path;
+        $tenantDocumentSetting->update([
+            'letterhead_disk' => null,
+            'letterhead_path' => null,
+            'letterhead_original_name' => null,
+            'letterhead_size' => null,
+        ]);
+
+        try {
+            Storage::disk($disk)->delete($path);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'documentos')
+        ->with('success', 'Membrete eliminado correctamente.');
+}
+
+public function updateDocumentTemplate(
+    Request $request,
+    string $type,
+    TenantDocumentTemplateService $templateService
+) {
+    $user = $request->user();
+    $tenant = $user->tenant;
+    abort_unless($tenant && $this->canManageTenantAppearance($user, $tenant), 403);
+    abort_unless(in_array($type, $templateService->types(), true), 404);
+
+    $data = $request->validate([
+        'body_html' => ['nullable', 'string', 'max:100000'],
+        'header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        'closing_text' => ['nullable', 'string', 'max:2000'],
+        'image_section_title' => ['nullable', 'string', 'max:255'],
+        'document_template_type' => ['required', Rule::in([$type])],
+    ]);
+
+    $bodyHtml = $templateService->sanitizeAndValidate($type, $data['body_html'] ?? '');
+    $closingText = $templateService->validatePlainText($type, $data['closing_text'] ?? '', 'closing_text');
+    $imageSectionTitle = $templateService->validatePlainText($type, $data['image_section_title'] ?? '', 'image_section_title');
+    if ($type !== TenantDocumentTemplateService::CLINICAL_REPORT && trim(strip_tags($bodyHtml)) === '') {
+        throw ValidationException::withMessages([
+            'body_html' => 'Escribe el texto principal de la carta.',
+        ]);
+    }
+
+    TenantDocumentTemplate::updateOrCreate(
+        [
+            'tenant_id' => $tenant->id,
+            'document_type' => $type,
+        ],
+        [
+            'body_html' => $bodyHtml,
+            'header_color' => strtoupper($data['header_color']),
+            'closing_text' => $closingText ?: null,
+            'image_section_title' => $imageSectionTitle ?: null,
+            'updated_by' => $user->id,
+        ]
+    );
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'documentos')
+        ->with('documentTemplateOpen', $type)
+        ->with('success', 'Plantilla actualizada correctamente.');
+}
+
+public function restoreDocumentTemplate(
+    Request $request,
+    string $type,
+    TenantDocumentTemplateService $templateService
+) {
+    $user = $request->user();
+    $tenant = $user->tenant;
+    abort_unless($tenant && $this->canManageTenantAppearance($user, $tenant), 403);
+    abort_unless(in_array($type, $templateService->types(), true), 404);
+
+    TenantDocumentTemplate::query()
+        ->where('tenant_id', $tenant->id)
+        ->where('document_type', $type)
+        ->delete();
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'documentos')
+        ->with('success', 'Plantilla restaurada a su texto predeterminado.');
+}
+
+public function veterinarianSignature(VeterinarianProfile $veterinarianProfile)
+{
+    abort_unless($veterinarianProfile->tenant_id === auth()->user()->tenant_id, 404);
+    abort_unless($veterinarianProfile->signature_path, 404);
+    abort_unless(Storage::disk($veterinarianProfile->signature_disk)->exists($veterinarianProfile->signature_path), 404);
+
+    return redirect()->away(
+        Storage::disk($veterinarianProfile->signature_disk)
+            ->temporaryUrl($veterinarianProfile->signature_path, now()->addMinutes(30))
+    );
+}
+
+public function destroyVeterinarianSignature(VeterinarianProfile $veterinarianProfile)
+{
+    abort_unless($this->isTenantAdmin(auth()->user()), 403);
+    abort_unless($veterinarianProfile->tenant_id === auth()->user()->tenant_id, 404);
+
+    if ($veterinarianProfile->signature_path) {
+        Storage::disk($veterinarianProfile->signature_disk)->delete($veterinarianProfile->signature_path);
+        $veterinarianProfile->update([
+            'signature_disk' => null,
+            'signature_path' => null,
+        ]);
+    }
+
+    return redirect()
+        ->route('client.mi-configuracion.index')
+        ->with('activeTab', 'usuarios')
+        ->with('professionalProfileUserId', $veterinarianProfile->user_id)
+        ->with('success', 'Firma eliminada correctamente.');
+}
+
 private function tenantRoleOptions(): array
 {
     return [
@@ -404,6 +726,16 @@ private function tenantRoleOptions(): array
         'asistente' => 'Asistente',
         'cajero' => 'Cajero',
     ];
+}
+
+private function teamUsersQuery(int $tenantId): Builder
+{
+    return User::query()
+        ->where('tenant_id', $tenantId)
+        ->where(function ($query) {
+            $query->whereDoesntHave('roles')
+                ->orWhereHas('roles', fn ($roleQuery) => $roleQuery->where('name', '!=', 'customer'));
+        });
 }
 
 private function tenantRoleDescriptions(): array

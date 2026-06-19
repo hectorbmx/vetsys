@@ -6,11 +6,12 @@
     <style>
         @page { margin: 45px 50px 55px; }
         body { color: #1f2937; font-family: DejaVu Sans, sans-serif; font-size: 10.5px; line-height: 1.45; }
-        .header { border-bottom: 3px solid #111827; padding-bottom: 16px; margin-bottom: 22px; }
-        .brand { display: inline-block; vertical-align: middle; width: 62%; }
-        .brand img { max-height: 55px; max-width: 155px; vertical-align: middle; }
-        .brand-name { display: inline-block; margin-left: 12px; font-size: 17px; font-weight: bold; vertical-align: middle; }
-        .place { display: inline-block; width: 37%; text-align: right; color: #6b7280; vertical-align: middle; }
+        .document-header { height: 3cm; margin: 0 -50px 24px; position: relative; }
+        .letterhead { bottom: 0; left: 50px; position: absolute; right: 50px; top: 0; z-index: 2; }
+        .letterhead img { max-height: 2.5cm; max-width: 68%; position: absolute; top: 0.25cm; }
+        .fallback-brand { color: #fff; font-size: 17px; font-weight: bold; padding-top: 1cm; }
+        .document-title { bottom: 0.35cm; color: #fff; font-size: 14px; font-weight: bold; position: absolute; right: 50px; text-align: right; z-index: 3; }
+        .date-line { color: #6b7280; margin-bottom: 26px; text-align: right; }
         h1 { color: #0f766e; font-size: 19px; margin: 0 0 8px; }
         .meta { width: 100%; margin-bottom: 22px; border-collapse: collapse; }
         .meta td { padding: 5px 8px 5px 0; vertical-align: top; }
@@ -25,21 +26,27 @@
         .image { page-break-inside: avoid; margin-top: 16px; text-align: center; }
         .image img { max-height: 470px; max-width: 100%; }
         .caption { color: #64748b; font-size: 9px; margin-top: 5px; }
+        .signature { margin-top: 30px; page-break-inside: avoid; width: 260px; }
+        .signature img { display: block; max-height: 85px; max-width: 180px; }
+        .signature-name { font-weight: bold; margin-top: 4px; }
         .footer { bottom: -35px; color: #64748b; font-size: 8.5px; left: 0; position: fixed; right: 0; text-align: center; }
     </style>
 </head>
 <body>
     <div class="footer">Reporte clinico generado por {{ $report->tenant->name }} &middot; Documento finalizado el {{ $finalizedAt->format('d/m/Y H:i') }}</div>
 
-    <header class="header">
-        <div class="brand">
-            @if($logoDataUri)<img src="{{ $logoDataUri }}" alt="Logo">@endif
-            <span class="brand-name">{{ $report->tenant->business_name ?: $report->tenant->name }}</span>
+    <header class="document-header" style="background-color: {{ $documentPresentation['header_color'] }}">
+        <div class="letterhead">
+            @if($documentPresentation['letterhead_data_uri'])
+                <img src="{{ $documentPresentation['letterhead_data_uri'] }}" alt="Membrete">
+            @else
+                <div class="fallback-brand">{{ $documentPresentation['values']['clinic_name'] }}</div>
+            @endif
         </div>
-        <div class="place">{{ now()->translatedFormat('F Y') }}</div>
+        <div class="document-title">{{ $report->title }}</div>
     </header>
+    <div class="date-line">{{ $report->report_date->translatedFormat('F Y') }}</div>
 
-    <h1>{{ $report->title }}</h1>
     <table class="meta">
         <tr>
             <td><span class="label">Paciente:</span> {{ $report->animal->name }}</td>
@@ -54,10 +61,13 @@
         </tr>
     </table>
 
+    @if($documentPresentation['body_html'])
+        <section class="content">{!! $documentPresentation['body_html'] !!}</section>
+    @endif
     <section class="content">{!! $report->content_html !!}</section>
 
     @if($imageData->isNotEmpty())
-        <div class="images-title">Imagenes de referencia significativas</div>
+        <div class="images-title">{{ $documentPresentation['image_section_title'] }}</div>
         @foreach($imageData as $image)
             <div class="image">
                 <img src="{{ $image['data_uri'] }}" alt="Imagen clinica">
@@ -65,5 +75,18 @@
             </div>
         @endforeach
     @endif
+
+    <div class="signature">
+        @if($documentPresentation['closing_text'])
+            <div>{{ $documentPresentation['closing_text'] }}</div>
+        @endif
+        @if($documentPresentation['signature_data_uri'])
+            <img src="{{ $documentPresentation['signature_data_uri'] }}" alt="Firma">
+        @endif
+        <div class="signature-name">{{ $documentPresentation['values']['veterinarian_title'] }} {{ $documentPresentation['values']['veterinarian_name'] }}</div>
+        @if($documentPresentation['values']['license_number'])
+            <div>Cedula: {{ $documentPresentation['values']['license_number'] }}</div>
+        @endif
+    </div>
 </body>
 </html>

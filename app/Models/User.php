@@ -78,6 +78,11 @@ class User extends Authenticatable
         return $this->hasMany(UserAccessSession::class);
     }
 
+    public function veterinarianProfile()
+    {
+        return $this->hasOne(VeterinarianProfile::class);
+    }
+
     public function customerLinks()
     {
         return $this->hasMany(CustomerUserLink::class);

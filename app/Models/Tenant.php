@@ -80,6 +80,16 @@ class Tenant extends Model
         return $this->hasMany(User::class);
     }
 
+    public function documentSetting()
+    {
+        return $this->hasOne(TenantDocumentSetting::class);
+    }
+
+    public function documentTemplates()
+    {
+        return $this->hasMany(TenantDocumentTemplate::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

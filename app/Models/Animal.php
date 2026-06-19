@@ -27,6 +27,10 @@ class Animal extends Model
         'microchip',
         'microchip_image_path',
         'microchip_print_token',
+        'microchip_issued_by',
+        'microchip_pdf_disk',
+        'microchip_pdf_path',
+        'microchip_finalized_at',
         'status',
         'notes',
     ];
@@ -35,6 +39,7 @@ class Animal extends Model
         'birthdate' => 'date',
         'weight' => 'decimal:2',
         'synced_from_mobile' => 'boolean',
+        'microchip_finalized_at' => 'datetime',
     ];
 
     public function tenant()
@@ -85,6 +90,11 @@ public function radiologyStudies()
 public function reports()
 {
     return $this->hasMany(AnimalReport::class);
+}
+
+public function microchipIssuer()
+{
+    return $this->belongsTo(User::class, 'microchip_issued_by');
 }
 
 public function shares()

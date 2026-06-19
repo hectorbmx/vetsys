@@ -6,8 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\VaccinationLetter;
 use App\Services\PortalNotificationService;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Carbon;
+use App\Services\VaccinationLetterPdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,52 +20,32 @@ class VaccinationLetterController extends Controller
         return response()->file($this->publicStorageFilePath($vaccinationLetter->image_path));
     }
 
-    public function print(VaccinationLetter $vaccinationLetter)
+    public function print(VaccinationLetter $vaccinationLetter, VaccinationLetterPdfService $pdfService)
     {
         $tenantId = auth()->user()->tenant_id;
 
         abort_unless($vaccinationLetter->tenant_id === $tenantId, 404);
 
-        return $this->renderPdf($vaccinationLetter);
+        return redirect()->away($pdfService->temporaryUrl($vaccinationLetter));
     }
 
-    public function signedPrint(Request $request, VaccinationLetter $vaccinationLetter)
+    public function signedPrint(Request $request, VaccinationLetter $vaccinationLetter, VaccinationLetterPdfService $pdfService)
     {
         abort_unless($request->hasValidSignature() || $request->hasValidRelativeSignature(), 403);
 
-        return $this->renderPdf($vaccinationLetter);
+        return redirect()->away($pdfService->temporaryUrl($vaccinationLetter));
     }
 
-    private function renderPdf(VaccinationLetter $vaccinationLetter)
+    public function publicPrint(string $token, VaccinationLetterPdfService $pdfService)
     {
-        $vaccinationLetter->load(['tenant', 'animal.customer', 'animal.animalType']);
-        abort_unless($this->publicStorageFileExists($vaccinationLetter->image_path), 404);
+        $vaccinationLetter = VaccinationLetter::query()
+            ->where('public_token', $token)
+            ->firstOrFail();
 
-        $imageDataUri = $this->storageImageAsDataUri($vaccinationLetter->image_path);
-        $tenantLogoDataUri = $vaccinationLetter->tenant->logo
-            ? $this->storageImageAsDataUri($vaccinationLetter->tenant->logo)
-            : null;
-
-        $pdf = Pdf::loadView('client.animals.vaccination-letter-pdf', [
-            'letter' => $vaccinationLetter,
-            'animal' => $vaccinationLetter->animal,
-            'customer' => $vaccinationLetter->animal->customer,
-            'tenant' => $vaccinationLetter->tenant,
-            'imageDataUri' => $imageDataUri,
-            'tenantLogoDataUri' => $tenantLogoDataUri,
-            'generatedDate' => Carbon::now()->format('Y-m-d'),
-        ])
-            ->setPaper('letter', 'portrait')
-            ->setOption('defaultFont', 'DejaVu Sans')
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('isRemoteEnabled', true);
-
-        $filename = 'carta-vacunacion-' . str($vaccinationLetter->animal->name)->slug() . '-' . $vaccinationLetter->date->format('Ymd') . '.pdf';
-
-        return $pdf->stream($filename);
+        return redirect()->away($pdfService->temporaryUrl($vaccinationLetter));
     }
 
-    public function store(Request $request, Animal $animal)
+    public function store(Request $request, Animal $animal, VaccinationLetterPdfService $pdfService)
     {
         $tenantId = auth()->user()->tenant_id;
 
@@ -74,6 +53,7 @@ class VaccinationLetterController extends Controller
 
         $data = $request->validate([
             'date' => ['required', 'date'],
+            'vaccine_name' => ['required', 'string', 'max:255'],
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
@@ -88,6 +68,9 @@ class VaccinationLetterController extends Controller
 
             foreach ($lettersToDelete as $letter) {
                 Storage::disk('public')->delete($letter->image_path);
+                if ($letter->pdf_path) {
+                    Storage::disk($letter->pdf_disk ?: 'r2')->delete($letter->pdf_path);
+                }
                 $letter->delete();
             }
         }
@@ -102,25 +85,26 @@ class VaccinationLetterController extends Controller
             'animal_id' => $animal->id,
             'image_path' => $path,
             'date' => $data['date'],
+            'vaccine_name' => $data['vaccine_name'],
+            'published_by' => auth()->id(),
         ]);
+
+        try {
+            $pdfService->finalize($letter);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('client.animals.edit', $animal)
+                ->with('animalTab', 'vacunacion')
+                ->with('error', 'La carta quedo guardada, pero no se pudo generar el PDF. Podras intentarlo al abrirla.');
+        }
 
         app(PortalNotificationService::class)->vaccinationLetterPublished($letter);
 
         return redirect()
             ->route('client.animals.edit', $animal)
             ->with('success', 'Carta de vacunacion guardada correctamente.');
-    }
-
-    private function storageImageAsDataUri(?string $path): ?string
-    {
-        if (!$path || !$this->publicStorageFileExists($path)) {
-            return null;
-        }
-
-        $fullPath = $this->publicStorageFilePath($path);
-        $mime = mime_content_type($fullPath) ?: 'image/jpeg';
-
-        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
     }
 
     private function publicStorageFileExists(?string $path): bool
