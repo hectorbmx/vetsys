@@ -104,6 +104,7 @@ class VaccinationLetterController extends Controller
 
         return redirect()
             ->route('client.animals.edit', $animal)
+            ->with('animalTab', 'vacunacion')
             ->with('success', 'Carta de vacunacion guardada correctamente.');
     }
 

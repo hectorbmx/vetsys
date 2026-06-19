@@ -8,6 +8,8 @@
     tab: @js(session('animalTab', old('intent') ? 'reportes' : 'datos')),
     loading: false,
     microchipUploading: false,
+    vaccinationFormOpen: @js($errors->has('date') || $errors->has('vaccine_name') || $errors->has('image')),
+    vaccinationSaving: false,
     reportFormOpen: @js((bool) old('intent')),
     reportSaving: false,
     videoUploading: false,
@@ -106,6 +108,16 @@
             </div>
             <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Procesando video</p>
             <p class="mt-2 text-xs font-semibold text-slate-500">Optimizando y guardando el archivo. Esto puede tardar unos minutos.</p>
+        </div>
+    </div>
+
+    <div x-show="vaccinationSaving" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="vaccination-saving-title">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full theme-bg-primary-soft">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            </div>
+            <p id="vaccination-saving-title" class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando carta</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Subiendo la imagen, registrando la vacuna y generando el PDF.</p>
         </div>
     </div>
 
@@ -381,6 +393,128 @@
         </div>
 
         <div x-show="tab === 'vacunacion'" class="p-6 space-y-6" x-cloak>
+            <div class="overflow-hidden border border-slate-200 rounded-2xl bg-white">
+                <div class="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm font-black theme-text-heading">Cartas de vacunacion</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-1">Solo se conservan 2 cartas. Al subir una tercera se reemplaza la segunda.</p>
+                    </div>
+
+                    <button type="button" @click="vaccinationFormOpen = true" class="inline-flex h-10 w-10 items-center justify-center rounded-xl theme-button-primary text-lg font-black transition-all" title="Agregar carta">
+                        +
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="w-20 px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Ver</th>
+                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Carta</th>
+                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
+                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vacuna</th>
+                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse($animal->vaccinationLetters as $letter)
+                                <tr class="hover:bg-slate-50/70 transition-colors" x-data="{ copied: false }">
+                                    <td class="px-4 py-3 text-center">
+                                        <a href="{{ route('client.vaccination-letters.show', $letter) }}" target="_blank" rel="noopener" class="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 transition-all hover:ring-slate-300" title="Ver imagen">
+                                            <img src="{{ route('client.vaccination-letters.show', $letter) }}" alt="Carta de vacunacion {{ $loop->iteration }}" class="h-full w-full object-cover">
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <p class="text-xs font-black theme-text-heading">Carta {{ $loop->iteration }}</p>
+                                        <p class="text-[11px] font-semibold text-slate-400 mt-0.5">{{ optional($letter->created_at)->format('d/m/Y H:i') }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <p class="text-xs font-black theme-text-heading">{{ $letter->date->format('d/m/Y') }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 min-w-[220px]">
+                                        <p class="text-xs font-semibold text-slate-600">{{ $letter->vaccine_name }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button type="button"
+                                                    @click="navigator.clipboard.writeText(@js(route('public.vaccination-letters.share', $letter->public_token))); copied = true; setTimeout(() => copied = false, 2000)"
+                                                    :class="copied ? 'bg-emerald-500 text-white' : 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white'"
+                                                    class="flex items-center gap-1.5 rounded-xl p-2 text-[9px] font-black uppercase tracking-widest shadow-sm transition-all">
+                                                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                                <span x-text="copied ? 'Copiado' : 'Compartir'"></span>
+                                            </button>
+                                            <a href="{{ route('client.vaccination-letters.print', $letter) }}" target="_blank" rel="noopener" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-200">
+                                                Imprimir
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-12 text-center">
+                                        <p class="text-sm font-black theme-text-heading">Sin cartas de vacunacion</p>
+                                        <p class="text-xs font-semibold text-slate-400 mt-2">Sube la primera imagen para este paciente.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div x-show="vaccinationFormOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm" @keydown.escape.window="if (!vaccinationSaving) vaccinationFormOpen = false">
+                <div @click.outside="if (!vaccinationSaving) vaccinationFormOpen = false" class="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                        <div>
+                            <p class="text-sm font-black theme-text-heading">Nueva carta</p>
+                            <p class="text-[11px] text-slate-400 font-semibold mt-1">Agrega fecha, vacuna e imagen del documento.</p>
+                        </div>
+                        <button type="button" @click="vaccinationFormOpen = false" :disabled="vaccinationSaving" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200 disabled:opacity-50">
+                            x
+                        </button>
+                    </div>
+
+                    <form action="{{ route('client.animals.vaccination-letters.store', $animal) }}" method="POST" enctype="multipart/form-data" @submit="vaccinationSaving = true; vaccinationFormOpen = false" class="space-y-4 p-5">
+                        @csrf
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Fecha *</label>
+                            <input type="date" name="date" value="{{ old('date') }}" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
+                            @error('date')
+                                <p class="text-[11px] font-semibold text-rose-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Vacuna *</label>
+                            <input type="text" name="vaccine_name" value="{{ old('vaccine_name') }}" required maxlength="255" placeholder="Ej. Influenza equina" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
+                            @error('vaccine_name')
+                                <p class="text-[11px] font-semibold text-rose-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Imagen *</label>
+                            <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required class="block w-full text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white">
+                            <p class="text-[10px] text-slate-400 font-semibold">Formatos: JPG, PNG o WEBP. Maximo 5 MB.</p>
+                            @error('image')
+                                <p class="text-[11px] font-semibold text-rose-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" @click="vaccinationFormOpen = false" :disabled="vaccinationSaving" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-200 disabled:opacity-50">Cancelar</button>
+                            <button type="submit" :disabled="vaccinationSaving" class="theme-button-primary px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-60">
+                                Guardar carta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- Legacy vaccination card layout replaced by the table/modal view above.
+        <div x-show="false && tab === 'vacunacion'" class="p-6 space-y-6" x-cloak>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <form action="{{ route('client.animals.vaccination-letters.store', $animal) }}" method="POST" enctype="multipart/form-data" class="lg:col-span-1 border border-slate-200 rounded-2xl p-5 space-y-4 bg-slate-50/40">
                     @csrf
@@ -447,6 +581,8 @@
                 </div>
             </div>
         </div>
+
+        --}}
 
         <div x-show="tab === 'videos'" class="p-6 space-y-6" x-cloak>
             <div class="overflow-hidden border border-slate-200 rounded-2xl bg-white">
