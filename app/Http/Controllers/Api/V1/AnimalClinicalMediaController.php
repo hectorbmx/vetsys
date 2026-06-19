@@ -48,9 +48,12 @@ class AnimalClinicalMediaController extends Controller
             ->oldest('id')
             ->get();
 
-        foreach ($existingLetters->slice(1) as $letter) {
-            Storage::disk('public')->delete($letter->image_path);
-            $letter->delete();
+        if ($existingLetters->count() >= 2) {
+            $toDelete = $existingLetters->slice(0, $existingLetters->count() - 1);
+            foreach ($toDelete as $letter) {
+                Storage::disk('public')->delete($letter->image_path);
+                $letter->delete();
+            }
         }
 
         $path = $request->file('image')->store(

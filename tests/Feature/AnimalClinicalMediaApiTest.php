@@ -83,6 +83,38 @@ class AnimalClinicalMediaApiTest extends TestCase
         Storage::disk('r2')->assertExists($animal->microchip_pdf_path);
     }
 
+    public function test_mobile_vaccination_upload_retains_at_most_two_latest(): void
+    {
+        Storage::fake('public');
+        [$animal, $user] = $this->animalForTenant('vaccination');
+        $this->withoutMiddleware([EnsureValidMobileAccessSession::class, EnsureApiTenantAccess::class]);
+        Sanctum::actingAs($user);
+
+        $this->post('/api/v1/animals/'.$animal->id.'/vaccination-letters', [
+            'date' => '2026-06-01',
+            'image' => UploadedFile::fake()->image('letter1.png', 800, 600),
+        ])->assertCreated();
+
+        $this->post('/api/v1/animals/'.$animal->id.'/vaccination-letters', [
+            'date' => '2026-06-02',
+            'image' => UploadedFile::fake()->image('letter2.png', 800, 600),
+        ])->assertCreated();
+
+        $this->assertEquals(2, $animal->vaccinationLetters()->count());
+
+        $this->post('/api/v1/animals/'.$animal->id.'/vaccination-letters', [
+            'date' => '2026-06-03',
+            'image' => UploadedFile::fake()->image('letter3.png', 800, 600),
+        ])->assertCreated();
+
+        $this->assertEquals(2, $animal->vaccinationLetters()->count());
+
+        $remainingDates = $animal->vaccinationLetters()->pluck('date')->map->toDateString()->toArray();
+        $this->assertNotContains('2026-06-01', $remainingDates);
+        $this->assertContains('2026-06-02', $remainingDates);
+        $this->assertContains('2026-06-03', $remainingDates);
+    }
+
     private function animalForTenant(string $suffix): array
     {
         $tenant = Tenant::create([
