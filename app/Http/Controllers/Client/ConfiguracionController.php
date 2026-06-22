@@ -42,6 +42,7 @@ use App\Models\TenantBillingProfile;
 use App\Services\TenantOnboardingService;
 use App\Services\LetterheadImageOptimizer;
 use App\Services\TenantDocumentTemplateService;
+use App\Services\AppointmentConfigurationService;
 use App\Support\TenantThemePalettes;
 
 class ConfiguracionController extends Controller
@@ -49,7 +50,7 @@ class ConfiguracionController extends Controller
     /**
      * Display a listing of the resource.
      */
- public function index()
+ public function index(AppointmentConfigurationService $appointmentConfigurationService)
 {
     // TEMPORAL: Pon esto al inicio para validar si Laravel ya entra aquí
     // dd("¡ESTOY AQUÍ!");
@@ -120,10 +121,11 @@ class ConfiguracionController extends Controller
     $canManageDocuments = $this->canManageTenantAppearance($user, $tenant);
     $themePalettes = TenantThemePalettes::all();
     $activeThemePalette = TenantThemePalettes::normalize($tenant?->theme_palette);
+    $appointmentConfiguration = $appointmentConfigurationService->viewData($tenant, $user);
 
     $this->ensureTenantRolesExist();
 
-    return view('client.mi-configuracion.index', compact(
+    return view('client.mi-configuracion.index', array_merge(compact(
         'animalTypes',
         'tenant',
         'billingProfile',
@@ -148,7 +150,7 @@ class ConfiguracionController extends Controller
         'pendingPlanPayment',
         'themePalettes',
         'activeThemePalette'
-    ));
+    ), $appointmentConfiguration));
 }
 
 public function updateThemePalette(Request $request)

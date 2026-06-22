@@ -133,6 +133,11 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             📱 Clientes en app
         </button>
+        <button @click="currentTab = 'agenda'"
+                :class="currentTab === 'agenda' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            Agenda
+        </button>
         <button @click="currentTab = 'bancos'" 
                 :class="currentTab === 'bancos' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
@@ -933,6 +938,7 @@
             @endif
         </div>
     </div>
+    @include('client.mi-configuracion.appointments')
     @include('client.mi-configuracion.payment-methods.index')
 
     {{-- TAB 5: PLAN Y PAGOS --}}

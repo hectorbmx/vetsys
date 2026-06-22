@@ -38,6 +38,11 @@ class VeterinarianProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_user_id', 'user_id');
+    }
+
     public function isComplete(): bool
     {
         return filled($this->professional_name)

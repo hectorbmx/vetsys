@@ -116,4 +116,9 @@ public function portalNotifications()
 {
     return $this->hasMany(PortalNotification::class);
 }
+
+public function appointments()
+{
+    return $this->hasMany(Appointment::class);
+}
 }

@@ -9,6 +9,7 @@ use App\Models\UserAccessSession;
 use App\Services\Auth\UserAccessSessionManager;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class UserAccessSessionManagerTest extends TestCase
@@ -28,6 +29,18 @@ class UserAccessSessionManagerTest extends TestCase
 
         $this->assertTrue($manager->planAllows($user, 'web'));
         $this->assertFalse($manager->planAllows($user, 'mobile'));
+    }
+
+    public function test_customer_cannot_use_web_even_when_the_plan_allows_it(): void
+    {
+        $user = $this->tenantUser([
+            'web_access' => true,
+            'max_web_sessions_per_user' => 1,
+        ]);
+        $customerRole = Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web']);
+        $user->assignRole($customerRole);
+
+        $this->assertFalse(app(UserAccessSessionManager::class)->planAllows($user, 'web'));
     }
 
     public function test_new_mobile_login_revokes_previous_mobile_token(): void

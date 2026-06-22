@@ -12,13 +12,18 @@ class CatalogItem extends Model
 
     protected $fillable = [
         'tenant_id', 'name', 'sku', 'type', 'description', 
-        'tax_percentage', 'has_inventory', 'is_active'
+        'tax_percentage', 'has_inventory', 'is_active', 'is_bookable',
+        'appointment_duration_minutes', 'appointment_buffer_minutes',
+        'booking_description'
     ];
 
     protected $casts = [
         'tax_percentage' => 'decimal:2',
         'has_inventory' => 'boolean',
         'is_active' => 'boolean',
+        'is_bookable' => 'boolean',
+        'appointment_duration_minutes' => 'integer',
+        'appointment_buffer_minutes' => 'integer',
     ];
 
     // Relación con el Tenant
@@ -31,6 +36,13 @@ class CatalogItem extends Model
     public function inventory() { return $this->hasOne(Inventory::class); }
 
     public function inventoryMovements() { return $this->hasMany(InventoryMovement::class); }
+
+    public function appointments() { return $this->hasMany(Appointment::class); }
+
+    public function appointmentSettingsForLateFee()
+    {
+        return $this->hasMany(AppointmentSetting::class, 'late_fee_catalog_item_id');
+    }
 
     protected static function booted()
     {

@@ -108,6 +108,46 @@ class User extends Authenticatable
         return $this->hasMany(PortalNotification::class);
     }
 
+    public function appointmentSetting()
+    {
+        return $this->hasOne(AppointmentSetting::class, 'doctor_user_id');
+    }
+
+    public function doctorSchedules()
+    {
+        return $this->hasMany(DoctorSchedule::class, 'doctor_user_id');
+    }
+
+    public function scheduleBlocks()
+    {
+        return $this->hasMany(ScheduleBlock::class, 'doctor_user_id');
+    }
+
+    public function appointmentsAsDoctor()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_user_id');
+    }
+
+    public function appointmentProposals()
+    {
+        return $this->hasMany(AppointmentProposal::class, 'proposed_by_user_id');
+    }
+
+    public function appointmentEvents()
+    {
+        return $this->hasMany(AppointmentEvent::class, 'actor_user_id');
+    }
+
+    public function pushDevices()
+    {
+        return $this->hasMany(PushDevice::class);
+    }
+
+    public function appointmentNotificationDeliveries()
+    {
+        return $this->hasMany(AppointmentNotificationDelivery::class, 'recipient_user_id');
+    }
+
     public static function activationCodeHash(string $code): string
     {
         return hash('sha256', 'activation-code:'.$code);

@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use App\Services\TenantAppointmentAccessService;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,20 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::define('manage-appointment-configuration', function (User $user) {
+            return $user->tenant_id && $user->hasAnyRole(['client-admin', 'admin']);
+        });
+
+        Gate::define('view-appointments', function (User $user) {
+            $tenant = $user->tenant;
+
+            return $tenant && app(TenantAppointmentAccessService::class)->allows($tenant, $user);
+        });
+
+        Gate::define('operate-appointments', function (User $user) {
+            $tenant = $user->tenant;
+
+            return $tenant && app(TenantAppointmentAccessService::class)->allows($tenant, $user);
+        });
     }
 }

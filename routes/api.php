@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\AnimalController;
 use App\Http\Controllers\Api\V1\AnimalClinicalMediaController;
+use App\Http\Controllers\Api\V1\AnimalController;
 use App\Http\Controllers\Api\V1\AnimalTypeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogItemController;
 use App\Http\Controllers\Api\V1\ClubController;
+use App\Http\Controllers\Api\V1\CustomerAppointmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerPortalController;
 use App\Http\Controllers\Api\V1\MobileBootstrapController;
@@ -14,7 +14,10 @@ use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PaymentMethodController;
+use App\Http\Controllers\Api\V1\PushDeviceController;
 use App\Http\Controllers\Api\V1\SyncController;
+use App\Http\Controllers\Api\V1\TenantAppointmentController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +37,10 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'access.mobile', 'api.tenant'])->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::post('/push-devices', [PushDeviceController::class, 'store'])
+            ->middleware('throttle:20,1');
+        Route::delete('/push-devices/{pushDevice}', [PushDeviceController::class, 'destroy'])
+            ->middleware('throttle:20,1');
 
         Route::middleware('customer.portal')
             ->prefix('portal')
@@ -55,6 +62,48 @@ Route::prefix('v1')->group(function () {
                 Route::get('/patients/{patient}/vaccines', [CustomerPortalController::class, 'patientVaccines']);
                 Route::get('/vaccination-letters/{vaccinationLetter}/pdf', [CustomerPortalController::class, 'vaccinationLetterPdf']);
                 Route::get('/patients/{patient}', [CustomerPortalController::class, 'patient']);
+
+                Route::prefix('appointments')->name('appointments.')->group(function () {
+                    Route::get('/bootstrap', [CustomerAppointmentController::class, 'bootstrap'])->name('bootstrap');
+                    Route::get('/services', [CustomerAppointmentController::class, 'services'])->name('services');
+                    Route::get('/availability', [CustomerAppointmentController::class, 'availability'])
+                        ->name('availability')
+                        ->middleware('throttle:appointment-availability');
+                    Route::get('/', [CustomerAppointmentController::class, 'index'])->name('index');
+                    Route::post('/', [CustomerAppointmentController::class, 'store'])
+                        ->name('store')
+                        ->middleware('throttle:appointment-write');
+                    Route::get('/{appointment}', [CustomerAppointmentController::class, 'show'])->name('show');
+                    Route::post('/{appointment}/proposals/{proposal}/accept', [CustomerAppointmentController::class, 'acceptProposal'])
+                        ->name('proposals.accept')
+                        ->middleware('throttle:appointment-write');
+                    Route::post('/{appointment}/proposals/{proposal}/reject', [CustomerAppointmentController::class, 'rejectProposal'])
+                        ->name('proposals.reject')
+                        ->middleware('throttle:appointment-write');
+                    Route::post('/{appointment}/cancel', [CustomerAppointmentController::class, 'cancel'])
+                        ->name('cancel')
+                        ->middleware('throttle:appointment-write');
+                });
+            });
+
+        Route::prefix('appointments')
+            ->name('api.v1.appointments.')
+            ->middleware('throttle:tenant-appointment-read')
+            ->group(function () {
+                Route::get('/bootstrap', [TenantAppointmentController::class, 'bootstrap'])->name('bootstrap');
+                Route::get('/availability', [TenantAppointmentController::class, 'availability'])->name('availability');
+                Route::get('/', [TenantAppointmentController::class, 'index'])->name('index');
+                Route::get('/{appointment}', [TenantAppointmentController::class, 'show'])->name('show');
+
+                Route::middleware('throttle:tenant-appointment-write')->group(function () {
+                    Route::post('/manual', [TenantAppointmentController::class, 'storeManual'])->name('manual.store');
+                    Route::post('/{appointment}/confirm', [TenantAppointmentController::class, 'confirm'])->name('confirm');
+                    Route::post('/{appointment}/reject', [TenantAppointmentController::class, 'reject'])->name('reject');
+                    Route::post('/{appointment}/proposals', [TenantAppointmentController::class, 'propose'])->name('proposals.store');
+                    Route::post('/{appointment}/cancel', [TenantAppointmentController::class, 'cancel'])->name('cancel');
+                    Route::post('/{appointment}/complete', [TenantAppointmentController::class, 'complete'])->name('complete');
+                    Route::post('/{appointment}/no-show', [TenantAppointmentController::class, 'noShow'])->name('no-show');
+                });
             });
 
         Route::get('/mobile/bootstrap', MobileBootstrapController::class);

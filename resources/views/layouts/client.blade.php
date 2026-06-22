@@ -96,17 +96,26 @@
                         // ['route' => 'client.facturacion.index', 'icon' => '🛒', 'label' => 'Facturación'],
                         // Agrega tus futuras opciones aquí manteniendo la misma estructura
                     ];
+
+                    if (auth()->user()->can('view-appointments')) {
+                        array_splice($links, 3, 0, [[
+                            'route' => 'client.agenda.index',
+                            'active' => 'client.agenda.*',
+                            'icon' => '📅',
+                            'label' => 'Agenda',
+                        ]]);
+                    }
                 @endphp
 
             @foreach($links as $link)
                 <a href="{{ route($link['route']) }}"
                    class="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                   {{ request()->routeIs($link['route'])
+                   {{ request()->routeIs($link['active'] ?? $link['route'])
                        ? 'theme-nav-active'
                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
                    }}">
                     
-                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ request()->routeIs($link['route']) ? 'theme-text-primary' : 'text-slate-400 group-hover:text-white' }}">
+                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ request()->routeIs($link['active'] ?? $link['route']) ? 'theme-text-primary' : 'text-slate-400 group-hover:text-white' }}">
                         {{ $link['icon'] }}
                     </span>
 
