@@ -5,8 +5,8 @@ Ultima actualizacion: 2026-06-21
 ## Estado general
 
 - Roadmap principal: `docs/appointment-scheduling-roadmap.md`.
-- Ultimo paso trabajado: Paso 10.4, correos de Agenda en queue.
-- Siguiente paso: Paso 10.5, Firebase Cloud Messaging backend para Android.
+- Ultimo paso trabajado: Paso 10.6, integracion push compartida en Ionic.
+- Siguiente paso: Paso 10.7, configuracion Firebase/APNs y QA en dispositivo.
 
 ## Ajuste de UI: anticipacion y cancelacion en horas (post Paso 3)
 
@@ -1729,15 +1729,16 @@ Verificacion:
   exclusion de asistente, HTML seguro, acceso revocado, fallo SMTP sanitizado,
   reintento exitoso y deduplicacion.
 
-#### Paso 10.5: Firebase Cloud Messaging en Laravel
+#### Paso 10.5: Firebase Cloud Messaging en Laravel (completado)
 
 Objetivo: entregar push Android/iOS mediante FCM HTTP v1.
 
-Cambios previstos:
+Cambios ejecutados el 2026-06-21:
 
-- Instalar/configurar SDK compatible y crear `config/firebase.php`.
-- Variables previstas: `FCM_ENABLED`, `FCM_PROJECT_ID` y ruta segura de
-  credenciales; el JSON nunca se versiona.
+- Se instalo `kreait/laravel-firebase:5.10.0`, compatible con PHP 8.2 y
+  Laravel 10. El paquete aporta su configuracion Firebase.
+- Se agrego `config/appointment_push.php`, `FCM_ENABLED=false`,
+  `FIREBASE_PROJECT=app` y `FIREBASE_CREDENTIALS=` a `.env.example`.
 - Servicio proveedor desacoplado (`PushGateway`) y Job por dispositivo.
 - Payload `notification` con titulo/cuerpo y `data` solo string:
   `notification_id`, `appointment_id`, `audience`, `route`, `event_type`.
@@ -1745,7 +1746,7 @@ Cambios previstos:
 - Token no registrado/invalido marca dispositivo revocado. Error temporal se
   reintenta con backoff; error permanente no entra en ciclo infinito.
 - Modo `FCM_ENABLED=false` para desarrollo/tests sin red.
-- Pruebas unitarias con gateway fake y pruebas de clasificacion de errores.
+- Se agregaron pruebas con gateway fake y clasificacion de errores.
 
 Prerequisitos externos:
 
@@ -1863,13 +1864,10 @@ Ionic actual:
 - Correo de Agenda ya usa queue, reintentos, deduplicacion y matriz oficial.
 - Deep links por `appointment_id` ya navegan a detalle tenant/customer en Ionic.
 
-Todavia NO existe:
-
-- SDK/credenciales/configuracion Firebase en Laravel;
-- `PushGateway` ni Job FCM;
-- entregas de canal `push`;
-- plugin `@capacitor/push-notifications` en Ionic;
-- listeners de registro, foreground, tap o error en Ionic.
+Al cierre de los Pasos 10.5 y 10.6 ya existen SDK/configuracion deshabilitable
+en Laravel, `PushGateway`, Job FCM, entregas `push`, plugin Capacitor y listeners
+Ionic. Permanecen pendientes las credenciales reales, el token FCM de iOS y QA
+en dispositivos.
 
 ### Estado nativo iOS confirmado
 
@@ -1944,17 +1942,17 @@ npm run build -- --configuration development
 npx cap sync ios
 ```
 
-El plugin push aun no esta instalado; el `cap sync ios` definitivo debe repetirse
-despues del Paso 10.6.
+El plugin push ya esta instalado y sincronizado. En macOS se debe repetir
+`npx cap sync ios` despues de integrar Firebase Messaging en el Paso 10.7.
 
 ### Orden recomendado en la nueva sesion
 
 1. Verificar que el checkpoint y archivos nuevos existan en la Mac.
 2. Ejecutar `git status --short` en ambos repos; no limpiar cambios existentes.
 3. Ejecutar suite Laravel y build Ionic para validar el traslado.
-4. Ejecutar Paso 10.5 backend con FCM deshabilitado/fake primero.
+4. Verificar los Pasos 10.5 y 10.6 ya implementados.
 5. Crear/configurar Firebase y probar FCM HTTP v1 con credenciales fuera de Git.
-6. Ejecutar Paso 10.6: instalar plugin Capacitor 8, registrar token y listeners.
+6. Ejecutar Paso 10.7: Firebase Messaging/APNs, capabilities y QA real.
 7. Corregir Bundle ID Debug y configurar capabilities/plist/APNs en Xcode.
 8. Ejecutar `npm run build`, `npx cap sync ios` y abrir
    `ios/App/App.xcodeproj` en Xcode.
@@ -1975,17 +1973,184 @@ La siguiente sesion puede arrancar directamente en Paso 10.5 si:
 Si alguno falta, el problema es de transferencia/versionado, no de diseno; usar
 este checkpoint para comparar archivos antes de volver a implementar.
 
+## Ejecucion del Paso 10.5: backend FCM
+
+Fecha: 2026-06-21. Equipo: Windows, repo `vetsys`.
+
+### Implementacion terminada
+
+- Dependencia fijada: `kreait/laravel-firebase:5.10.0` en `composer.json` y
+  `composer.lock`. Composer tambien actualizo dependencias transitivas
+  compatibles al resolver el SDK.
+- `PushGateway` desacopla el dominio del SDK. `FirebasePushGateway` construye
+  `CloudMessage` con destino token y traduce errores de Kreait a:
+  `InvalidPushTokenException`, `PermanentPushException` y
+  `TransientPushException`.
+- `DisabledPushGateway` se resuelve cuando `FCM_ENABLED=false`; por ello un
+  worker local/test arranca sin service account y sin intentar red.
+- `SendAppointmentPush` es un Job unico por delivery, con 5 intentos, timeout
+  de 60 segundos y backoff de 30, 120, 600 y 1800 segundos.
+- Antes de enviar, el Job vuelve a validar tenant, usuario activo, dispositivo
+  no revocado y acceso vigente de operador/customer. Una revocacion posterior
+  a crear la entrega produce `skipped`.
+- Token desconocido/invalido revoca `push_devices.revoked_at` y no reintenta.
+  Error permanente queda `skipped`; error temporal queda `failed`, se relanza
+  para queue y puede reutilizar la misma entrega.
+- `last_error` solo guarda clase/categoria sanitizada; nunca mensaje de SDK,
+  token, credencial o respuesta remota.
+- `AppointmentNotificationService` crea una entrega canal `push` por
+  `appointment_event_id + audience + user_id + push_device_id`, usando el
+  indice de deduplicacion existente, y despacha solo para dispositivos activos.
+- Payload `data` contiene solo strings: `notification_id`, `appointment_id`,
+  `appointment_event_id`, `animal_id`, `event_type`, `starts_at`, `timezone`,
+  `animal_name`, `service_name`, `route` y `audience`. No incluye notas
+  internas, razones privadas, correo, customer completo ni token.
+- La cita y su evento no dependen del resultado del push: el envio sigue
+  desacoplado mediante queue y las excepciones de dispatch son reportadas.
+
+### Matriz push implementada
+
+- Tenant (admin/client-admin y veterinario activo): `requested`,
+  `proposal_accepted`, `proposal_rejected`, `cancelled_by_customer`.
+- Customer con acceso vigente: `requested`, `created_manually`, `confirmed`,
+  `rejected`, `proposed`, `proposal_expired`, `cancelled_by_tenant` y
+  `late_fee_charged`.
+- Sin push: `completed`, `no_show`, `late_fee_pending`, `late_fee_waived` y los
+  eventos redundantes para la misma audiencia definidos en la matriz.
+
+### Archivos creados
+
+- `app/Contracts/PushGateway.php`
+- `app/Exceptions/InvalidPushTokenException.php`
+- `app/Exceptions/PermanentPushException.php`
+- `app/Exceptions/TransientPushException.php`
+- `app/Jobs/SendAppointmentPush.php`
+- `app/Services/DisabledPushGateway.php`
+- `app/Services/FirebasePushGateway.php`
+- `config/appointment_push.php`
+- `tests/Feature/AppointmentPushTest.php`
+
+### Archivos modificados
+
+- `.env.example`, `.gitignore`, `app/Providers/AppServiceProvider.php`
+- `app/Services/AppointmentNotificationService.php`
+- `composer.json`, `composer.lock`
+- `docs/appointment-scheduling-checkpoint.md`
+
+### Verificacion ejecutada
+
+- `php artisan test --filter=AppointmentPushTest`: 6 tests, 33 assertions.
+- `php artisan test --filter=Appointment`: 89 tests, 442 assertions.
+- `php artisan test`: 150 tests, 671 assertions, todo correcto.
+- Pint aplicado y verificacion de estilo correcta en archivos del Paso 10.5.
+- `composer audit`: 6 advisories en `laravel/framework` y `symfony/yaml`.
+  Registrar una actualizacion mayor de Laravel/Symfony como trabajo separado;
+  no se hizo una migracion de framework dentro del feature Agenda.
+
+### Configuracion externa pendiente
+
+- No se agrego ni probo una service account real. Mantener
+  `FCM_ENABLED=false` hasta disponer del JSON fuera de Git.
+- Para activar: establecer `FIREBASE_PROJECT`, apuntar
+  `FIREBASE_CREDENTIALS` a la ruta absoluta segura del JSON, limpiar cache de
+  configuracion, reiniciar workers y finalmente usar `FCM_ENABLED=true`.
+- No hubo envio real a Firebase/dispositivo en Windows; esa prueba pertenece
+  al Paso 10.7 con credenciales y hardware.
+
+## Ejecucion del Paso 10.6: integracion Ionic compartida
+
+Fecha: 2026-06-22. Equipo: Windows, repo `gorozpeApp`.
+
+### Implementacion terminada
+
+- Instalado `@capacitor/push-notifications:8.1.1`, compatible con Capacitor 8,
+  en `package.json` y `package-lock.json`.
+- Creado `NativePushNotificationsService` como adaptador testeable del plugin
+  oficial: plataforma, permisos, registro y cuatro listeners nativos.
+- Creado `PushNotificationsService` como coordinador unico para tenant y
+  customer. En web no solicita permisos ni invoca APIs nativas.
+- El servicio inicia desde `AppComponent`, vuelve a registrar al reanudar/volver
+  la red y se activa inmediatamente despues de login normal o biometrico.
+- Flujo de permisos: consulta estado, solicita solo cuando esta en `prompt` y
+  registra si queda `granted`; permiso denegado no bloquea login ni uso.
+- Android registra/rota el token FCM en `POST /api/v1/push-devices` con
+  `platform`, UUID estable local y nombre de dispositivo. Guarda el ID de
+  backend separado por usuario.
+- Logout intenta `DELETE /api/v1/push-devices/{id}` antes de cerrar la sesion;
+  un fallo de revocacion no impide limpiar/autenticar el logout existente.
+- Foreground y tap reconcilian la fuente persistente: customer refresca portal
+  y tenant refresca `TenantNotificationsService`.
+- El tap nunca confia una URL arbitraria del push. Valida `appointment_id` y
+  construye `/portal/citas/{id}` para customer o `/tabs/agenda/{id}` para
+  tenant; sin cita abre la bandeja de notificaciones correspondiente.
+- Errores nativos o de sincronizacion se guardan en una signal y nunca rompen
+  login, bootstrap, cita o navegacion.
+- Ejecutado Capacitor sync Android: Gradle incluye
+  `capacitor-push-notifications`.
+- Ejecutado Capacitor sync iOS: Swift Package Manager incluye
+  `CapacitorPushNotifications`. Las rutas generadas por Windows se corrigieron
+  manualmente a `/` para mantener `Package.swift` valido en macOS.
+
+### Limite iOS confirmado
+
+- En Android, el plugin entrega token FCM y ya se envia a Laravel.
+- En iOS, `@capacitor/push-notifications` entrega token APNs. El backend del
+  Paso 10.5 espera token FCM; enviar el APNs como FCM seria incorrecto.
+- Por ello iOS solicita permiso y recibe eventos, pero no publica el token APNs
+  a `/push-devices`. El Paso 10.7 debe integrar Firebase Messaging en Xcode,
+  obtener su token FCM y pasarlo al mismo flujo de registro.
+
+### Archivos creados
+
+- `src/app/core/services/native-push-notifications.service.ts`
+- `src/app/core/services/push-notifications.service.ts`
+- `src/app/core/services/push-notifications.service.spec.ts`
+
+### Archivos modificados
+
+- `package.json`, `package-lock.json`
+- `src/app/app.component.ts`
+- `src/app/core/services/auth.service.ts`
+- `android/app/capacitor.build.gradle`
+- `android/capacitor.settings.gradle`
+- `ios/App/CapApp-SPM/Package.swift`
+- `docs/appointment-scheduling-checkpoint.md`
+
+Los assets copiados dentro de `android/app/src/main/assets` e
+`ios/App/App/public` permanecen ignorados por Git; Capacitor los regenerara.
+
+### Verificacion ejecutada
+
+- Build development correcto usando salida aislada `.codex-tmp`; TypeScript y
+  bundle Angular compilan.
+- Pruebas enfocadas push en ChromeHeadless: 3/3 correctas (registro/revocacion
+  Android, exclusion del APNs crudo y deep link customer con reconciliacion).
+- Suite Karma global: 13 tests, 9 correctos y 4 fallos preexistentes porque
+  `app.component.spec.ts`, `tab1.page.spec.ts`, `tab2.page.spec.ts` y
+  `tabs.page.spec.ts` no proveen `HttpClient`. Las 3 pruebas push pasan dentro
+  de esa misma compilacion.
+- Lint global: un error preexistente en `video-upload.service.ts:19` por
+  `@angular-eslint/prefer-inject`; los archivos del Paso 10.6 no reportan error.
+- `npm install` reporto 31 advisories (2 low, 6 moderate, 23 high). No se uso
+  `npm audit fix --force` porque implicaria cambios mayores no auditados.
+- `cap sync android` correcto y `cap sync ios` correcto al repetir fuera del
+  sandbox por archivos nativos bloqueados.
+
 ## Punto de arranque de la siguiente sesion
 
-Ejecutar Paso 10.5 para Android/backend en este orden:
+Ejecutar Paso 10.7 en macOS:
 
-1. Verificar e instalar SDK Firebase compatible con PHP 8.1/Laravel 10.
-2. Crear configuracion FCM deshabilitable y variables sin secretos.
-3. Implementar `PushGateway` desacoplado y fake para pruebas.
-4. Crear Job unico por `push_device_id + appointment_event_id`.
-5. Generar entregas push segun matriz para dispositivos activos.
-6. Revocar tokens invalidos y reintentar solo errores temporales.
-7. Probar payload string seguro, deduplicacion y FCM apagado.
-8. Ejecutar suite completa y actualizar checkpoint.
-
-iOS/APNs permanece diferido hasta trabajar en macOS para App Store.
+1. Hacer `npm ci` y repetir `npx cap sync ios`.
+2. Corregir el Bundle ID Debug `-com.hectorbmx.vetsys`.
+3. Registrar app iOS/Firebase, agregar `GoogleService-Info.plist` fuera de Git e
+   integrar Firebase Messaging para obtener token FCM, no el APNs crudo.
+4. Conectar ese token FCM al metodo de registro ya implementado o exponerlo
+   mediante un adaptador nativo especifico.
+5. Activar Push Notifications, Background Modes/Remote notifications y
+   `aps-environment`; configurar APNs `.p8` en Firebase.
+6. Configurar service account del backend, activar `FCM_ENABLED=true`, limpiar
+   cache Laravel y reiniciar workers.
+7. Probar tenant/customer en iPhone fisico: permiso, token, foreground,
+   background, app cerrada, tap, refresh, logout/revocacion y reconciliacion.
+8. Resolver los cuatro tests antiguos sin `HttpClient` y el lint preexistente
+   antes de exigir suite Ionic global completamente verde.

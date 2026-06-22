@@ -6,11 +6,13 @@ use App\Enums\AppointmentEventType;
 use App\Enums\NotificationDeliveryChannel;
 use App\Enums\NotificationDeliveryStatus;
 use App\Jobs\SendAppointmentEmail;
+use App\Jobs\SendAppointmentPush;
 use App\Models\Appointment;
 use App\Models\AppointmentEvent;
 use App\Models\AppointmentNotificationDelivery;
 use App\Models\CustomerPortalAccess;
 use App\Models\PortalNotification;
+use App\Models\PushDevice;
 use App\Models\TenantNotification;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -40,6 +42,7 @@ class AppointmentNotificationService
         }
 
         $this->queueEmailDeliveries($event, $appointment, $customerAccesses, $type);
+        $this->queuePushDeliveries($event, $appointment, $customerAccesses, $type);
     }
 
     public function customerCanReceive(Appointment $appointment, User $user): bool
@@ -71,6 +74,41 @@ class AppointmentNotificationService
             'url' => $audience === 'tenant'
                 ? url('/client/agenda/'.$appointment->id)
                 : url('/portal/citas/'.$appointment->id),
+        ];
+    }
+
+    public function pushData(AppointmentEvent $event, string $audience, User $recipient): array
+    {
+        $event->loadMissing('appointment');
+        $appointment = $event->appointment;
+        $type = $this->notificationType($event);
+        $copy = $this->copy($event, $appointment, $type)[$audience];
+        $route = $audience === 'tenant'
+            ? '/tabs/agenda/'.$appointment->id
+            : '/portal/citas/'.$appointment->id;
+        $notificationId = $audience === 'tenant'
+            ? TenantNotification::query()
+                ->where('tenant_id', $appointment->tenant_id)
+                ->where('type', $type)
+                ->where('data->appointment_event_id', $event->id)
+                ->value('id')
+            : PortalNotification::query()
+                ->where('tenant_id', $appointment->tenant_id)
+                ->where('user_id', $recipient->id)
+                ->where('type', $type)
+                ->where('data->appointment_event_id', $event->id)
+                ->value('id');
+
+        $data = $this->safeData($event, $appointment, $type, $route);
+        $data['notification_id'] = $notificationId;
+        $data['audience'] = $audience;
+
+        return [
+            'title' => $copy['title'],
+            'body' => $copy['body'],
+            'data' => collect($data)
+                ->map(fn ($value) => $value === null ? '' : (string) $value)
+                ->all(),
         ];
     }
 
@@ -362,6 +400,99 @@ class AppointmentNotificationService
                 report($exception);
             }
         }
+    }
+
+    private function queuePushDeliveries(
+        AppointmentEvent $event,
+        Appointment $appointment,
+        Collection $customerAccesses,
+        string $type,
+    ): void {
+        if ($this->tenantReceivesPush($type)) {
+            $tenantRecipients = User::query()
+                ->where('tenant_id', $appointment->tenant_id)
+                ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereHas('roles', fn ($roles) => $roles->whereIn('name', ['client-admin', 'admin']))
+                        ->orWhereHas('veterinarianProfile', fn ($profile) => $profile->where('is_active', true));
+                })
+                ->get();
+
+            foreach ($tenantRecipients as $recipient) {
+                $this->queuePushesForUser($event, $recipient, 'tenant');
+            }
+        }
+
+        if ($this->customerReceivesPush($type)) {
+            foreach ($customerAccesses->pluck('user')->filter()->unique('id') as $recipient) {
+                $this->queuePushesForUser($event, $recipient, 'customer');
+            }
+        }
+    }
+
+    private function queuePushesForUser(AppointmentEvent $event, User $recipient, string $audience): void
+    {
+        $devices = PushDevice::query()
+            ->where('tenant_id', $event->tenant_id)
+            ->where('user_id', $recipient->id)
+            ->whereNull('revoked_at')
+            ->get();
+
+        foreach ($devices as $device) {
+            $recipientKey = "push:{$audience}:{$recipient->id}:{$device->id}";
+            $recipientHash = AppointmentNotificationDelivery::recipientHash($recipientKey);
+            $delivery = DB::transaction(function () use ($event, $recipient, $device, $recipientKey, $recipientHash) {
+                AppointmentNotificationDelivery::query()->insertOrIgnore([
+                    'tenant_id' => $event->tenant_id,
+                    'appointment_event_id' => $event->id,
+                    'recipient_user_id' => $recipient->id,
+                    'push_device_id' => $device->id,
+                    'channel' => NotificationDeliveryChannel::Push->value,
+                    'recipient_key' => $recipientKey,
+                    'recipient_hash' => $recipientHash,
+                    'status' => NotificationDeliveryStatus::Pending->value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return AppointmentNotificationDelivery::query()
+                    ->where('appointment_event_id', $event->id)
+                    ->where('channel', NotificationDeliveryChannel::Push->value)
+                    ->where('recipient_hash', $recipientHash)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+            }, 3);
+
+            if (! in_array($delivery->status, [
+                NotificationDeliveryStatus::Delivered,
+                NotificationDeliveryStatus::Skipped,
+            ], true)) {
+                try {
+                    SendAppointmentPush::dispatch($delivery->id);
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            }
+        }
+    }
+
+    private function tenantReceivesPush(string $type): bool
+    {
+        return $this->tenantReceivesEmail($type);
+    }
+
+    private function customerReceivesPush(string $type): bool
+    {
+        return in_array($type, [
+            AppointmentEventType::Requested->value,
+            AppointmentEventType::CreatedManually->value,
+            AppointmentEventType::Confirmed->value,
+            AppointmentEventType::Rejected->value,
+            AppointmentEventType::Proposed->value,
+            AppointmentEventType::ProposalExpired->value,
+            'appointment.cancelled_by_tenant',
+            AppointmentEventType::LateFeeCharged->value,
+        ], true);
     }
 
     private function tenantReceivesEmail(string $type): bool

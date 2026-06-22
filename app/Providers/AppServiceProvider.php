@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
-use App\Models\TenantNotification;
+use App\Contracts\PushGateway;
 use App\Models\AdminNotification;
-use Illuminate\Support\ServiceProvider;
+use App\Models\TenantNotification;
+use App\Services\DisabledPushGateway;
+use App\Services\FirebasePushGateway;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +17,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PushGateway::class, fn ($app) => config('appointment_push.enabled')
+            ? $app->make(FirebasePushGateway::class)
+            : $app->make(DisabledPushGateway::class));
     }
 
     /**
@@ -25,9 +30,10 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.client', function ($view) {
             $user = auth()->user();
 
-            if (!$user || !$user->tenant_id) {
+            if (! $user || ! $user->tenant_id) {
                 $view->with('layoutNotifications', collect());
                 $view->with('layoutUnreadNotificationsCount', 0);
+
                 return;
             }
 
@@ -47,9 +53,10 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.admin', function ($view) {
             $user = auth()->user();
 
-            if (!$user || !$user->hasRole('super-admin')) {
+            if (! $user || ! $user->hasRole('super-admin')) {
                 $view->with('layoutAdminNotifications', collect());
                 $view->with('layoutAdminUnreadNotificationsCount', 0);
+
                 return;
             }
 
