@@ -598,7 +598,7 @@
                         <th class="px-4 py-3 pb-4 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-slate-100" x-data="{ openShare: null }">
                     @forelse($customer->animals as $animal)
                         @php
                             $portalUserId = $activePortalAccess?->user_id;
@@ -625,13 +625,16 @@
                                 'show_appointments' => 'Citas',
                             ];
                         @endphp
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-4">
+                        <tr class="bg-white hover:bg-slate-50/70 transition-colors">
+                            <td class="px-4 py-4 border-l-4 theme-border-primary">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-xs">
+                                    <div class="w-11 h-11 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm shadow-sm ring-1 ring-white">
                                         {{ substr($animal->name, 0, 1) }}
                                     </div>
-                                    <span class="text-xs font-bold theme-text-heading">{{ $animal->name }}</span>
+                                    <div class="min-w-0">
+                                        <span class="block text-sm font-black theme-text-heading leading-tight">{{ $animal->name }}</span>
+                                        <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500">Paciente</span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-4 py-4">
@@ -675,25 +678,37 @@
                                 </form>
                             </td>
                             <td class="px-4 py-4 text-right">
-                                <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
-                                    Detalles
-                                </a>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button type="button"
+                                            @click="openShare = openShare === {{ $animal->id }} ? null : {{ $animal->id }}"
+                                            :class="openShare === {{ $animal->id }} ? 'theme-bg-primary-soft theme-text-primary-strong theme-border-primary-soft' : 'bg-white text-slate-500 border-slate-200'"
+                                            class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all hover:bg-slate-50">
+                                        App/Web
+                                        <span class="text-[10px]" x-text="openShare === {{ $animal->id }} ? '-' : '+'"></span>
+                                    </button>
+                                    <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                                        Detalles
+                                    </a>
+                                </div>
                             </td>
                         </tr>
-                        <tr class="bg-slate-50/60">
+                        <tr x-show="openShare === {{ $animal->id }}" x-cloak class="bg-slate-50/80">
                             <td colspan="8" class="px-4 py-4">
-                                <form action="{{ route('client.customers.portal-animals.update', $customer) }}" method="POST" class="space-y-3">
+                                <form action="{{ route('client.customers.portal-animals.update', $customer) }}" method="POST" class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                     @csrf
                                     @method('PATCH')
                                     <input type="hidden" name="animal_id" value="{{ $animal->id }}">
 
                                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                                        <label class="inline-flex items-center gap-3 cursor-pointer">
-                                            <input type="checkbox" name="is_shared" value="1" @checked($isShared) class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
-                                            <span class="text-[10px] font-black uppercase tracking-widest {{ $isShared ? 'text-indigo-600' : 'text-slate-400' }}">
-                                                Compartir en app/web
-                                            </span>
-                                        </label>
+                                        <div>
+                                            <label class="inline-flex items-center gap-3 cursor-pointer">
+                                                <input type="checkbox" name="is_shared" value="1" @checked($isShared) class="rounded border-slate-300 theme-text-primary theme-focus-ring-primary">
+                                                <span class="text-[10px] font-black uppercase tracking-widest {{ $isShared ? 'text-indigo-600' : 'text-slate-400' }}">
+                                                    Compartir en app/web
+                                                </span>
+                                            </label>
+                                            <p class="mt-1 text-[10px] font-semibold text-slate-400">Define que secciones vera este cliente para {{ $animal->name }}.</p>
+                                        </div>
 
                                         <button type="submit" class="self-start lg:self-auto inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white border border-slate-200 theme-text-heading text-[10px] font-black uppercase tracking-widest hover:bg-slate-100">
                                             Guardar visibilidad
