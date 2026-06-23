@@ -9,6 +9,7 @@
     <style>
         [x-cloak] { display: none !important; }
     </style>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
     <div class="min-h-screen flex flex-col">
