@@ -263,5 +263,96 @@
             </div>
         </div>
     </div>
+
+    <section data-tour="service-performance" class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-5 border-b border-slate-100 px-6 py-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] theme-text-primary">Rendimiento anual</p>
+                <h2 class="mt-1 text-lg font-black theme-text-heading">Servicios realizados {{ $servicePerformance['year'] }}</h2>
+                <p class="mt-1 text-[11px] font-semibold text-slate-400">
+                    Valor de servicios ejecutados frente al monto cobrado y saldo pendiente.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest">
+                <span class="inline-flex items-center gap-2 text-slate-500">
+                    <span class="h-3 w-3 rounded-sm theme-bg-primary"></span>
+                    Valor ejecutado
+                </span>
+                <span class="inline-flex items-center gap-2 text-emerald-700">
+                    <span class="h-3 w-3 rounded-sm bg-emerald-500"></span>
+                    Cobrado
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 border-b border-slate-100 bg-slate-50/60 p-5 md:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">Servicios</p>
+                <p class="mt-2 text-xl font-black theme-text-heading">{{ number_format($servicePerformance['totals']['service_count'], 0) }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">Valor ejecutado</p>
+                <p class="mt-2 text-xl font-black theme-text-heading">${{ number_format($servicePerformance['totals']['service_value'], 2) }}</p>
+            </div>
+            <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                <p class="text-[9px] font-black uppercase tracking-widest text-emerald-600">Cobrado</p>
+                <p class="mt-2 text-xl font-black text-emerald-700">${{ number_format($servicePerformance['totals']['collected'], 2) }}</p>
+            </div>
+            <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p class="text-[9px] font-black uppercase tracking-widest text-amber-600">Por cobrar</p>
+                <p class="mt-2 text-xl font-black text-amber-700">${{ number_format($servicePerformance['totals']['debt'], 2) }}</p>
+            </div>
+        </div>
+
+        @php
+            $compactMoney = static function (float $value): string {
+                if ($value >= 1000000) {
+                    return '$'.number_format($value / 1000000, 1).'M';
+                }
+                if ($value >= 1000) {
+                    return '$'.number_format($value / 1000, 1).'k';
+                }
+                return '$'.number_format($value, 0);
+            };
+        @endphp
+
+        <div class="overflow-x-auto px-5 pb-6 pt-8">
+            <div class="grid min-w-[980px] grid-cols-12 gap-3" role="img" aria-label="Grafica mensual de valor de servicios y monto cobrado en {{ $servicePerformance['year'] }}">
+                @foreach($servicePerformance['months'] as $month)
+                    <div class="flex min-w-0 flex-col items-center">
+                        <div class="mb-2 text-center">
+                            <p class="text-sm font-black theme-text-heading">{{ number_format($month['service_count'], 0) }}</p>
+                            <p class="text-[8px] font-black uppercase tracking-wider text-slate-400">servicios</p>
+                        </div>
+
+                        <div class="flex h-56 w-full items-end justify-center gap-2 rounded-xl border-b border-slate-200 bg-gradient-to-t from-slate-50 to-white px-2 pt-3">
+                            <div class="w-5 rounded-t-md theme-bg-primary transition-all"
+                                 style="height: {{ $month['service_value'] > 0 ? max($month['service_value_percent'], 3) : 0 }}%"
+                                 title="{{ $month['label'] }}: valor ejecutado ${{ number_format($month['service_value'], 2) }}"></div>
+                            <div class="w-5 rounded-t-md bg-emerald-500 transition-all"
+                                 style="height: {{ $month['collected'] > 0 ? max($month['collected_percent'], 3) : 0 }}%"
+                                 title="{{ $month['label'] }}: cobrado ${{ number_format($month['collected'], 2) }}"></div>
+                        </div>
+
+                        <p class="mt-3 text-xs font-black uppercase tracking-widest theme-text-heading">{{ $month['label'] }}</p>
+                        <div class="mt-2 w-full space-y-1 text-center text-[9px] font-bold">
+                            <p class="theme-text-primary" title="Valor ejecutado ${{ number_format($month['service_value'], 2) }}">
+                                {{ $compactMoney($month['service_value']) }}
+                            </p>
+                            <p class="text-emerald-600" title="Cobrado ${{ number_format($month['collected'], 2) }}">
+                                {{ $compactMoney($month['collected']) }}
+                            </p>
+                            @if($month['debt'] > 0)
+                                <p class="text-amber-600" title="Por cobrar ${{ number_format($month['debt'], 2) }}">
+                                    Debe {{ $compactMoney($month['debt']) }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
 </div>
 @endsection

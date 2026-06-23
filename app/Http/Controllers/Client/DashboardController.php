@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\TenantOnboardingStep;
+use App\Services\DashboardServicePerformanceService;
 use App\Services\TenantOnboardingService;
 use Illuminate\Http\RedirectResponse;
 
@@ -33,6 +34,9 @@ class DashboardController extends Controller
             ->latest()
             ->take(5)
             ->get();
+
+        $servicePerformance = app(DashboardServicePerformanceService::class)
+            ->forYear($tenant, now()->year);
 
         $onboarding = app(TenantOnboardingService::class)->reconcileSafely($tenant);
 
@@ -65,6 +69,7 @@ class DashboardController extends Controller
             'totalCollected',
             'totalReceivable',
             'recentNotes',
+            'servicePerformance',
             'onboarding'
         ));
     }

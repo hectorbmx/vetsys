@@ -15,6 +15,7 @@
     </div>
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
         <form method="GET" action="{{ route('client.servicios.index') }}" class="relative w-full sm:w-80">
+            <input type="hidden" name="per_page" value="{{ $perPage }}">
             <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
             <input type="text"
                    name="q"
@@ -23,7 +24,7 @@
                    class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
 
             @if($search !== '')
-                <a href="{{ route('client.servicios.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                <a href="{{ route('client.servicios.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
             @endif
         </form>
 
@@ -198,6 +199,26 @@
 
     {{-- LISTADO EN TABLA --}}
     <div data-tour="services-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">CatÃ¡logo registrado</h3>
+            <div class="flex flex-wrap items-center justify-end gap-3">
+                @if($search !== '')
+                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ $search }}</span>
+                @endif
+                <form method="GET" action="{{ route('client.servicios.index') }}" class="flex items-center gap-2">
+                    @if($search !== '')
+                        <input type="hidden" name="q" value="{{ $search }}">
+                    @endif
+                    <label for="services-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                    <select id="services-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
+                        @foreach([15, 30, 50, 100] as $option)
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                    <span class="text-[10px] font-bold text-slate-400">filas</span>
+                </form>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -319,6 +340,10 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
+            {{ $items->links() }}
         </div>
     </div>
 

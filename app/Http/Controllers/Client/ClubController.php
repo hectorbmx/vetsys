@@ -16,6 +16,14 @@ class ClubController extends Controller
     {
         $tenantId = auth()->user()->tenant_id;
         $search = $request->get('q');
+        $allowedPerPage = [15, 30, 50, 100];
+        $requestedPerPage = $request->integer('per_page', 15);
+        $perPage = in_array($requestedPerPage, $allowedPerPage, true)
+            ? $requestedPerPage
+            : 15;
+
+        $tenantClubs = Club::query()->where('tenant_id', $tenantId);
+        $activeClubsCount = (clone $tenantClubs)->where('is_active', true)->count();
 
         $clubs = Club::query()
             ->where('tenant_id', $tenantId)
@@ -30,13 +38,14 @@ class ClubController extends Controller
                 ->with(['customer', 'animalType'])
                 ->orderBy('name')])
             ->latest()
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         $animals = Animal::query()
             ->where('tenant_id', $tenantId)
             ->get();
 
-        return view('client.clubes.index', compact('clubs', 'animals'));
+        return view('client.clubes.index', compact('clubs', 'animals', 'activeClubsCount', 'perPage'));
     }
 
     public function toggleStatus(Club $club)

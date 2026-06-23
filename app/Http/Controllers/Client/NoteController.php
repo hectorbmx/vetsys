@@ -25,6 +25,11 @@ class NoteController extends Controller
     {
         $tenant = auth()->user()->tenant;
         $search = $request->get('q');
+        $allowedPerPage = [15, 30, 50, 100];
+        $requestedPerPage = $request->integer('per_page', 15);
+        $perPage = in_array($requestedPerPage, $allowedPerPage, true)
+            ? $requestedPerPage
+            : 15;
 
         $notes = $tenant->notes()
             ->with('customer')
@@ -39,7 +44,8 @@ class NoteController extends Controller
                 });
             })
             ->latest()
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         // KPIs del mes actual
         $startOfMonth = now()->startOfMonth();
@@ -75,7 +81,8 @@ class NoteController extends Controller
             'totalNotesMonth',
             'paidNotesMonth',
             'pendingNotesMonth',
-            'animalsAttendedMonth'
+            'animalsAttendedMonth',
+            'perPage'
         ));
     }
 

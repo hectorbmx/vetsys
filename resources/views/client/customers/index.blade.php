@@ -47,13 +47,14 @@
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <form method="GET" action="{{ route('client.customers.index') }}" class="relative w-full sm:w-80">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
                 <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar cliente, correo o telefono..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
                 @if(request('status'))
                     <input type="hidden" name="status" value="{{ request('status') }}">
                 @endif
                 @if(request()->filled('q') || request()->filled('status'))
-                    <a href="{{ route('client.customers.index') }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                    <a href="{{ route('client.customers.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                 @endif
             </form>
             <button data-tour="add-customer" @click="customerModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
@@ -120,11 +121,28 @@
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="customers-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Listado de Clientes</h3>
-            @if(request()->filled('q') || request()->filled('status'))
-                <span class="text-[11px] font-bold text-slate-400">Filtros activos</span>
-            @endif
+            <div class="flex flex-wrap items-center justify-end gap-3">
+                @if(request()->filled('q') || request()->filled('status'))
+                    <span class="text-[11px] font-bold text-slate-400">Filtros activos</span>
+                @endif
+                <form method="GET" action="{{ route('client.customers.index') }}" class="flex items-center gap-2">
+                    @if(request()->filled('q'))
+                        <input type="hidden" name="q" value="{{ request('q') }}">
+                    @endif
+                    @if(request()->filled('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    <label for="customers-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                    <select id="customers-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
+                        @foreach([15, 30, 50, 100] as $option)
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                    <span class="text-[10px] font-bold text-slate-400">filas</span>
+                </form>
+            </div>
         </div>
 
         {{-- TABLA CON RECORRIDO DINÁMICO --}}

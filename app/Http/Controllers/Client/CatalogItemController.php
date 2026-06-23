@@ -15,6 +15,11 @@ class CatalogItemController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->get('q', ''));
+        $allowedPerPage = [15, 30, 50, 100];
+        $requestedPerPage = $request->integer('per_page', 15);
+        $perPage = in_array($requestedPerPage, $allowedPerPage, true)
+            ? $requestedPerPage
+            : 15;
 
         $items = auth()->user()->tenant->catalogItems()
             ->with(['inventory'])
@@ -27,7 +32,8 @@ class CatalogItemController extends Controller
                 });
             })
             ->latest()
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         // KPIs
         $startOfMonth = now()->startOfMonth();
@@ -82,6 +88,7 @@ class CatalogItemController extends Controller
         return view('client.servicios.index', compact(
             'items',
             'search',
+            'perPage',
             'starProduct',
             'inventoryProductsCount',
             'lastCatalogItemMovement'

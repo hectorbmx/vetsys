@@ -19,6 +19,11 @@ class CustomerController extends Controller
     public function index(Request $request)
 {
     $tenantId = auth()->user()->tenant_id;
+    $allowedPerPage = [15, 30, 50, 100];
+    $requestedPerPage = $request->integer('per_page', 15);
+    $perPage = in_array($requestedPerPage, $allowedPerPage, true)
+        ? $requestedPerPage
+        : 15;
 
     $customers = Customer::query()
         ->where('tenant_id', $tenantId)
@@ -41,10 +46,10 @@ class CustomerController extends Controller
             $query->where('status', $request->status);
         })
         ->latest()
-        ->paginate(15)
+        ->paginate($perPage)
         ->withQueryString();
 
-    return view('client.customers.index', compact('customers'));
+    return view('client.customers.index', compact('customers', 'perPage'));
 }
 
     public function toggleStatus(Customer $customer)
