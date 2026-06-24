@@ -139,6 +139,7 @@ class TenantAppointmentController extends Controller
             $request->input('customer_reason'),
             $request->input('internal_notes'),
             $request->string('idempotency_key')->toString(),
+            $request->boolean('requires_customer_confirmation'),
         );
 
         return (new TenantAppointmentResource(

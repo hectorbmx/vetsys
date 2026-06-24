@@ -2154,3 +2154,288 @@ Ejecutar Paso 10.7 en macOS:
    background, app cerrada, tap, refresh, logout/revocacion y reconciliacion.
 8. Resolver los cuatro tests antiguos sin `HttpClient` y el lint preexistente
    antes de exigir suite Ionic global completamente verde.
+
+## Resultado backend ejecutado: cita tenant pendiente de customer
+
+Fecha: 2026-06-24.
+
+Se ejecuto en Laravel el Paso 1 dejado por el handoff de Ionic para que una cita
+creada por tenant pueda quedar pendiente de respuesta del customer sin romper el
+flujo manual confirmado existente.
+
+### Contrato elegido
+
+Endpoint conservado:
+
+- `POST /api/v1/appointments/manual`
+
+Flag agregado:
+
+```json
+{
+  "requires_customer_confirmation": true
+}
+```
+
+Comportamiento:
+
+- Sin el flag, `createManual()` mantiene compatibilidad y crea cita
+  `confirmed` con `confirmed_at`.
+- Con `requires_customer_confirmation = true`, `createManual()` crea cita
+  `pending_customer`, sin `confirmed_at`, y crea una `pending_proposal`.
+- La propuesta guarda `previous_appointment_status = pending_tenant`.
+- El evento registrado es `appointment.proposed` con metadata
+  `source = tenant_manual`.
+- El customer ve la cita en `GET /api/v1/portal/appointments`.
+- El resource customer expone `pending_proposal` y
+  `can_respond_to_proposal = true`.
+- Al aceptar, el flujo existente pasa la cita a `confirmed`.
+- Al rechazar, el flujo existente deja la propuesta `rejected` y restaura la
+  cita a `pending_tenant`.
+
+### Archivos modificados
+
+- `app/Services/AppointmentService.php`
+- `app/Http/Controllers/Api/V1/TenantAppointmentController.php`
+- `app/Http/Requests/StoreManualAppointmentRequest.php`
+- `tests/Feature/TenantAppointmentHttpTest.php`
+- `docs/appointment-scheduling-checkpoint.md`
+
+### Verificacion ejecutada
+
+- `php artisan test --filter=TenantAppointmentHttpTest`
+- `php artisan test --filter=CustomerAppointmentApiTest`
+- `php artisan test --filter=TenantAppointmentServicesTest`
+- `php artisan test --filter=AppointmentNotificationServiceTest`
+
+Resultado: todos correctos. Solo aparece warning preexistente de PHPUnit XML
+deprecated schema.
+
+### Handoff de vuelta a Ionic/macOS
+
+Actualizar `TenantAppointmentsService.createManual()` o el submit de
+`TenantAppointmentCreatePage` para enviar:
+
+```json
+{
+  "requires_customer_confirmation": true
+}
+```
+
+Luego cambiar el texto del boton a `Enviar propuesta` o equivalente y probar en
+dispositivo que el customer ve la cita pendiente y puede aceptar/rechazar desde
+`/portal/citas`.
+
+## Guia para agente macOS: mapa backend actual
+
+Fecha: 2026-06-24.
+
+Esta seccion resume como esta compuesto el backend Laravel para que el agente de
+macOS/Ionic pueda ajustar la app aunque no tenga Laravel instalado/configurado.
+
+### Rutas API relevantes
+
+Todas cuelgan de `/api/v1` y requieren Sanctum/login mobile, salvo login.
+
+- Login: `POST /api/v1/auth/login`.
+- Logout: `POST /api/v1/auth/logout`.
+- Registrar dispositivo push: `POST /api/v1/push-devices`.
+- Revocar dispositivo push: `DELETE /api/v1/push-devices/{id}`.
+- Agenda tenant:
+  - `GET /api/v1/appointments/bootstrap`
+  - `GET /api/v1/appointments`
+  - `GET /api/v1/appointments/{appointment}`
+  - `POST /api/v1/appointments/manual`
+  - `POST /api/v1/appointments/{appointment}/proposals`
+  - `POST /api/v1/appointments/{appointment}/cancel`
+- Agenda customer:
+  - `GET /api/v1/portal/appointments/bootstrap`
+  - `GET /api/v1/portal/appointments`
+  - `GET /api/v1/portal/appointments/{appointment}`
+  - `POST /api/v1/portal/appointments/{appointment}/proposals/{proposal}/accept`
+  - `POST /api/v1/portal/appointments/{appointment}/proposals/{proposal}/reject`
+  - `POST /api/v1/portal/appointments/{appointment}/cancel`
+
+### Contrato de cita tenant pendiente de customer
+
+Ionic tenant debe seguir usando:
+
+- `POST /api/v1/appointments/manual`
+
+Payload esperado:
+
+```json
+{
+  "customer_id": 123,
+  "animal_id": 456,
+  "service_id": 789,
+  "starts_at": "2026-06-23T18:00:00Z",
+  "customer_reason": "texto visible opcional",
+  "internal_notes": "nota interna opcional",
+  "requires_customer_confirmation": true
+}
+```
+
+Headers:
+
+- `Authorization: Bearer <token>`
+- `Idempotency-Key: <uuid estable por intento de envio>`
+
+Respuesta tenant esperada:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "status": "pending_customer",
+    "status_label": "Esperando respuesta del customer",
+    "confirmed_at": null,
+    "pending_proposal": {
+      "id": 10,
+      "status": "pending",
+      "starts_at": "2026-06-23T18:00:00.000000Z",
+      "ends_at": "2026-06-23T18:30:00.000000Z"
+    },
+    "actions": {
+      "confirm": false,
+      "reject": false,
+      "propose": true,
+      "cancel": true
+    }
+  }
+}
+```
+
+Sin `requires_customer_confirmation`, el backend conserva el flujo anterior y
+crea `status = confirmed`.
+
+### Contrato customer
+
+`GET /api/v1/portal/appointments` debe devolver la cita pendiente si el customer
+tiene acceso portal y visibilidad del paciente:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "status": "pending_customer",
+      "status_label": "Esperando tu respuesta",
+      "confirmed_at": null,
+      "pending_proposal": {
+        "id": 10,
+        "status": "pending"
+      },
+      "can_respond_to_proposal": true,
+      "can_cancel": true
+    }
+  ]
+}
+```
+
+Aceptar:
+
+- `POST /api/v1/portal/appointments/{appointment}/proposals/{proposal}/accept`
+- Resultado: `status = confirmed`, `confirmed_at` con valor, propuesta
+  `accepted`.
+
+Rechazar/pedir ajuste:
+
+- `POST /api/v1/portal/appointments/{appointment}/proposals/{proposal}/reject`
+
+```json
+{
+  "response_message": "No puedo en ese horario"
+}
+```
+
+- Resultado: propuesta `rejected`, cita vuelve a `pending_tenant`, tenant recibe
+  evento/notificacion de respuesta de propuesta.
+
+### Contrato push devices
+
+Endpoint:
+
+- `POST /api/v1/push-devices`
+
+Payload:
+
+```json
+{
+  "platform": "ios",
+  "token": "<FCM token, no APNs crudo>",
+  "device_uuid": "<uuid local estable>",
+  "device_name": "iPhone de prueba",
+  "app_version": "x.y.z"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "data": {
+    "id": 123,
+    "platform": "ios",
+    "device_uuid": "<uuid local estable>",
+    "device_name": "iPhone de prueba",
+    "app_version": "x.y.z",
+    "last_seen_at": "2026-06-24T00:00:00.000000Z",
+    "revoked_at": null
+  }
+}
+```
+
+Notas:
+
+- `platform` se normaliza a minusculas.
+- El token se guarda cifrado y con `token_hash`.
+- El backend deduplica por `device_uuid` y por token.
+- Logout debe llamar `DELETE /api/v1/push-devices/{id}` si Ionic tiene guardado
+  el id devuelto por backend.
+
+### Donde vive cada cosa
+
+- Rutas: `routes/api.php`.
+- Crear cita tenant: `app/Http/Controllers/Api/V1/TenantAppointmentController.php`.
+- Validacion de cita manual: `app/Http/Requests/StoreManualAppointmentRequest.php`.
+- Estados, propuestas, aceptar/rechazar/cancelar: `app/Services/AppointmentService.php`.
+- Resource tenant: `app/Http/Resources/Api/Tenant/TenantAppointmentResource.php`.
+- Resource customer: `app/Http/Resources/Api/Customer/AppointmentResource.php`.
+- Registro push: `app/Http/Controllers/Api/V1/PushDeviceController.php`.
+- Validacion push: `app/Http/Requests/StorePushDeviceRequest.php`.
+- Dedupe/rotacion push: `app/Services/PushDeviceRegistrar.php`.
+- Matriz de notificaciones/push/email: `app/Services/AppointmentNotificationService.php`.
+
+### Estados y acciones que Ionic debe esperar
+
+- `pending_tenant`: espera decision del tenant.
+- `pending_customer`: espera respuesta del customer.
+- `confirmed`: cita confirmada.
+- `rejected`: solicitud rechazada.
+- `cancelled`: cita cancelada.
+- `completed`: cita completada.
+- `no_show`: no asistio.
+
+Tenant resource incluye `actions`:
+
+- `confirm`: solo en `pending_tenant`.
+- `reject`: solo en `pending_tenant`.
+- `propose`: en `pending_tenant`, `pending_customer` o `confirmed`.
+- `cancel`: en `pending_tenant`, `pending_customer` o `confirmed`.
+- `complete` y `no_show`: solo en `confirmed` y cuando la cita ya inicio.
+
+Customer resource:
+
+- `can_respond_to_proposal = true` solo cuando `status = pending_customer` y hay
+  `pending_proposal`.
+- `can_cancel = true` para `pending_tenant`, `pending_customer` o `confirmed`
+  mientras la cita este en el futuro.
+
+### Recomendacion de coordinacion
+
+Copiar `vetsys` al Mac sirve como referencia de lectura, pero no como ambiente
+de ejecucion si no se configura `.env`, Composer, base de datos, storage, queue
+y credenciales FCM. Para evitar ruido por diferencias de entorno, lo mas rapido
+es que Ionic/macOS pruebe contra el backend real de Windows por IP LAN y que los
+cambios de contrato viajen por commit/checkpoint.

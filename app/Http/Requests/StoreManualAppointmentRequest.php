@@ -19,6 +19,7 @@ class StoreManualAppointmentRequest extends TenantAppointmentRequest
             'duration_minutes' => ['nullable', 'integer', 'between:5,480'],
             'customer_reason' => ['nullable', 'string', 'max:2000'],
             'internal_notes' => ['nullable', 'string', 'max:5000'],
+            'requires_customer_confirmation' => ['sometimes', 'boolean'],
             'idempotency_key' => $this->idempotencyRules(),
         ];
     }

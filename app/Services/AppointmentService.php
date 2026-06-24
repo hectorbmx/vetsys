@@ -124,6 +124,7 @@ class AppointmentService
         ?string $customerReason = null,
         ?string $internalNotes = null,
         ?string $idempotencyKey = null,
+        bool $requiresCustomerConfirmation = false,
         ?DateTimeInterface $now = null,
     ): Appointment {
         $startsAtUtc = CarbonImmutable::instance($startsAtUtc)->utc();
@@ -143,6 +144,7 @@ class AppointmentService
                 'duration_minutes' => $durationMinutes,
                 'customer_reason' => $customerReason,
                 'internal_notes' => $internalNotes,
+                'requires_customer_confirmation' => $requiresCustomerConfirmation,
             ],
             function () use (
                 $tenant,
@@ -154,6 +156,7 @@ class AppointmentService
                 $durationMinutes,
                 $customerReason,
                 $internalNotes,
+                $requiresCustomerConfirmation,
                 $nowUtc,
             ) {
                 $this->staffAccess->authorize($tenant, $actor);
@@ -200,6 +203,10 @@ class AppointmentService
                     );
                 }
 
+                $status = $requiresCustomerConfirmation
+                    ? AppointmentStatus::PendingCustomer
+                    : AppointmentStatus::Confirmed;
+
                 $appointment = Appointment::create([
                     'tenant_id' => $tenant->id,
                     'customer_id' => $customer->id,
@@ -214,13 +221,57 @@ class AppointmentService
                     'timezone' => $setting->timezone,
                     'duration_minutes' => $duration,
                     'buffer_minutes' => $buffer,
-                    'status' => AppointmentStatus::Confirmed,
+                    'status' => $status,
                     'customer_reason' => $customerReason,
                     'internal_notes' => $internalNotes,
                     'requested_at' => $nowUtc,
-                    'confirmed_at' => $nowUtc,
+                    'confirmed_at' => $requiresCustomerConfirmation ? null : $nowUtc,
                     'created_by_user_id' => $actor->id,
                 ]);
+
+                if ($requiresCustomerConfirmation) {
+                    $expiresAt = $nowUtc->addHours($setting->proposal_hold_hours)
+                        ->min($startsAtUtc->subMinutes($setting->minimum_notice_minutes));
+
+                    if ($expiresAt->lessThanOrEqualTo($nowUtc)) {
+                        throw new AppointmentDomainException(
+                            'APPOINTMENT_PROPOSAL_EXPIRY_INVALID',
+                            'La fecha propuesta no deja tiempo suficiente para responder.',
+                            422,
+                        );
+                    }
+
+                    $proposal = AppointmentProposal::create([
+                        'tenant_id' => $tenant->id,
+                        'appointment_id' => $appointment->id,
+                        'proposed_by_user_id' => $actor->id,
+                        'starts_at' => $startsAtUtc,
+                        'ends_at' => $endsAtUtc,
+                        'duration_minutes' => $duration,
+                        'previous_appointment_status' => AppointmentStatus::PendingTenant,
+                        'message' => $customerReason,
+                        'status' => AppointmentProposalStatus::Pending,
+                        'expires_at' => $expiresAt,
+                    ]);
+
+                    $this->recordEvent(
+                        $appointment,
+                        $actor,
+                        AppointmentEventType::Proposed,
+                        null,
+                        AppointmentStatus::PendingCustomer,
+                        [
+                            'proposal_id' => $proposal->id,
+                            'source' => 'tenant_manual',
+                            'starts_at' => $startsAtUtc->toIso8601String(),
+                            'ends_at' => $endsAtUtc->toIso8601String(),
+                            'expires_at' => $expiresAt->toIso8601String(),
+                        ],
+                    );
+
+                    return $appointment;
+                }
+
                 $this->recordEvent(
                     $appointment,
                     $actor,

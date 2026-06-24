@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\AppointmentEventType;
+use App\Enums\AppointmentProposalStatus;
 use App\Enums\AppointmentStatus;
 use App\Http\Middleware\CheckTenantSubscription;
 use App\Http\Middleware\EnsureApiTenantAccess;
@@ -10,13 +11,18 @@ use App\Http\Middleware\EnsureTenantHasActivePlan;
 use App\Http\Middleware\EnsureValidMobileAccessSession;
 use App\Http\Middleware\EnsureValidWebAccessSession;
 use App\Models\Animal;
+use App\Models\AnimalPortalVisibilitySetting;
 use App\Models\AnimalType;
 use App\Models\Appointment;
 use App\Models\AppointmentEvent;
+use App\Models\AppointmentProposal;
 use App\Models\AppointmentSetting;
 use App\Models\CatalogItem;
 use App\Models\Customer;
+use App\Models\CustomerPortalAccess;
+use App\Models\CustomerUserLink;
 use App\Models\DoctorSchedule;
+use App\Models\FinalUserPatientAssignment;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\VeterinarianProfile;
@@ -148,6 +154,56 @@ class TenantAppointmentHttpTest extends TestCase
                 'customer_id' => $foreignCustomer->id,
             ]))
             ->assertNotFound();
+    }
+
+    public function test_manual_api_can_create_customer_confirmation_proposal(): void
+    {
+        $this->actingAsAdminApi();
+        $payload = array_merge($this->manualPayload(), [
+            'requires_customer_confirmation' => true,
+        ]);
+
+        $response = $this->withHeader('Idempotency-Key', 'tenant-manual-proposal-1')
+            ->postJson('/api/v1/appointments/manual', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.status', AppointmentStatus::PendingCustomer->value)
+            ->assertJsonPath('data.pending_proposal.status', AppointmentProposalStatus::Pending->value)
+            ->assertJsonPath('data.confirmed_at', null);
+
+        $appointmentId = $response->json('data.id');
+        $proposalId = $response->json('data.pending_proposal.id');
+        $this->assertDatabaseHas('appointment_proposals', [
+            'id' => $proposalId,
+            'appointment_id' => $appointmentId,
+            'previous_appointment_status' => AppointmentStatus::PendingTenant->value,
+            'status' => AppointmentProposalStatus::Pending->value,
+        ]);
+        $this->assertDatabaseHas('appointment_events', [
+            'appointment_id' => $appointmentId,
+            'event_type' => AppointmentEventType::Proposed->value,
+            'new_status' => AppointmentStatus::PendingCustomer->value,
+        ]);
+
+        $customerUser = $this->createCustomerPortalUser();
+        Sanctum::actingAs($customerUser);
+
+        $this->getJson('/api/v1/portal/appointments')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $appointmentId)
+            ->assertJsonPath('data.0.status', AppointmentStatus::PendingCustomer->value)
+            ->assertJsonPath('data.0.pending_proposal.id', $proposalId)
+            ->assertJsonPath('data.0.can_respond_to_proposal', true)
+            ->assertJsonMissingPath('data.0.internal_notes');
+
+        $this->withHeader('Idempotency-Key', 'tenant-manual-proposal-accept-1')
+            ->postJson("/api/v1/portal/appointments/{$appointmentId}/proposals/{$proposalId}/accept")
+            ->assertOk()
+            ->assertJsonPath('data.status', AppointmentStatus::Confirmed->value);
+
+        $appointment = Appointment::findOrFail($appointmentId);
+        $this->assertSame(AppointmentStatus::Confirmed, $appointment->status);
+        $this->assertNotNull($appointment->confirmed_at);
+        $this->assertSame(AppointmentProposalStatus::Accepted, AppointmentProposal::findOrFail($proposalId)->status);
     }
 
     public function test_api_can_confirm_reject_and_propose_with_stable_domain_errors(): void
@@ -352,6 +408,48 @@ class TenantAppointmentHttpTest extends TestCase
             'customer_reason' => 'Consulta manual',
             'internal_notes' => 'Nota interna',
         ];
+    }
+
+    private function createCustomerPortalUser(): User
+    {
+        Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web']);
+
+        $user = User::factory()->create([
+            'tenant_id' => $this->context['tenant']->id,
+            'is_active' => true,
+        ]);
+        $user->assignRole('customer');
+
+        CustomerUserLink::create([
+            'tenant_id' => $this->context['tenant']->id,
+            'customer_id' => $this->context['customer']->id,
+            'user_id' => $user->id,
+            'relationship' => 'owner',
+            'is_primary' => true,
+        ]);
+        CustomerPortalAccess::create([
+            'tenant_id' => $this->context['tenant']->id,
+            'customer_id' => $this->context['customer']->id,
+            'user_id' => $user->id,
+            'status' => 'active',
+            'access_starts_at' => now()->subDay(),
+        ]);
+        FinalUserPatientAssignment::create([
+            'tenant_id' => $this->context['tenant']->id,
+            'customer_id' => $this->context['customer']->id,
+            'user_id' => $user->id,
+            'animal_id' => $this->context['animal']->id,
+            'assigned_at' => now(),
+        ]);
+        AnimalPortalVisibilitySetting::create([
+            'tenant_id' => $this->context['tenant']->id,
+            'customer_id' => $this->context['customer']->id,
+            'user_id' => $user->id,
+            'animal_id' => $this->context['animal']->id,
+            'show_appointments' => true,
+        ]);
+
+        return $user;
     }
 
     private function appointment(array $overrides = []): Appointment
