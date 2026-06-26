@@ -33,6 +33,7 @@ use App\Http\Controllers\Client\VaccinationLetterController;
 use App\Http\Controllers\PublicCustomerPaymentController;
 use App\Http\Controllers\PublicNotePaymentController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Services\Auth\TenantSessionGuard;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -78,6 +79,12 @@ $redirectAuthenticatedUser = function () {
     }
 
     if ($user->tenant_id) {
+        $access = app(TenantSessionGuard::class)->canEnterBillingArea($user);
+
+        if (($access['billing_limited'] ?? false) === true) {
+            return redirect()->route('client.profile.index');
+        }
+
         return redirect()->route('client.dashboard');
     }
 
@@ -144,6 +151,15 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::delete('/tenants/{tenant}/payments/{payment}', [TenantsController::class, 'destroyPayment'])->name('tenants.payments.destroy');
     });
 
+Route::middleware(['auth', 'access.web', 'tenant.plan'])
+    ->prefix('client')
+    ->name('client.')
+    ->group(function () {
+        Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('mi-configuracion/plan/stripe-checkout', [ClientConfiguracionController::class, 'stripeCheckout'])->name('mi-configuracion.plan.stripe-checkout');
+    });
+
 Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscription'])
     ->prefix('client')
     ->name('client.')
@@ -151,8 +167,6 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
         Route::patch('/dashboard/onboarding-banner/dismiss', [ClientDashboardController::class, 'dismissOnboardingBanner'])
             ->name('dashboard.onboarding-banner.dismiss');
-        Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
-        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
         Route::get('/notificaciones/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
         Route::patch('/notificaciones/{notification}/leer', [NotificationController::class, 'markRead'])->name('notifications.mark-read');
@@ -261,7 +275,6 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::post('mi-configuracion/importar-clientes', [ClientConfiguracionController::class, 'importCustomers'])->name('mi-configuracion.import-customers');
         Route::post('mi-configuracion/importar-servicios', [ClientConfiguracionController::class, 'importServices'])->name('mi-configuracion.import-services');
         Route::post('mi-configuracion/importar-caballos', [ClientConfiguracionController::class, 'importHorses'])->name('mi-configuracion.import-horses');
-        Route::post('mi-configuracion/plan/stripe-checkout', [ClientConfiguracionController::class, 'stripeCheckout'])->name('mi-configuracion.plan.stripe-checkout');
 
         /*
 a           |--------------------------------------------------------------------------

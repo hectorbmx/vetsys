@@ -50,7 +50,7 @@ class LoginController extends Controller
             return back()->withErrors(['email' => 'Tu usuario no tiene un perfil valido para acceder.'])->onlyInput('email');
         }
 
-        $access = app(TenantSessionGuard::class)->canLogin($user);
+        $access = app(TenantSessionGuard::class)->canEnterBillingArea($user);
 
         if (! $access['allowed']) {
             $this->logoutCurrentDevice($request);
@@ -76,6 +76,10 @@ class LoginController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
         $accessManager->registerWeb($user, $request);
+
+        if ($access['billing_limited'] ?? false) {
+            return redirect()->route('client.profile.index');
+        }
 
         return redirect()->route('client.dashboard');
     }

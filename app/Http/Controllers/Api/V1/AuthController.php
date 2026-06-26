@@ -51,7 +51,9 @@ class AuthController extends Controller
         if (! $access['allowed']) {
             return response()->json([
                 'message' => $access['message'],
-            ], 403);
+                'code' => $access['code'],
+                'billing_status' => $access['billing_status'],
+            ], $access['http_status'] ?? 403);
         }
 
         $accessManager = app(UserAccessSessionManager::class);
