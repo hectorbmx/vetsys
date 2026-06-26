@@ -1408,8 +1408,8 @@ public function stripeCheckout(Request $request)
         $session = app(StripeTenantCheckoutService::class)->createPlanCheckout(
             $tenant,
             $plan,
-            route('client.mi-configuracion.index') . '?stripe_success=1',
-            route('client.mi-configuracion.index') . '?stripe_cancel=1',
+            route('client.profile.index') . '?stripe_success=1',
+            route('client.profile.index') . '?stripe_cancel=1',
             auth()->id()
         );
     } catch (\Throwable $exception) {

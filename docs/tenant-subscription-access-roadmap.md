@@ -582,11 +582,32 @@ Criterio de salida:
 
 ### Fase 4: creacion/asignacion de plan
 
-- [ ] Agregar decision de acceso inicial en crear tenant.
-- [ ] Agregar trial con fecha fin.
-- [ ] Crear pago `$0` para trial.
-- [ ] Crear pending para Stripe/transferencia.
-- [ ] Mantener pago confirmado manual.
+- [x] Agregar decision de acceso inicial en crear tenant.
+- [x] Agregar trial con fecha fin.
+- [x] Crear pago `$0` para trial.
+- [x] Crear pending para Stripe/transferencia.
+- [x] Mantener pago confirmado manual.
+
+Ejecucion:
+
+- `Admin\TenantsController@store` ahora exige `billing_action`,
+  `starts_at` y `ends_at`, y crea siempre suscripcion + pago/intencion al
+  crear tenant.
+- `Admin\TenantsController@assignPlan` reutiliza la misma regla manual para
+  trial, pago confirmado y pago pendiente.
+- `createManualBillingRecord()` centraliza la creacion manual de:
+  - trial: suscripcion `active`, pago `paid`, amount `0`, method `trial`;
+  - pago confirmado: suscripcion `active`/`scheduled`, pago `paid`;
+  - pago pendiente: suscripcion `pending`, pago `pending`.
+- El flujo Stripe existente conserva `StripeTenantCheckoutService`, que ya
+  crea suscripcion y pago pendiente.
+- Prueba local con rollback:
+  - `trial`: `subs=1`, `payments=1`, `sub_status=active`,
+    `pay_status=paid`, `amount=0.00`;
+  - `paid`: `subs=1`, `payments=1`, `sub_status=active`,
+    `pay_status=paid`;
+  - `pending`: `subs=1`, `payments=1`, `sub_status=pending`,
+    `pay_status=pending`.
 
 Criterio de salida:
 
@@ -595,11 +616,23 @@ Criterio de salida:
 
 ### Fase 5: UI master
 
-- [ ] Reordenar modal `Agregar Plan`.
-- [ ] Separar plan seleccionado de suscripcion activa.
-- [ ] Mostrar acciones segun estado.
-- [ ] Mostrar trial en historial.
-- [ ] Mostrar links Stripe pendientes.
+- [x] Reordenar modal `Agregar Plan`.
+- [x] Separar plan seleccionado de suscripcion activa.
+- [x] Mostrar acciones segun estado.
+- [x] Mostrar trial en historial.
+- [x] Mostrar links Stripe pendientes.
+
+Ejecucion:
+
+- El detalle admin ahora recibe `billingSummary` desde `TenantsController`.
+- La vista separa `Plan asignado` de `Suscripcion`.
+- El card de suscripcion muestra estados de negocio: trial vigente, pago
+  pendiente, suscripcion activa, vencido, sin contrato o bloqueo
+  administrativo.
+- El historial de pagos traduce metodos y estados para trial, Stripe checkout,
+  transferencia, efectivo, pagado, pendiente y cancelado.
+- El modal `Agregar Plan` incluye ayuda sobre trial `$0` y pago pendiente sin
+  acceso operativo.
 
 Criterio de salida:
 
@@ -607,11 +640,22 @@ Criterio de salida:
 
 ### Fase 6: UI cliente
 
-- [ ] Ajustar perfil/facturacion.
-- [ ] Cambiar `Renovar con Stripe` por `Pagar plan` cuando aplique.
-- [ ] Mostrar trial vigente.
-- [ ] Mostrar pago pendiente.
-- [ ] Mostrar vencimiento real.
+- [x] Ajustar perfil/facturacion.
+- [x] Cambiar `Renovar con Stripe` por `Pagar plan` cuando aplique.
+- [x] Mostrar trial vigente.
+- [x] Mostrar pago pendiente.
+- [x] Mostrar vencimiento real.
+
+Ejecucion:
+
+- `Client\ProfileController` ahora calcula `billingSummary` para la vista.
+- `/client/profile` muestra `Plan asignado` y estado real de billing.
+- La seccion de facturacion usa `Pagar plan`, `Continuar pago`, `Renovar
+  plan`, `Trial activo` o `Suscripcion vencida` segun estado.
+- La tabla de pagos traduce metodos y estados para cliente.
+- El checkout Stripe iniciado desde cliente vuelve a `/client/profile`, ruta
+  permitida en facturacion limitada.
+- Render local de `ProfileController@index` validado correctamente.
 
 Criterio de salida:
 
@@ -619,10 +663,25 @@ Criterio de salida:
 
 ### Fase 7: migracion y limpieza de datos
 
-- [ ] Crear comando o script de auditoria.
-- [ ] Crear registros faltantes para tenants existentes segun decision.
-- [ ] Corregir tenants activos sin contrato.
-- [ ] Documentar excepciones.
+- [x] Crear comando o script de auditoria.
+- [x] Crear registros faltantes para tenants existentes segun decision.
+- [x] Corregir tenants activos sin contrato.
+- [x] Documentar excepciones.
+
+Ejecucion:
+
+- Auditoria disponible: `php artisan tenants:audit-subscriptions`.
+- Normalizacion trial historico disponible:
+  `php artisan tenants:normalize-trial {tenant_id} --starts=YYYY-MM-DD
+  --ends=YYYY-MM-DD --created-by=ID --apply`.
+- El comando `tenants:normalize-trial` corre en dry-run por defecto.
+- Documento operativo agregado:
+  `docs/tenant-subscription-production-normalization.md`.
+- Produccion fue normalizada manualmente antes del deploy:
+  - tenant `1`: trial historico `$0`;
+  - tenant `2`: cancelado con `is_active = false`;
+  - tenant `5`: queda en facturacion limitada por pago pendiente;
+  - check final de activos sin respaldo: `0`.
 
 Criterio de salida:
 
@@ -631,14 +690,34 @@ Criterio de salida:
 
 ### Fase 8: pruebas
 
-- [ ] Feature test: tenant sin plan no entra.
-- [ ] Feature test: tenant con plan sin pago no entra a modulos.
-- [ ] Feature test: tenant con checkout pendiente solo ve facturacion.
-- [ ] Feature test: trial activo entra.
-- [ ] Feature test: trial vencido no entra.
-- [ ] Feature test: pago manual confirmado entra.
+- [x] Feature test: tenant sin plan no entra.
+- [x] Feature test: tenant con plan sin pago no entra a modulos.
+- [x] Feature test: tenant con checkout pendiente solo ve facturacion.
+- [x] Feature test: trial activo entra.
+- [x] Feature test: trial vencido no entra.
+- [x] Feature test: pago manual confirmado entra.
 - [ ] Feature test: Stripe paid activa acceso.
-- [ ] API test: bloqueo devuelve `402`.
+- [x] API test: bloqueo devuelve `402`.
+
+Ejecucion:
+
+- `tests/Feature/TenantSessionGuardTest.php` cubre:
+  - plan sin suscripcion/pago queda en facturacion limitada;
+  - pago pendiente queda en facturacion limitada;
+  - trial activo entra;
+  - trial vencido bloquea;
+  - pago confirmado vigente entra;
+  - tenant inactivo no entra ni a facturacion.
+- `tests/Feature/TenantBillingAccessHttpTest.php` cubre:
+  - ruta operativa responde `402` con pantalla restringida para tenant
+    billing-limited;
+  - `/client/profile` sigue disponible para tenant billing-limited.
+- Comando ejecutado:
+  `php artisan test --filter='TenantSessionGuardTest|TenantBillingAccessHttpTest'`.
+- Resultado: 8 tests, 21 assertions, passed.
+- Pendiente especifico: prueba end-to-end de webhook Stripe `paid`; queda fuera
+  de esta pasada porque requiere simular payload Stripe/webhook con IDs de
+  proveedor.
 
 Criterio de salida:
 

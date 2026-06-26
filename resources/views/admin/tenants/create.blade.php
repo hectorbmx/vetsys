@@ -155,6 +155,89 @@
             </div>
         </div>
 
+        <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+            <div class="px-8 py-5 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-black text-[11px] uppercase tracking-widest text-slate-500">
+                    Acceso inicial
+                </h2>
+            </div>
+
+            <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div class="space-y-2 md:col-span-2">
+                    <label class="block text-[11px] font-black text-[#0F172A] uppercase tracking-wider ml-1">
+                        Como se manejara el acceso inicial
+                    </label>
+                    <select name="billing_action"
+                            class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all cursor-pointer">
+                        <option value="trial" @selected(old('billing_action', 'trial') === 'trial')>Trial sin cargo</option>
+                        <option value="paid" @selected(old('billing_action') === 'paid')>Pago confirmado</option>
+                        <option value="pending" @selected(old('billing_action') === 'pending')>Pago pendiente</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-black text-[#0F172A] uppercase tracking-wider ml-1">
+                        Fecha inicio
+                    </label>
+                    <input type="date"
+                           name="starts_at"
+                           value="{{ old('starts_at', now()->format('Y-m-d')) }}"
+                           class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-black text-[#0F172A] uppercase tracking-wider ml-1">
+                        Fecha fin
+                    </label>
+                    <input type="date"
+                           name="ends_at"
+                           value="{{ old('ends_at', now()->addDays(30)->format('Y-m-d')) }}"
+                           class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-black text-[#0F172A] uppercase tracking-wider ml-1">
+                        Monto
+                    </label>
+                    <input type="number"
+                           step="0.01"
+                           name="amount"
+                           value="{{ old('amount', '0.00') }}"
+                           class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Para trial el sistema fuerza $0.00.</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-black text-[#0F172A] uppercase tracking-wider ml-1">
+                        Metodo
+                    </label>
+                    <select name="payment_method"
+                            class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all cursor-pointer">
+                        <option value="transfer" @selected(old('payment_method') === 'transfer')>Transferencia</option>
+                        <option value="cash" @selected(old('payment_method') === 'cash')>Efectivo</option>
+                        <option value="card_manual" @selected(old('payment_method') === 'card_manual')>Tarjeta manual</option>
+                        <option value="manual" @selected(old('payment_method', 'manual') === 'manual')>Manual</option>
+                        <option value="other" @selected(old('payment_method') === 'other')>Otro</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2 md:col-span-2">
+                    <label class="block text-[11px] font-black text-[#0F172A] uppercase tracking-wider ml-1">
+                        Referencia / notas
+                    </label>
+                    <input type="text"
+                           name="payment_reference"
+                           value="{{ old('payment_reference') }}"
+                           class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all"
+                           placeholder="Referencia de pago si aplica">
+                    <textarea name="notes"
+                              rows="3"
+                              class="mt-3 w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-[#38B2AC] focus:ring-4 focus:ring-[#38B2AC]/10 transition-all"
+                              placeholder="Notas internas">{{ old('notes') }}</textarea>
+                </div>
+            </div>
+        </div>
+
         {{-- Footer de acciones con contraste invertido --}}
         <div class="flex items-center justify-between bg-slate-900 p-2 rounded-[20px] shadow-xl">
             <a href="{{ route('admin.tenants.index') }}"

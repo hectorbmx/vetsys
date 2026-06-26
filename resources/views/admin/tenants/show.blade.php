@@ -135,12 +135,43 @@
         <div class="lg:col-span-4 space-y-6">
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Actual</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan asignado</p>
                     <p class="text-lg font-black text-[#0F172A] mt-1">{{ $tenant->plan->name ?? 'N/A' }}</p>
                 </div>
                 <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuarios</p>
                     <p class="text-lg font-black text-[#0F172A] mt-1">{{ $tenant->users->count() }}</p>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suscripcion</p>
+                        <p class="text-xl font-black text-[#0F172A] mt-1">{{ $billingSummary['label'] }}</p>
+                        <p class="text-xs font-semibold text-slate-500 mt-1">{{ $billingSummary['description'] }}</p>
+                    </div>
+                    <span class="shrink-0 inline-flex rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest {{ $billingSummary['badge'] }}">
+                        {{ $billingSummary['status'] }}
+                    </span>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vence</p>
+                        <p class="text-sm font-black text-[#0F172A] mt-1">{{ $billingSummary['ends_at'] ? $billingSummary['ends_at']->format('d M, Y') : 'Sin fecha' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Evidencia</p>
+                        <p class="text-sm font-black text-[#0F172A] mt-1">
+                            @if($billingSummary['payment'])
+                                Pago #{{ $billingSummary['payment']->id }}
+                            @elseif($billingSummary['active_subscription'])
+                                Sub #{{ $billingSummary['active_subscription']->id }}
+                            @else
+                                Sin registro
+                            @endif
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -187,7 +218,7 @@
                     <div class="pt-4 border-t border-white/10 space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-[10px] text-white/40 uppercase font-black">Suscripción</span>
-                            <span class="text-xs font-bold">{{ $tenant->subscription_ends_at ? $tenant->subscription_ends_at->format('d M, Y') : 'Vencida' }}</span>
+                            <span class="text-xs font-bold">{{ $billingSummary['label'] }}</span>
                         </div>
                     </div>
                 </div>
@@ -301,7 +332,17 @@
            <td class="px-8 py-4">
     <div class="flex items-center gap-2">
         <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest">
-            {{ $payment->payment_method ?? $payment->provider ?? 'manual' }}
+            @if($payment->payment_method === 'trial')
+                Trial
+            @elseif($payment->payment_method === 'stripe_checkout')
+                Stripe checkout
+            @elseif($payment->payment_method === 'transfer')
+                Transferencia
+            @elseif($payment->payment_method === 'cash')
+                Efectivo
+            @else
+                {{ $payment->payment_method ?? $payment->provider ?? 'manual' }}
+            @endif
         </span>
         @if($payment->status === 'pending' && $payment->payment_reference && str_starts_with($payment->payment_reference, 'https://'))
             <a href="https://wa.me/?text={{ urlencode($payment->payment_reference) }}"
@@ -332,7 +373,15 @@
                         bg-slate-100 text-slate-500
                     @endif
                 ">
-                    {{ $payment->status }}
+                    @if($payment->status === 'paid')
+                        Pagado
+                    @elseif($payment->status === 'pending')
+                        Pendiente
+                    @elseif($payment->status === 'cancelled')
+                        Cancelado
+                    @else
+                        {{ $payment->status }}
+                    @endif
                 </span>
             </td>
 
@@ -414,6 +463,24 @@
                     </select>
                 </div>
 
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                        Tipo de registro
+                    </label>
+                    <select
+                        name="billing_action"
+                        required
+                        class="w-full rounded-2xl border-slate-200 focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                    >
+                        <option value="trial">Trial sin cargo</option>
+                        <option value="paid">Pago confirmado</option>
+                        <option value="pending">Pago pendiente</option>
+                    </select>
+                    <p class="mt-2 text-[11px] font-semibold text-slate-400">
+                        Trial fuerza monto $0. Pago pendiente no habilita acceso operativo hasta confirmarse.
+                    </p>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
@@ -470,8 +537,6 @@
                             <option value="cash">Efectivo</option>
                             <option value="transfer">Transferencia</option>
                             <option value="card_manual">Tarjeta de credito manual</option>
-                            <option value="card">Tarjeta</option>
-                            <option value="stripe">Stripe</option>
                             <option value="other">Otro</option>
                         </select>
                     </div>

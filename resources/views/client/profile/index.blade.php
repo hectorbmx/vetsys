@@ -124,7 +124,7 @@
                 <div class="relative overflow-hidden theme-surface-dark rounded-[24px] p-6 shadow-xl shadow-slate-200 min-h-[210px]">
                     <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full theme-bg-primary-soft-hover"></div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-black uppercase tracking-[0.24em] theme-text-primary">Plan Contratado</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] theme-text-primary">Plan asignado</p>
                         <h3 class="text-3xl font-black text-white mt-4">{{ $tenant->plan->name ?? 'Sin plan' }}</h3>
                         <p class="text-sm font-semibold text-slate-300 mt-2">{{ $tenant->plan->description ?? 'Sin descripcion disponible.' }}</p>
 
@@ -149,8 +149,11 @@
                 <div class="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Suscripcion</p>
                     <h3 class="text-2xl font-black theme-text-heading mt-3">
-                        {{ $currentSubscription->status ?? $tenant->status }}
+                        {{ $billingSummary['title'] }}
                     </h3>
+                    <span class="inline-flex mt-3 rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest {{ $billingSummary['badge'] }}">
+                        {{ $billingSummary['status'] }}
+                    </span>
 
                     <div class="mt-5 space-y-3 text-sm">
                         <div class="flex justify-between gap-4">
@@ -160,7 +163,7 @@
                         <div class="flex justify-between gap-4">
                             <span class="font-bold text-slate-400">Vence</span>
                             <span class="font-black {{ $tenant->subscription_ends_at && $tenant->subscription_ends_at->isPast() ? 'text-rose-600' : 'theme-text-heading' }}">
-                                {{ optional($tenant->subscription_ends_at ?? $currentSubscription?->ends_at)->format('d/m/Y') ?? '--' }}
+                                {{ optional($billingSummary['ends_at'] ?? $tenant->subscription_ends_at ?? $currentSubscription?->ends_at)->format('d/m/Y') ?? '--' }}
                             </span>
                         </div>
                         <div class="flex justify-between gap-4">
@@ -196,14 +199,8 @@
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                        <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Renovacion</h3>
-                        @if($pendingCheckout)
-                            <p class="text-[11px] font-semibold text-amber-500 mt-1">Tienes un pago pendiente de completar.</p>
-                        @elseif($canCheckout)
-                            <p class="text-[11px] font-semibold text-slate-400 mt-1">Renueva tu plan en linea con tarjeta via Stripe.</p>
-                        @else
-                            <p class="text-[11px] font-semibold text-slate-400 mt-1">La renovacion en linea se activara mas adelante.</p>
-                        @endif
+                        <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Facturacion</h3>
+                        <p class="text-[11px] font-semibold text-slate-400 mt-1">{{ $billingSummary['description'] }}</p>
                     </div>
 
                     @if($pendingCheckout && $pendingCheckout->payment_reference)
@@ -212,19 +209,19 @@
                            class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                             Continuar pago
                         </a>
-                    @elseif($canCheckout)
+                    @elseif($canCheckout && ($billingSummary['can_pay'] ?? true))
                         <form action="{{ route('client.mi-configuracion.plan.stripe-checkout') }}" method="POST">
                             @csrf
                             <input type="hidden" name="plan_id" value="{{ $tenant->plan->id }}">
                             <button type="submit"
                                     class="theme-button-dark px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                                Renovar con Stripe
+                                {{ $billingSummary['action_label'] }}
                             </button>
                         </form>
                     @else
                         <button type="button" disabled
                                 class="bg-slate-100 text-slate-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
-                            Solicitar renovacion
+                            {{ $billingSummary['action_label'] ?? 'Solicitar apoyo' }}
                         </button>
                     @endif
                 </div>
@@ -247,9 +244,9 @@
                         </div>
                     @elseif($canCheckout)
                         <div class="rounded-2xl bg-teal-50 border border-teal-100 p-4">
-                            <p class="text-xs font-black text-teal-900">Pago en linea activo</p>
+                            <p class="text-xs font-black text-teal-900">{{ $billingSummary['title'] }}</p>
                             <p class="text-[11px] font-semibold text-teal-700 mt-1">
-                                Puedes renovar tu plan "{{ $tenant->plan->name }}" por
+                                Puedes pagar tu plan "{{ $tenant->plan->name }}" por
                                 ${{ number_format($tenant->plan->price, 2) }} {{ $tenant->plan->currency }}
                                 directamente con tarjeta.
                             </p>
@@ -294,9 +291,29 @@
                             <tr>
                                 <td class="px-6 py-4 text-xs font-bold text-slate-600">{{ optional($payment->paid_at)->format('d/m/Y') ?? $payment->created_at->format('d/m/Y') }}</td>
                                 <td class="px-6 py-4 text-xs font-bold theme-text-heading">{{ $payment->plan->name ?? 'N/A' }}</td>
-                                <td class="px-6 py-4 text-xs font-semibold text-slate-500">{{ $payment->payment_method ?? 'Manual' }}</td>
+                                <td class="px-6 py-4 text-xs font-semibold text-slate-500">
+                                    @if($payment->payment_method === 'trial')
+                                        Trial
+                                    @elseif($payment->payment_method === 'stripe_checkout')
+                                        Stripe
+                                    @elseif($payment->payment_method === 'transfer')
+                                        Transferencia
+                                    @elseif($payment->payment_method === 'cash')
+                                        Efectivo
+                                    @else
+                                        {{ $payment->payment_method ?? 'Manual' }}
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $payment->status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">{{ $payment->status }}</span>
+                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $payment->status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
+                                        @if($payment->status === 'paid')
+                                            Pagado
+                                        @elseif($payment->status === 'pending')
+                                            Pendiente
+                                        @else
+                                            {{ $payment->status }}
+                                        @endif
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 text-xs font-black text-right theme-text-heading">${{ number_format($payment->amount, 2) }} {{ $payment->currency }}</td>
                             </tr>

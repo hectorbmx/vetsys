@@ -64,12 +64,14 @@ public function show(Tenant $tenant)
         ->where('status', 'pending')
         ->sortByDesc('created_at')
         ->first();
+    $billingSummary = $this->tenantBillingSummary($tenant);
 
     return view('admin.tenants.show', compact(
         'tenant',
         'plans',
         'payments',
-        'pendingPlanRequest'
+        'pendingPlanRequest',
+        'billingSummary'
     ));
 }
    public function update(Request $request, Tenant $tenant)
@@ -133,6 +135,13 @@ public function show(Tenant $tenant)
             'phone' => ['nullable', 'string', 'max:50'],
             'status' => ['nullable', 'in:active,inactive,suspended,cancelled'],
             'plan_id' => ['required', 'exists:plans,id'],
+            'billing_action' => ['required', Rule::in(['trial', 'paid', 'pending'])],
+            'starts_at' => ['required', 'date'],
+            'ends_at' => ['required', 'date', 'after_or_equal:starts_at'],
+            'amount' => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', Rule::in(['cash', 'transfer', 'card_manual', 'manual', 'other'])],
+            'payment_reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
         ]);
 
         $activationCode = (string) random_int(100000, 999999);
@@ -146,7 +155,33 @@ public function show(Tenant $tenant)
         $validated['activation_link_token'] = hash('sha256', $activationToken);
         $validated['activation_expires_at'] = now()->addDays(7);
 
-        $tenant = Tenant::create($validated);
+        $billingData = collect($validated)->only([
+            'billing_action',
+            'starts_at',
+            'ends_at',
+            'amount',
+            'payment_method',
+            'payment_reference',
+            'notes',
+        ])->all();
+
+        $tenantData = collect($validated)->except([
+            'billing_action',
+            'starts_at',
+            'ends_at',
+            'amount',
+            'payment_method',
+            'payment_reference',
+            'notes',
+        ])->all();
+
+        $tenant = DB::transaction(function () use ($tenantData, $billingData) {
+            $tenant = Tenant::create($tenantData);
+            $this->createManualBillingRecord($tenant, $billingData);
+
+            return $tenant;
+        });
+
         $mailSent = $this->sendTenantActivationMail($tenant, $activationUrl, $activationCode);
 
         $this->flashTenantActivation($tenant, $activationCode, $activationUrl, $mailSent);
@@ -263,82 +298,18 @@ public function assignPlan(Request $request, Tenant $tenant)
 {
     $data = $request->validate([
         'plan_id' => ['required', 'exists:plans,id'],
+        'billing_action' => ['required', Rule::in(['trial', 'paid', 'pending'])],
         'starts_at' => ['required', 'date'],
         'ends_at' => ['required', 'date', 'after_or_equal:starts_at'],
-        'amount' => ['required', 'numeric', 'min:0'],
-        'payment_method' => ['required', 'string', 'max:50'],
+        'amount' => ['nullable', 'numeric', 'min:0'],
+        'payment_method' => ['nullable', Rule::in(['cash', 'transfer', 'card_manual', 'manual', 'other'])],
         'payment_reference' => ['nullable', 'string', 'max:255'],
         'notes' => ['nullable', 'string'],
     ]);
 
     DB::transaction(function () use ($tenant, $data) {
-        $startsAt = Carbon::parse($data['starts_at'])->startOfDay();
-        $endsAt = Carbon::parse($data['ends_at'])->endOfDay();
-        $subscriptionStatus = $startsAt->isFuture() ? 'scheduled' : 'active';
-
-        $pendingSubscription = TenantSubscription::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
-
-        if ($pendingSubscription) {
-            $pendingSubscription->update([
-                'plan_id' => $data['plan_id'],
-                'provider' => 'manual',
-                'status' => $subscriptionStatus,
-                'starts_at' => $startsAt,
-                'ends_at' => $endsAt,
-                'created_by' => auth()->id(),
-                'notes' => $data['notes'] ?? 'Solicitud atendida desde el panel admin al asignar plan.',
-            ]);
-
-            $subscription = $pendingSubscription;
-        } else {
-            $subscription = TenantSubscription::create([
-                'tenant_id' => $tenant->id,
-                'plan_id' => $data['plan_id'],
-                'provider' => 'manual',
-                'status' => $subscriptionStatus,
-                'starts_at' => $startsAt,
-                'ends_at' => $endsAt,
-                'created_by' => auth()->id(),
-                'notes' => $data['notes'] ?? null,
-            ]);
-        }
-
-        TenantPayment::updateOrCreate(
-            [
-                'tenant_id' => $tenant->id,
-                'tenant_subscription_id' => $subscription->id,
-            ],
-            [
-                'plan_id' => $data['plan_id'],
-                'provider' => 'manual',
-                'amount' => $data['amount'],
-                'currency' => 'MXN',
-                'status' => 'paid',
-                'payment_method' => $data['payment_method'],
-                'payment_reference' => $data['payment_reference'] ?? null,
-                'paid_at' => now(),
-                'period_starts_at' => $startsAt,
-                'period_ends_at' => $endsAt,
-                'created_by' => auth()->id(),
-                'notes' => $data['notes'] ?? null,
-            ]
-        );
-
-        $tenantData = [
-            'status' => $tenant->activated_at ? 'active' : 'inactive',
-            'is_active' => (bool) $tenant->activated_at,
-            'subscription_ends_at' => $endsAt,
-        ];
-
-        if ($subscriptionStatus === 'active') {
-            $tenantData['plan_id'] = $data['plan_id'];
-        }
-
-        $tenant->update($tenantData);
+        $this->cancelPendingManualBilling($tenant);
+        $this->createManualBillingRecord($tenant, $data);
     });
 
     return redirect()
@@ -391,6 +362,165 @@ public function stripeCheckoutLink(Request $request, Tenant $tenant)
     ->route('admin.tenants.show', $tenant)
     ->with('success', 'Link de Stripe generado correctamente.')
     ->with('stripe_checkout_link', $session->url);
+}
+
+private function createManualBillingRecord(Tenant $tenant, array $data): TenantSubscription
+{
+    $plan = Plan::findOrFail($data['plan_id']);
+    $startsAt = Carbon::parse($data['starts_at'])->startOfDay();
+    $endsAt = Carbon::parse($data['ends_at'])->endOfDay();
+    $billingAction = $data['billing_action'];
+    $isTrial = $billingAction === 'trial';
+    $isPaid = in_array($billingAction, ['trial', 'paid'], true);
+    $subscriptionStatus = $isPaid
+        ? ($startsAt->isFuture() ? 'scheduled' : 'active')
+        : 'pending';
+    $amount = $isTrial ? 0 : (float) ($data['amount'] ?? $plan->price ?? 0);
+    $paymentMethod = $isTrial
+        ? 'trial'
+        : ($data['payment_method'] ?? ($isPaid ? 'manual' : 'manual_pending'));
+    $note = $data['notes'] ?? match ($billingAction) {
+        'trial' => 'Trial otorgado desde master.',
+        'paid' => 'Pago manual registrado desde master.',
+        default => 'Pago pendiente registrado desde master.',
+    };
+
+    $subscription = TenantSubscription::create([
+        'tenant_id' => $tenant->id,
+        'plan_id' => $plan->id,
+        'provider' => 'manual',
+        'status' => $subscriptionStatus,
+        'starts_at' => $startsAt,
+        'trial_ends_at' => $isTrial ? $endsAt : null,
+        'ends_at' => $endsAt,
+        'created_by' => auth()->id(),
+        'notes' => $note,
+    ]);
+
+    TenantPayment::create([
+        'tenant_id' => $tenant->id,
+        'tenant_subscription_id' => $subscription->id,
+        'plan_id' => $plan->id,
+        'provider' => 'manual',
+        'amount' => $amount,
+        'currency' => $plan->currency ?? 'MXN',
+        'status' => $isPaid ? 'paid' : 'pending',
+        'payment_method' => $paymentMethod,
+        'payment_reference' => $data['payment_reference'] ?? null,
+        'paid_at' => $isPaid ? now() : null,
+        'period_starts_at' => $startsAt,
+        'period_ends_at' => $endsAt,
+        'created_by' => auth()->id(),
+        'notes' => $note,
+    ]);
+
+    $tenantData = [
+        'plan_id' => $plan->id,
+        'trial_ends_at' => $isTrial ? $endsAt : null,
+        'subscription_ends_at' => $isPaid ? $endsAt : null,
+    ];
+
+    if ($isPaid) {
+        $tenantData['status'] = $tenant->activated_at ? 'active' : $tenant->status;
+        $tenantData['is_active'] = $tenant->activated_at ? true : $tenant->is_active;
+    }
+
+    $tenant->update($tenantData);
+
+    return $subscription;
+}
+
+private function cancelPendingManualBilling(Tenant $tenant): void
+{
+    TenantPayment::where('tenant_id', $tenant->id)
+        ->where('status', 'pending')
+        ->where('provider', 'manual')
+        ->update(['status' => 'cancelled']);
+
+    TenantSubscription::where('tenant_id', $tenant->id)
+        ->where('status', 'pending')
+        ->where('provider', 'manual')
+        ->update(['status' => 'cancelled']);
+}
+
+private function tenantBillingSummary(Tenant $tenant): array
+{
+    $subscriptions = $tenant->subscriptions;
+    $payments = $tenant->payments;
+    $activeSubscription = $subscriptions
+        ->where('status', 'active')
+        ->filter(fn ($subscription) => ! $subscription->ends_at || $subscription->ends_at->isFuture())
+        ->sortByDesc(fn ($subscription) => $subscription->starts_at ?? $subscription->created_at)
+        ->first();
+    $pendingPayment = $payments
+        ->where('status', 'pending')
+        ->sortByDesc('created_at')
+        ->first();
+    $paidPayment = $payments
+        ->where('status', 'paid')
+        ->filter(fn ($payment) => ! $payment->period_ends_at || $payment->period_ends_at->isFuture())
+        ->sortByDesc(fn ($payment) => $payment->period_ends_at ?? $payment->paid_at ?? $payment->created_at)
+        ->first();
+
+    if ($tenant->status !== 'active' || ! $tenant->is_active) {
+        return [
+            'status' => 'admin_blocked',
+            'label' => 'Bloqueo administrativo',
+            'description' => 'La cuenta no esta activa para operar.',
+            'badge' => 'bg-slate-100 text-slate-600',
+            'ends_at' => null,
+            'active_subscription' => $activeSubscription,
+            'payment' => $paidPayment ?? $pendingPayment,
+        ];
+    }
+
+    if ($activeSubscription && $paidPayment) {
+        $isTrial = $paidPayment->payment_method === 'trial' && (float) $paidPayment->amount === 0.0;
+
+        return [
+            'status' => $isTrial ? 'trial_active' : 'paid_active',
+            'label' => $isTrial ? 'Trial vigente' : 'Suscripcion activa',
+            'description' => $isTrial ? 'Acceso sin cargo hasta la fecha indicada.' : 'Pago vigente registrado.',
+            'badge' => $isTrial ? 'bg-sky-50 text-sky-700' : 'bg-emerald-50 text-emerald-700',
+            'ends_at' => $activeSubscription->ends_at ?? $paidPayment->period_ends_at,
+            'active_subscription' => $activeSubscription,
+            'payment' => $paidPayment,
+        ];
+    }
+
+    if ($pendingPayment || $pendingPlanRequest = $subscriptions->where('status', 'pending')->sortByDesc('created_at')->first()) {
+        return [
+            'status' => 'pending_payment',
+            'label' => 'Pago pendiente',
+            'description' => 'El tenant solo tendra facturacion limitada hasta confirmar pago.',
+            'badge' => 'bg-amber-50 text-amber-700',
+            'ends_at' => $pendingPayment?->period_ends_at ?? $pendingPlanRequest?->ends_at,
+            'active_subscription' => null,
+            'payment' => $pendingPayment,
+        ];
+    }
+
+    if ($tenant->subscription_ends_at && $tenant->subscription_ends_at->isPast()) {
+        return [
+            'status' => 'expired',
+            'label' => 'Vencido',
+            'description' => 'La vigencia registrada ya termino.',
+            'badge' => 'bg-rose-50 text-rose-700',
+            'ends_at' => $tenant->subscription_ends_at,
+            'active_subscription' => null,
+            'payment' => null,
+        ];
+    }
+
+    return [
+        'status' => 'missing_contract',
+        'label' => 'Sin contrato registrado',
+        'description' => 'Tiene plan asignado, pero falta suscripcion y pago/intencion.',
+        'badge' => 'bg-rose-50 text-rose-700',
+        'ends_at' => $tenant->subscription_ends_at,
+        'active_subscription' => null,
+        'payment' => null,
+    ];
 }
 
 public function destroyPayment(Tenant $tenant, TenantPayment $payment)
