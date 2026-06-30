@@ -2,7 +2,16 @@
 
 ## Estado
 
-Propuesta inicial pendiente de ajustes y aprobacion antes de comenzar la implementacion.
+Fase 1 cerrada para web/Android el 2026-06-30.
+
+Queda creada la base local mediante IndexedDB en web y SQLite nativo en movil,
+el contrato de stores iniciales, repositorios de lectura y el upsert del
+bootstrap movil. El backend ya entrega `notes` y `note_details` en
+`/api/v1/mobile/bootstrap`.
+
+Android quedo sincronizado con Capacitor. iOS requiere repetir `cap sync ios`
+cuando se resuelva el bloqueo `EPERM` sobre `ios/App/App/capacitor.config.json`
+y symlinks de SPM.
 
 ## Objetivo
 

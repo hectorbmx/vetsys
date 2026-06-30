@@ -98,6 +98,8 @@ Includes:
 - `customers`
 - `animals`
 - `animal_field_values`
+- `notes`
+- `note_details`
 
 Save `server_time` locally as the next pull cursor.
 

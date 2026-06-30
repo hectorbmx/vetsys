@@ -10,6 +10,8 @@ use App\Models\AnimalTypeField;
 use App\Models\CatalogItem;
 use App\Models\Club;
 use App\Models\Customer;
+use App\Models\Note;
+use App\Models\NoteDetail;
 use App\Models\PaymentMethod;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,6 +43,8 @@ class MobileBootstrapController extends Controller
             'customers' => $this->customers($tenant->id, $since),
             'animals' => $this->animals($tenant->id, $since),
             'animal_field_values' => $this->animalFieldValues($tenant->id, $since),
+            'notes' => $this->notes($tenant->id, $since),
+            'note_details' => $this->noteDetails($tenant->id, $since),
         ]);
     }
 
@@ -223,6 +227,54 @@ class MobileBootstrapController extends Controller
                 'file_path' => $value->file_path,
                 'created_at' => $value->created_at?->toISOString(),
                 'updated_at' => $value->updated_at?->toISOString(),
+            ]);
+    }
+
+    private function notes(int $tenantId, ?Carbon $since)
+    {
+        return Note::withTrashed()
+            ->where('tenant_id', $tenantId)
+            ->when($since, fn (Builder $query) => $this->changedSince($query, $since))
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Note $note) => [
+                'id' => $note->id,
+                'client_uuid' => $note->client_uuid,
+                'customer_id' => $note->customer_id,
+                'folio' => $note->folio,
+                'total' => $note->total,
+                'amount_paid' => $note->amount_paid,
+                'balance' => $note->balance,
+                'status' => $note->status,
+                'date_at' => $note->date_at?->toDateString(),
+                'synced_from_mobile' => $note->synced_from_mobile,
+                'created_at' => $note->created_at?->toISOString(),
+                'updated_at' => $note->updated_at?->toISOString(),
+                'deleted_at' => $note->deleted_at?->toISOString(),
+            ]);
+    }
+
+    private function noteDetails(int $tenantId, ?Carbon $since)
+    {
+        return NoteDetail::with(['catalogItem', 'animal'])
+            ->where('tenant_id', $tenantId)
+            ->when($since, fn (Builder $query) => $query->where('updated_at', '>=', $since))
+            ->orderBy('note_id')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (NoteDetail $detail) => [
+                'id' => $detail->id,
+                'note_id' => $detail->note_id,
+                'catalog_item_id' => $detail->catalog_item_id,
+                'catalog_item_name' => $detail->catalogItem?->name,
+                'animal_id' => $detail->animal_id,
+                'animal_name' => $detail->animal?->name,
+                'quantity' => $detail->quantity,
+                'price_at_sale' => $detail->price_at_sale,
+                'tax_at_sale' => $detail->tax_at_sale,
+                'subtotal' => $detail->subtotal,
+                'created_at' => $detail->created_at?->toISOString(),
+                'updated_at' => $detail->updated_at?->toISOString(),
             ]);
     }
 
