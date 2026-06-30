@@ -91,6 +91,10 @@ public function show(Tenant $tenant)
            'plan_id' => ['nullable', 'exists:plans,id'],
        ]);
 
+       if (array_key_exists('status', $validated)) {
+           $validated['is_active'] = $validated['status'] === 'active';
+       }
+
        $tenant->update($validated);
 
        return redirect()
@@ -463,10 +467,14 @@ private function tenantBillingSummary(Tenant $tenant): array
         ->first();
 
     if ($tenant->status !== 'active' || ! $tenant->is_active) {
+        $description = $tenant->status !== 'active'
+            ? 'El estado administrativo no permite operar.'
+            : 'El estado visible es activo, pero el acceso operativo esta apagado.';
+
         return [
             'status' => 'admin_blocked',
             'label' => 'Bloqueo administrativo',
-            'description' => 'La cuenta no esta activa para operar.',
+            'description' => $description,
             'badge' => 'bg-slate-100 text-slate-600',
             'ends_at' => null,
             'active_subscription' => $activeSubscription,
