@@ -154,3 +154,19 @@ refresca el bootstrap.
 
 - `ng build` ejecutado correctamente en `gorozpeApp` el 2026-06-30 con el Node
   runtime bundled: `node node_modules/@angular/cli/bin/ng.js build`.
+- Correccion posterior 2026-06-30 en Ionic:
+  - Se agrego store local `animal_types` y `AnimalTypeRepository`.
+  - El bootstrap movil ahora persiste `catalogs.animal_types`.
+  - Alta rapida de pacientes usa tipos locales como fallback si `/animal-types`
+    no responde.
+  - `OfflineOutboxService` actualiza directamente clientes/pacientes/notas
+    locales cuando `/sync/push` devuelve `synced`, borrando el registro
+    temporal por `client_uuid` y guardando el registro definitivo por `server_id`.
+  - `ng build` volvio a pasar despues de esta correccion.
+
+## Nota para el siguiente agente
+
+Si un dispositivo ya tenia la base `vetsys_mobile_offline_v2`, debe abrir la app
+con conexion y completar un bootstrap/refresh antes de crear pacientes offline.
+Ese refresh crea/puebla la store local `animal_types`. Sin ese paso, el selector
+de tipo no tendra datos locales.
