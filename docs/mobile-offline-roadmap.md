@@ -2,12 +2,17 @@
 
 ## Estado
 
-Fase 1 cerrada para web/Android el 2026-06-30.
+Fases 1 a 4 cerradas para web/Android el 2026-06-30. Fase 5 preparada con
+checklist manual el 2026-06-30.
 
 Queda creada la base local mediante IndexedDB en web y SQLite nativo en movil,
 el contrato de stores iniciales, repositorios de lectura y el upsert del
 bootstrap movil. El backend ya entrega `notes` y `note_details` en
 `/api/v1/mobile/bootstrap`.
+
+La app ya puede crear offline clientes, pacientes y notas basicas de credito con
+servicios activos sin inventario. Las notas pendientes se guardan localmente con
+detalles congelados y se envian como `create_note` en `/api/v1/sync/push`.
 
 Android quedo sincronizado con Capacitor. iOS requiere repetir `cap sync ios`
 cuando se resuelva el bloqueo `EPERM` sobre `ios/App/App/capacitor.config.json`
@@ -175,20 +180,27 @@ Estimacion inicial: 1 a 2 dias efectivos.
 
 ### Fase 4: Creacion de notas offline
 
+Estado: ejecutada para notas basicas el 2026-06-30.
+
 - Solo servicios sin inventario.
 - Notas y detalles almacenados localmente.
 - Validacion y folio definitivo asignados por Laravel.
-- Flujo de revision cuando cambie un servicio.
+- Flujo de revision cuando cambie un servicio queda pendiente de contrato
+  especifico del backend.
 
 Estimacion inicial: 1 a 2 dias efectivos.
 
 ### Fase 5: Robustez
+
+Estado: preparada para validacion manual el 2026-06-30.
 
 - Pruebas de perdida y recuperacion de conexion.
 - Pruebas de reintentos e idempotencia.
 - Manejo de errores parciales.
 - Limpieza de datos locales al cerrar sesion.
 - Documentacion operativa.
+
+Checklist operativo: `docs/mobile-offline-phase5-test-plan.md`.
 
 Estimacion inicial: 1 a 2 dias efectivos.
 
