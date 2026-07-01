@@ -156,8 +156,12 @@ refresca el bootstrap.
   runtime bundled: `node node_modules/@angular/cli/bin/ng.js build`.
 - Correccion posterior 2026-06-30 en Ionic:
   - Se agrego store local `animal_types` y `AnimalTypeRepository`.
+  - Se agrego store local `payment_methods` y `PaymentMethodRepository`.
   - El bootstrap movil ahora persiste `catalogs.animal_types`.
+  - El bootstrap movil ahora persiste `catalogs.payment_methods`.
   - Alta rapida de pacientes usa tipos locales como fallback si `/animal-types`
+    no responde.
+  - Nueva nota usa metodos de pago locales como fallback si `/payment-methods`
     no responde.
   - `OfflineOutboxService` actualiza directamente clientes/pacientes/notas
     locales cuando `/sync/push` devuelve `synced`, borrando el registro
@@ -168,5 +172,6 @@ refresca el bootstrap.
 
 Si un dispositivo ya tenia la base `vetsys_mobile_offline_v2`, debe abrir la app
 con conexion y completar un bootstrap/refresh antes de crear pacientes offline.
-Ese refresh crea/puebla la store local `animal_types`. Sin ese paso, el selector
-de tipo no tendra datos locales.
+Ese refresh crea/puebla las stores locales `animal_types` y `payment_methods`.
+Sin ese paso, los selectores de tipo de paciente o metodo de pago no tendran
+datos locales.
