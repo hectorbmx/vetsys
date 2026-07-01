@@ -164,6 +164,8 @@ Estimacion inicial: 1 a 2 dias efectivos.
 
 ### Fase 3: Creacion de clientes y mascotas
 
+Estado: ejecutada para clientes y pacientes el 2026-06-30.
+
 - Cola local persistente.
 - Creacion offline con `client_uuid`.
 - Resolucion de relaciones al sincronizar.
