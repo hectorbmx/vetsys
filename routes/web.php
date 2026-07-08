@@ -265,6 +265,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::patch('mi-configuracion', [ClientConfiguracionController::class, 'update'])->name('mi-configuracion.update');
         Route::patch('mi-configuracion/apariencia', [ClientConfiguracionController::class, 'updateThemePalette'])->name('mi-configuracion.appearance.update');
         Route::patch('mi-configuracion/pantalla-inicio', [ClientConfiguracionController::class, 'updateHomeRoute'])->name('mi-configuracion.home-route.update');
+        Route::patch('mi-configuracion/modulos-menu', [ClientConfiguracionController::class, 'updateMenuModules'])->name('mi-configuracion.menu-modules.update');
         Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
         Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
         Route::put('mi-configuracion/users/{teamUser}/veterinarian-profile', [ClientConfiguracionController::class, 'updateVeterinarianProfile'])->name('mi-configuracion.veterinarian-profiles.update');

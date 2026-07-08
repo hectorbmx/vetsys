@@ -45,6 +45,7 @@ use App\Services\LetterheadImageOptimizer;
 use App\Services\TenantDocumentTemplateService;
 use App\Services\AppointmentConfigurationService;
 use App\Support\TenantHomeRoutes;
+use App\Support\TenantMenuModules;
 use App\Support\TenantThemePalettes;
 
 class ConfiguracionController extends Controller
@@ -125,6 +126,8 @@ class ConfiguracionController extends Controller
     $activeThemePalette = TenantThemePalettes::normalize($tenant?->theme_palette);
     $homeRouteOptions = TenantHomeRoutes::all();
     $activeHomeRoute = TenantHomeRoutes::normalize($tenant?->default_home_route);
+    $menuModuleOptions = TenantMenuModules::all();
+    $visibleMenuModules = TenantMenuModules::normalize($tenant?->visible_menu_modules);
     $appointmentConfiguration = $appointmentConfigurationService->viewData($tenant, $user);
 
     $this->ensureTenantRolesExist();
@@ -155,7 +158,9 @@ class ConfiguracionController extends Controller
         'themePalettes',
         'activeThemePalette',
         'homeRouteOptions',
-        'activeHomeRoute'
+        'activeHomeRoute',
+        'menuModuleOptions',
+        'visibleMenuModules'
     ), $appointmentConfiguration));
 }
 
@@ -177,6 +182,27 @@ public function updateHomeRoute(Request $request)
     return redirect()
         ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
         ->with('success', 'Pantalla de inicio actualizada correctamente.');
+}
+
+public function updateMenuModules(Request $request)
+{
+    $user = $request->user();
+    $tenant = $user->tenant;
+
+    abort_unless($tenant && $this->isTenantAdmin($user), 403);
+
+    $data = $request->validate([
+        'visible_menu_modules' => ['nullable', 'array'],
+        'visible_menu_modules.*' => ['string', Rule::in(TenantMenuModules::keys())],
+    ]);
+
+    $tenant->update([
+        'visible_menu_modules' => TenantMenuModules::normalize($data['visible_menu_modules'] ?? []),
+    ]);
+
+    return redirect()
+        ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
+        ->with('success', 'Modulos visibles actualizados correctamente.');
 }
 
 public function updateThemePalette(Request $request)

@@ -98,9 +98,65 @@ La lista final debe confirmarse contra rutas existentes y permisos reales.
 
 Agregar aqui los siguientes ajustes visuales/funcionales que se definan durante la planeacion:
 
-- [ ] Ajuste 2 por definir.
+- [x] Ajuste 2: modulos visibles en el menu por tenant.
 - [ ] Ajuste 3 por definir.
 - [ ] Ajuste 4 por definir.
+
+### 2. Modulos visibles en el menu por tenant
+
+Estado: implementado en backend/UI, pendiente de migrar y validar en entorno  
+Prioridad: alta  
+Ruta de configuracion: `https://hdoc.vet/client/mi-configuracion?tab=preferencias`
+
+#### Problema
+
+Para tenants con operacion simple, ver todos los modulos disponibles en el menu lateral agrega ruido y complejidad. El caso inicial es un cliente fundador/socio que necesita una experiencia mas ligera sin entrar todavia a permisos formales por plan.
+
+#### Propuesta funcional
+
+Agregar una seccion en `Preferencias` para elegir que modulos aparecen en el menu lateral del panel cliente.
+
+Modulos configurables iniciales:
+
+- Clientes
+- Pacientes
+- Ventas
+- Agenda
+- Clubes
+- Servicios
+- Dashboard
+
+`Configuracion` queda siempre visible para poder reactivar modulos.
+
+#### Alcance implementado
+
+- Migracion `visible_menu_modules` en `tenants`.
+- Utilidad `TenantMenuModules` con lista cerrada.
+- Endpoint `client.mi-configuracion.menu-modules.update`.
+- Formulario de checkboxes en tab `Preferencias`.
+- Filtro del sidebar en `resources/views/layouts/client.blade.php`.
+- El redirect de pantalla inicial evita caer en una ruta cuyo modulo fue ocultado y usa la primera pantalla visible compatible.
+
+#### Fuera de alcance por ahora
+
+- No bloquea acceso por URL directa.
+- No modifica planes ni permisos comerciales.
+- No aplica middleware/policies por modulo.
+
+#### Criterios de aceptacion
+
+- Un admin del tenant puede activar/desactivar modulos visibles desde `Preferencias`.
+- Al guardar, el menu lateral solo muestra los modulos seleccionados.
+- `Configuracion` siempre permanece visible.
+- Si el modulo de la pantalla inicial queda oculto, el login cae en la primera pantalla visible disponible.
+- Tenants sin configuracion previa siguen viendo todos los modulos.
+
+#### Verificacion minima
+
+- Ejecutar migraciones.
+- Entrar a `client/mi-configuracion?tab=preferencias`.
+- Ocultar Dashboard y Agenda, guardar y verificar el sidebar.
+- Confirmar que el login no redirige a una pantalla oculta.
 
 ## Orden sugerido de ejecucion
 

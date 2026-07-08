@@ -233,6 +233,48 @@
                 @endif
             </div>
         </form>
+
+        <form action="{{ route('client.mi-configuracion.menu-modules.update') }}" method="POST" class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+            @csrf
+            @method('PATCH')
+
+            <div class="border-b border-slate-100 bg-slate-50/50 p-6">
+                <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Modulos visibles en el menu</h3>
+                <p class="mt-1 text-[11px] font-medium text-slate-400">Oculta secciones del menu lateral para simplificar la operacion diaria. Esto no cambia permisos de acceso por URL directa.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
+                @foreach($menuModuleOptions as $moduleKey => $option)
+                    <label class="flex cursor-pointer gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:border-slate-300 {{ in_array($moduleKey, $visibleMenuModules, true) ? 'theme-border-primary ring-4 theme-ring-primary' : 'border-slate-200' }}">
+                        <input
+                            type="checkbox"
+                            name="visible_menu_modules[]"
+                            value="{{ $moduleKey }}"
+                            @checked(in_array($moduleKey, $visibleMenuModules, true))
+                            @disabled(!$canManageTeam)
+                            class="mt-1 rounded border-slate-300 theme-text-primary focus:ring-0"
+                        >
+                        <span>
+                            <span class="block text-xs font-black uppercase tracking-widest theme-text-heading">{{ $option['label'] }}</span>
+                            <span class="mt-1 block text-[11px] font-semibold text-slate-400">{{ $option['description'] }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-[11px] font-semibold text-slate-400">
+                    Configuracion siempre queda visible para poder reactivar modulos.
+                </p>
+                @if($canManageTeam)
+                    <button type="submit" class="theme-button-primary rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-widest">
+                        Guardar modulos visibles
+                    </button>
+                @else
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Solo administradores</span>
+                @endif
+            </div>
+        </form>
     </div>
 
     {{-- TAB: APARIENCIA --}}

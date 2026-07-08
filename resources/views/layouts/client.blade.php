@@ -22,7 +22,7 @@
       data-theme-palette="{{ $layoutThemePalette }}"
       x-data="{ sidebarOpen: true }"
       @hasSection('contextual-tour') data-contextual-tour="@yield('contextual-tour')" @endif>
-{{-- Toast de Notificación Global --}}
+{{-- Toast de NotificaciÃ³n Global --}}
 @if(session('success'))
     <div x-data="{ show: true }" 
          x-init="setTimeout(() => show = false, 3000)" 
@@ -30,7 +30,7 @@
          x-transition:enter="transition ease-out duration-300"
          x-transition:leave="transition ease-in duration-200"
          class="fixed bottom-5 right-5 z-[100] theme-surface-dark px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
-        <span class="text-xl">✅</span>
+        <span class="text-xl">âœ…</span>
         <p class="text-[10px] font-black uppercase tracking-widest">{{ session('success') }}</p>
     </div>
 @endif
@@ -40,10 +40,10 @@
          class="fixed bottom-5 right-5 z-[100] max-w-md bg-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-start gap-3 border border-rose-500">
         <span class="text-xl">!</span>
         <div>
-            <p class="text-[10px] font-black uppercase tracking-widest">No se pudo completar la operación</p>
+            <p class="text-[10px] font-black uppercase tracking-widest">No se pudo completar la operaciÃ³n</p>
             <p class="text-xs font-semibold mt-1">{{ session('error') ?: $errors->first() }}</p>
         </div>
-        <button type="button" @click="show = false" class="ml-2 text-white/80 hover:text-white font-black">×</button>
+        <button type="button" @click="show = false" class="ml-2 text-white/80 hover:text-white font-black">Ã—</button>
     </div>
 @endif
 <div class="min-h-screen flex">
@@ -84,30 +84,31 @@
         {{-- Nav Links --}}
         <nav data-tour="main-navigation" class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
                 @php
+                    $visibleMenuModules = \App\Support\TenantMenuModules::normalize(auth()->user()->tenant?->visible_menu_modules);
                     $links = [
-                        ['route' => 'client.dashboard', 'icon' => '▦', 'label' => 'Dashboard'],
-                        // ['route' => 'client.profile.index', 'icon' => '◎', 'label' => 'Perfil'],
-                        ['route' => 'client.customers.index', 'icon' => '👥', 'label' => 'Clientes'],
-                        ['route' => 'client.animals.index', 'icon' => '🐕', 'label' => 'Pacientes'],
-                        ['route' => 'client.clubes.index', 'icon' => '🏇', 'label' => 'Clubes'],
-                        ['route' => 'client.ventas.index', 'icon' => '🛒', 'label' => 'Ventas'],
-                        ['route' => 'client.servicios.index', 'icon' => '⚙️', 'label' => 'Servicios'],
-                        ['route' => 'client.mi-configuracion.index', 'icon' => '🔧', 'label' => 'Configuración'],
-
-                        // ['route' => 'client.facturacion.index', 'icon' => '🛒', 'label' => 'Facturación'],
-                        // Agrega tus futuras opciones aquí manteniendo la misma estructura
+                        ['module' => 'dashboard', 'route' => 'client.dashboard', 'icon' => '&#9638;', 'label' => 'Dashboard'],
+                        ['module' => 'customers', 'route' => 'client.customers.index', 'icon' => '&#128101;', 'label' => 'Clientes'],
+                        ['module' => 'animals', 'route' => 'client.animals.index', 'icon' => '&#128021;', 'label' => 'Pacientes'],
+                        ['module' => 'clubs', 'route' => 'client.clubes.index', 'icon' => '&#127943;', 'label' => 'Clubes'],
+                        ['module' => 'sales', 'route' => 'client.ventas.index', 'icon' => '&#128722;', 'label' => 'Ventas'],
+                        ['module' => 'services', 'route' => 'client.servicios.index', 'icon' => '&#9881;&#65039;', 'label' => 'Servicios'],
+                        ['route' => 'client.mi-configuracion.index', 'icon' => '&#128295;', 'label' => 'Configuracion'],
                     ];
 
                     if (auth()->user()->can('view-appointments')) {
                         array_splice($links, 3, 0, [[
+                            'module' => 'agenda',
                             'route' => 'client.agenda.index',
                             'active' => 'client.agenda.*',
-                            'icon' => '📅',
+                            'icon' => '&#128467;&#65039;',
                             'label' => 'Agenda',
                         ]]);
                     }
-                @endphp
 
+                    $links = array_values(array_filter($links, function ($link) use ($visibleMenuModules) {
+                        return ! isset($link['module']) || in_array($link['module'], $visibleMenuModules, true);
+                    }));
+                @endphp
             @foreach($links as $link)
                 <a href="{{ route($link['route']) }}"
                    class="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
@@ -117,7 +118,7 @@
                    }}">
                     
                     <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ request()->routeIs($link['active'] ?? $link['route']) ? 'theme-text-primary' : 'text-slate-400 group-hover:text-white' }}">
-                        {{ $link['icon'] }}
+                        {!! $link['icon'] !!}
                     </span>
 
                     <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm whitespace-nowrap">
@@ -127,7 +128,7 @@
             @endforeach
         </nav>
 
-        {{-- Footer Sidebar con Datos de Sesión del Cliente --}}
+        {{-- Footer Sidebar con Datos de SesiÃ³n del Cliente --}}
         <div class="px-3 py-4 border-t border-white/5 theme-bg-sidebar-footer">
             <div class="flex items-center gap-3 px-3 py-2 overflow-hidden mb-2">
                 <div class="w-8 h-8 rounded-lg theme-bg-primary flex-shrink-0 flex items-center justify-center text-xs font-black theme-text-primary-ink">
@@ -141,12 +142,12 @@
                 </div>
             </div>
 
-            {{-- Formulario de Cierre de Sesión Seguro --}}
+            {{-- Formulario de Cierre de SesiÃ³n Seguro --}}
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all group text-left">
-                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center group-hover:rotate-12 transition-transform">↪</span>
-                    <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm">Cerrar sesión</span>
+                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center group-hover:rotate-12 transition-transform">â†ª</span>
+                    <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm">Cerrar sesiÃ³n</span>
                 </button>
             </form>
         </div>
@@ -157,7 +158,7 @@
         :class="sidebarOpen ? 'ml-64' : 'ml-20'"
         class="sidebar-transition flex-1 flex flex-col min-w-0">
 
-        {{-- Topbar con Blur y Botón Toggle --}}
+        {{-- Topbar con Blur y BotÃ³n Toggle --}}
         <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40">
             <div class="flex items-center gap-4">
                 {{-- BOTON DE COLAPSO (TOGGLE) --}}
@@ -172,7 +173,7 @@
                     </svg>
                 </button>
                 
-                {{-- Breadcrumb Dinámico --}}
+                {{-- Breadcrumb DinÃ¡mico --}}
                 <nav class="flex text-xs font-medium text-slate-400 uppercase tracking-widest" aria-label="Breadcrumb">
                     <span>Panel</span>
                     <span class="mx-2">/</span>
@@ -180,7 +181,7 @@
                 </nav>
             </div>
 
-            {{-- Información de usuario en el costado derecho --}}
+            {{-- InformaciÃ³n de usuario en el costado derecho --}}
             <div class="flex items-center gap-3">
                 <button type="button"
                         data-tour-launch
@@ -195,7 +196,7 @@
                             data-tour="notifications"
                             @click="notificationsOpen = !notificationsOpen"
                             class="relative inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all outline-none {{ ($layoutUnreadNotificationsCount ?? 0) > 0 ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600' }}">
-                        <span class="text-base leading-none">🔔</span>
+                        <span class="text-base leading-none">ðŸ””</span>
                         {{-- <span class="hidden md:inline text-[10px] font-black uppercase tracking-widest">Notificaciones</span> --}}
                         @if(($layoutUnreadNotificationsCount ?? 0) > 0)
                             <span class="ml-1 min-w-[20px] h-5 rounded-full bg-rose-600 px-1.5 text-[10px] font-black text-white flex items-center justify-center">
@@ -263,3 +264,4 @@
 @stack('scripts')
 </body>
 </html>
+

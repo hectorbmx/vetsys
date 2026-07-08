@@ -33,6 +33,7 @@ class Tenant extends Model
         'onboarding_banner_dismissed_at',
         'theme_palette',
         'default_home_route',
+        'visible_menu_modules',
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class Tenant extends Model
         'activated_at' => 'datetime',
         'onboarding_banner_dismissed_at' => 'datetime',
         'is_active' => 'boolean',
+        'visible_menu_modules' => 'array',
     ];
 
     public static function activationCodeHash(string $code): string
