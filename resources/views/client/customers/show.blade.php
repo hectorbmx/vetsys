@@ -302,8 +302,8 @@
 
             {{-- NAVEGACIÓN DE TABS --}}
     <div class="flex gap-2 border-b border-slate-200">
+        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Caballos</button>
         <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Notas de Venta</button>
-        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Pacientes</button>
         <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Historial de Pagos</button>
         <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
         <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
