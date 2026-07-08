@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Auth\TenantHomeRouteResolver;
 use App\Services\Auth\TenantSessionGuard;
 use App\Services\Auth\UserAccessSessionManager;
 use Illuminate\Http\Request;
@@ -81,7 +82,7 @@ class LoginController extends Controller
             return redirect()->route('client.profile.index');
         }
 
-        return redirect()->route('client.dashboard');
+        return redirect()->route(app(TenantHomeRouteResolver::class)->routeNameFor($user));
     }
 
     public function destroy(Request $request)

@@ -32,6 +32,7 @@ class Tenant extends Model
         'activated_at',
         'onboarding_banner_dismissed_at',
         'theme_palette',
+        'default_home_route',
     ];
 
     protected $casts = [

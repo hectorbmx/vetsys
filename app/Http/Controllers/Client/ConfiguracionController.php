@@ -44,6 +44,7 @@ use App\Services\TenantOnboardingService;
 use App\Services\LetterheadImageOptimizer;
 use App\Services\TenantDocumentTemplateService;
 use App\Services\AppointmentConfigurationService;
+use App\Support\TenantHomeRoutes;
 use App\Support\TenantThemePalettes;
 
 class ConfiguracionController extends Controller
@@ -122,6 +123,8 @@ class ConfiguracionController extends Controller
     $canManageDocuments = $this->canManageTenantAppearance($user, $tenant);
     $themePalettes = TenantThemePalettes::all();
     $activeThemePalette = TenantThemePalettes::normalize($tenant?->theme_palette);
+    $homeRouteOptions = TenantHomeRoutes::all();
+    $activeHomeRoute = TenantHomeRoutes::normalize($tenant?->default_home_route);
     $appointmentConfiguration = $appointmentConfigurationService->viewData($tenant, $user);
 
     $this->ensureTenantRolesExist();
@@ -150,8 +153,30 @@ class ConfiguracionController extends Controller
         'pendingPlanRequest',
         'pendingPlanPayment',
         'themePalettes',
-        'activeThemePalette'
+        'activeThemePalette',
+        'homeRouteOptions',
+        'activeHomeRoute'
     ), $appointmentConfiguration));
+}
+
+public function updateHomeRoute(Request $request)
+{
+    $user = $request->user();
+    $tenant = $user->tenant;
+
+    abort_unless($tenant && $this->isTenantAdmin($user), 403);
+
+    $data = $request->validate([
+        'default_home_route' => ['required', Rule::in(TenantHomeRoutes::keys())],
+    ]);
+
+    $tenant->update([
+        'default_home_route' => $data['default_home_route'],
+    ]);
+
+    return redirect()
+        ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
+        ->with('success', 'Pantalla de inicio actualizada correctamente.');
 }
 
 public function updateThemePalette(Request $request)

@@ -149,6 +149,11 @@
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
             💰 Métodos de Pago
         </button>
+        <button @click="currentTab = 'preferencias'"
+                :class="currentTab === 'preferencias' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
+            Preferencias
+        </button>
         <button @click="currentTab = 'apariencia'"
                 :class="currentTab === 'apariencia' ? 'theme-tab-active' : 'border-transparent text-slate-400 hover:text-slate-600'"
                 class="border-b-2 px-4 py-3 text-xs font-black uppercase tracking-widest transition-all outline-none whitespace-nowrap">
@@ -183,6 +188,52 @@
     </div>
 
     {{-- CONTENIDO DE LAS PESTAÑAS --}}
+
+    {{-- TAB: PREFERENCIAS --}}
+    <div x-show="currentTab === 'preferencias'" x-transition:enter="transition duration-200" class="space-y-6" x-cloak>
+        <form action="{{ route('client.mi-configuracion.home-route.update') }}" method="POST" class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+            @csrf
+            @method('PATCH')
+
+            <div class="border-b border-slate-100 bg-slate-50/50 p-6">
+                <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Pantalla de inicio</h3>
+                <p class="mt-1 text-[11px] font-medium text-slate-400">Define a donde llegara el equipo despues de iniciar sesion en el panel.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
+                @foreach($homeRouteOptions as $routeName => $option)
+                    <label class="relative flex cursor-pointer gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:border-slate-300 {{ $activeHomeRoute === $routeName ? 'theme-border-primary ring-4 theme-ring-primary' : 'border-slate-200' }}">
+                        <input
+                            type="radio"
+                            name="default_home_route"
+                            value="{{ $routeName }}"
+                            @checked($activeHomeRoute === $routeName)
+                            @disabled(!$canManageTeam)
+                            class="mt-1 theme-text-primary focus:ring-0"
+                        >
+                        <span>
+                            <span class="block text-xs font-black uppercase tracking-widest theme-text-heading">{{ $option['label'] }}</span>
+                            <span class="mt-1 block text-[11px] font-semibold text-slate-400">{{ $option['description'] }}</span>
+                            <span class="mt-3 inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">{{ $routeName }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-[11px] font-semibold text-slate-400">
+                    Si el tenant tiene facturacion limitada, el sistema seguira entrando primero a Plan y Pagos.
+                </p>
+                @if($canManageTeam)
+                    <button type="submit" class="theme-button-primary rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-widest">
+                        Guardar pantalla inicial
+                    </button>
+                @else
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Solo administradores</span>
+                @endif
+            </div>
+        </form>
+    </div>
 
     {{-- TAB: APARIENCIA --}}
     <div x-show="currentTab === 'apariencia'" x-transition:enter="transition duration-200" class="space-y-6" x-cloak>
