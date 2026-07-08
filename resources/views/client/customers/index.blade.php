@@ -165,11 +165,17 @@
                             {{-- Nombre Completo usando el Accessor de tu Modelo --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full theme-surface-dark flex items-center justify-center font-bold text-xs">
+                                    <a href="{{ route('client.customers.show', $customer->id) }}"
+                                       class="w-9 h-9 rounded-full theme-surface-dark flex items-center justify-center font-bold text-xs transition-transform hover:scale-105 focus:outline-none theme-focus-primary"
+                                       title="Ver ficha de {{ $customer->full_name }}">
                                         {{ substr($customer->name, 0, 1) }}{{ substr($customer->last_name, 0, 1) }}
-                                    </div>
+                                    </a>
                                     <div>
-                                        <h4 class="text-sm font-bold theme-text-heading leading-tight">{{ $customer->full_name }}</h4>
+                                        <a href="{{ route('client.customers.show', $customer->id) }}"
+                                           class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors"
+                                           title="Ver ficha de {{ $customer->full_name }}">
+                                            {{ $customer->full_name }}
+                                        </a>
                                         <p class="text-[10px] font-medium text-slate-400 mt-0.5">ID: #{{ $customer->id }}</p>
                                     </div>
                                 </div>
