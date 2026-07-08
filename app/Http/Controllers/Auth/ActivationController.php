@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -53,7 +54,7 @@ class ActivationController extends Controller
                 ->withInput($request->only('email'));
         }
 
-        if (User::where('email', $tenant->email)->exists()) {
+        if (User::where('email', $tenant->email)->exists() || Customer::where('email', $tenant->email)->exists()) {
             return back()
                 ->withErrors(['email' => 'Ya existe un usuario con este correo.'])
                 ->withInput($request->only('email'));

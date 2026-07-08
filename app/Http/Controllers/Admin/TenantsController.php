@@ -19,6 +19,7 @@ use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Models\TenantNotification;
+use App\Rules\GloballyUniqueEmail;
 
 use App\Models\User;
 
@@ -85,6 +86,7 @@ public function show(Tenant $tenant)
                'email',
                'max:255',
                Rule::unique('tenants', 'email')->ignore($tenant->id),
+               new GloballyUniqueEmail('tenants', $tenant->id),
            ],
            'phone' => ['nullable', 'string', 'max:50'],
            'status' => ['nullable', 'in:active,inactive,suspended,cancelled'],
@@ -134,7 +136,7 @@ public function show(Tenant $tenant)
                 'email',
                 'max:255',
                 Rule::unique('tenants', 'email'),
-                Rule::unique('users', 'email'),
+                new GloballyUniqueEmail,
             ],
             'phone' => ['nullable', 'string', 'max:50'],
             'status' => ['nullable', 'in:active,inactive,suspended,cancelled'],
@@ -204,7 +206,7 @@ public function storeUser(Request $request, Tenant $tenant)
             'required',
             'email',
             'max:255',
-            Rule::unique('users', 'email'),
+            new GloballyUniqueEmail,
         ],
 
         'role' => [
@@ -255,6 +257,42 @@ public function storeUser(Request $request, Tenant $tenant)
   return redirect()
     ->route('admin.tenants.show', $tenant)
     ->with('success', 'Usuario registrado correctamente.');
+}
+
+public function updateUser(Request $request, Tenant $tenant, User $user, int $tenantId = null, int $userId = null)
+{
+    $tenant = $this->resolveTenantRouteModel($tenant, $tenantId);
+    $user = $this->resolveUserRouteModel($user, $userId);
+    $this->ensureTenantUser($tenant, $user);
+
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => [
+            'required',
+            'email',
+            'max:255',
+            new GloballyUniqueEmail('users', $user->id),
+        ],
+    ]);
+
+    $user->update($validated);
+
+    return redirect()
+        ->route('admin.tenants.show', $tenant)
+        ->with('success', 'Usuario actualizado correctamente.');
+}
+
+public function destroyUser(Tenant $tenant, User $user, int $tenantId = null, int $userId = null)
+{
+    $tenant = $this->resolveTenantRouteModel($tenant, $tenantId);
+    $user = $this->resolveUserRouteModel($user, $userId);
+    $this->ensureTenantUser($tenant, $user);
+
+    $user->delete();
+
+    return redirect()
+        ->route('admin.tenants.show', $tenant)
+        ->with('success', 'Usuario eliminado correctamente.');
 }
 
 public function resendTenantActivationCode(Tenant $tenant)
@@ -557,9 +595,7 @@ public function clearCancelledPayments(Tenant $tenant)
 
 public function resendActivationCode(Tenant $tenant, User $user)
 {
-    if ((int) $user->tenant_id !== (int) $tenant->id) {
-        abort(404);
-    }
+    $this->ensureTenantUser($tenant, $user);
 
     if ($user->invitation_accepted_at) {
         return redirect()
@@ -596,6 +632,21 @@ public function resendActivationCode(Tenant $tenant, User $user)
     return redirect()
         ->route('admin.tenants.show', $tenant)
         ->with('success', 'Acceso de activacion regenerado correctamente.');
+}
+
+private function ensureTenantUser(Tenant $tenant, User $user): void
+{
+    abort_if((int) $user->tenant_id !== (int) $tenant->id, 404);
+}
+
+private function resolveTenantRouteModel(Tenant $tenant, ?int $tenantId): Tenant
+{
+    return $tenant->exists ? $tenant : Tenant::findOrFail($tenantId);
+}
+
+private function resolveUserRouteModel(User $user, ?int $userId): User
+{
+    return $user->exists ? $user : User::findOrFail($userId);
 }
 
 private function sendInvitationMail(User $user, Tenant $tenant, string $invitationUrl, string $activationCode): bool

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Note;
 use App\Models\CustomerPaymentLink;
+use App\Rules\GloballyUniqueEmail;
 use App\Services\CustomerStripePaymentProcessor;
 use App\Services\CustomerPortalAccessService;
 use App\Services\StripeCustomerPaymentService;
@@ -82,7 +83,7 @@ class CustomerController extends Controller
     $data = $request->validate([
         'name'            => ['required', 'string', 'max:255'],
         'last_name'       => ['required', 'string', 'max:255'], // Lo cambié a required si lo pides con (*) en el modal
-        'email'           => ['required', 'email', 'max:255'],    // Lo cambié a required por el (*) del modal
+        'email'           => ['required', 'email', 'max:255', new GloballyUniqueEmail],    // Lo cambié a required por el (*) del modal
         'phone'           => ['required', 'string', 'max:50'],    // Lo cambié a required por el (*) del modal
         'secondary_phone' => ['nullable', 'string', 'max:50'],
         'address'         => ['nullable', 'string'],
@@ -316,7 +317,7 @@ public function show($id)
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'last_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', new GloballyUniqueEmail('customers', $customer->id)],
             'phone' => ['nullable', 'string', 'max:50'],
             'secondary_phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],

@@ -139,6 +139,8 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::resource('tenants', TenantsController::class);
         Route::post('/tenants/{tenant}/resend-activation-code', [TenantsController::class, 'resendTenantActivationCode'])->name('tenants.resend-activation-code');
         Route::post('/tenants/{tenant}/users', [TenantsController::class, 'storeUser'])->name('tenants.users.store');
+        Route::patch('/tenants/{tenant}/users/{user}', [TenantsController::class, 'updateUser'])->name('tenants.users.update');
+        Route::delete('/tenants/{tenant}/users/{user}', [TenantsController::class, 'destroyUser'])->name('tenants.users.destroy');
         Route::post('/tenants/{tenant}/users/{user}/resend-activation-code', [TenantsController::class, 'resendActivationCode'])->name('tenants.users.resend-activation-code');
         Route::post('/planes/{plan}/sync-stripe', [PlanesController::class, 'syncStripe'])->name('planes.sync-stripe');
         Route::resource('planes', PlanesController::class);

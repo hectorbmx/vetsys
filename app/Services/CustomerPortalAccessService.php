@@ -70,6 +70,10 @@ class CustomerPortalAccessService
                 throw new RuntimeException('Ya existe un usuario con ese correo en otro tenant.');
             }
 
+            if ($user && !$user->hasRole('customer')) {
+                throw new RuntimeException('Ya existe un usuario interno con ese correo. Usa un correo diferente para el cliente.');
+            }
+
             Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web']);
 
             if (!$user) {

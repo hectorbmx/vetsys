@@ -39,6 +39,7 @@ use Exception;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Models\TenantBillingProfile;
+use App\Rules\GloballyUniqueEmail;
 use App\Services\TenantOnboardingService;
 use App\Services\LetterheadImageOptimizer;
 use App\Services\TenantDocumentTemplateService;
@@ -374,7 +375,7 @@ public function storeUser(Request $request)
             'required',
             'email',
             'max:255',
-            Rule::unique('users', 'email'),
+            new GloballyUniqueEmail,
         ],
         'role' => [
             'required',
@@ -899,6 +900,7 @@ public function importCustomers(Request $request)
                 trim((string) ($data['am'] ?? '')),
             ])));
             $email = trim((string) ($data['correo'] ?? ''));
+            $validEmail = filter_var($email, FILTER_VALIDATE_EMAIL) ? strtolower($email) : null;
             $phone = $this->normalizePhone((string) ($data['telefono'] ?? ''));
 
             if ($name === '') {
@@ -915,13 +917,19 @@ public function importCustomers(Request $request)
                 continue;
             }
 
+            if ($validEmail && $this->emailExistsGlobally($validEmail)) {
+                $errors[] = "Fila {$rowNumber}: correo ya registrado en el sistema.";
+                $skipped++;
+                continue;
+            }
+
             $createdAt = $this->parseLegacyDate($data['created_at'] ?? null);
 
             $customer = new Customer([
                 'tenant_id' => $tenantId,
                 'name' => $name,
                 'last_name' => $lastName !== '' ? $lastName : null,
-                'email' => filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null,
+                'email' => $validEmail,
                 'phone' => $phone !== '' ? $phone : null,
                 'status' => ((string) ($data['estatus'] ?? '1')) === '0' ? 'inactive' : 'active',
                 'notes' => trim('Importado desde legacy. Legacy ClienteID: ' . ($legacyId !== '' ? $legacyId : 'sin-id')),
@@ -1255,6 +1263,19 @@ private function isEmptyCsvRow(array $row): bool
 private function normalizePhone(string $phone): string
 {
     return preg_replace('/\D+/', '', $phone) ?? '';
+}
+
+private function emailExistsGlobally(string $email): bool
+{
+    $email = strtolower(trim($email));
+
+    foreach (['users', 'customers'] as $table) {
+        if (DB::table($table)->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 private function normalizeMoney($value): float

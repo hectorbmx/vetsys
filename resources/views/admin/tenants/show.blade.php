@@ -600,10 +600,34 @@
                     <tbody class="divide-y divide-slate-100 italic">
                         @forelse($tenant->users as $user)
                             @php($needsActivation = !$user->is_active || !$user->invitation_accepted_at)
-                            <tr class="hover:bg-slate-50/50 transition-colors">
+                            <tr x-data="{ editing: false }" class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-8 py-4">
-                                    <p class="font-black text-[#0F172A] not-italic">{{ $user->name }}</p>
-                                    <p class="text-xs text-slate-400 font-medium">{{ $user->email }}</p>
+                                    <template x-if="!editing">
+                                        <div>
+                                            <p class="font-black text-[#0F172A] not-italic">{{ $user->name }}</p>
+                                            <p class="text-xs text-slate-400 font-medium">{{ $user->email }}</p>
+                                        </div>
+                                    </template>
+                                    <template x-if="editing">
+                                        <form id="edit-user-{{ $user->id }}" method="POST" action="{{ route('admin.tenants.users.update', [$tenant, $user]) }}" class="grid grid-cols-1 md:grid-cols-2 gap-3 not-italic">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value="{{ old('name', $user->name) }}"
+                                                required
+                                                class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs font-bold text-[#0F172A] focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                                            >
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value="{{ old('email', $user->email) }}"
+                                                required
+                                                class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs font-bold text-[#0F172A] focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                                            >
+                                        </form>
+                                    </template>
                                 </td>
                                 <td class="px-8 py-4">
                                     <div class="flex flex-wrap gap-2">
@@ -621,6 +645,33 @@
                                 </td>
                                 <td class="px-8 py-4">
                                     <div class="flex items-center justify-end gap-3">
+                                        <template x-if="!editing">
+                                            <button
+                                                type="button"
+                                                @click="editing = true"
+                                                class="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors not-italic"
+                                            >
+                                                Editar
+                                            </button>
+                                        </template>
+                                        <template x-if="editing">
+                                            <div class="flex items-center gap-2">
+                                                <button
+                                                    type="submit"
+                                                    form="edit-user-{{ $user->id }}"
+                                                    class="px-3 py-2 rounded-xl bg-[#38B2AC] text-white text-[9px] font-black uppercase tracking-widest hover:bg-[#2C9A94] transition-colors not-italic"
+                                                >
+                                                    Guardar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    @click="editing = false"
+                                                    class="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors not-italic"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </template>
                                         @if($needsActivation)
                                             <form method="POST" action="{{ route('admin.tenants.users.resend-activation-code', [$tenant, $user]) }}">
                                                 @csrf
@@ -630,9 +681,13 @@
                                                 </button>
                                             </form>
                                         @endif
-                                    <button class="text-slate-300 hover:text-red-500 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
+                                        <form method="POST" action="{{ route('admin.tenants.users.destroy', [$tenant, $user]) }}" onsubmit="return confirm('¿Eliminar este usuario del tenant? Esta accion no se puede deshacer.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-slate-300 hover:text-red-500 transition-colors" title="Eliminar usuario">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
