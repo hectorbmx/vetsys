@@ -1,7 +1,7 @@
 @extends('layouts.client')
 
 @section('content')
-<div x-data="{ tab: '{{ session('activeCustomerTab', request('tab', 'notas')) }}', ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="p-6 max-w-7xl mx-auto space-y-6">
+<div x-data="{ tab: '{{ session('activeCustomerTab', request('tab', 'mascotas')) }}', ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- CABECERA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -303,7 +303,7 @@
             {{-- NAVEGACIÓN DE TABS --}}
     <div class="flex gap-2 border-b border-slate-200">
         <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Caballos</button>
-        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Notas de Venta</button>
+        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Cuentas</button>
         <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Historial de Pagos</button>
         <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
         <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
@@ -321,7 +321,7 @@
                 </div>
                 <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
                    class="theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
-                    Nueva nota
+                    Nueva cuenta
                 </a>
             </div>
 
@@ -365,7 +365,8 @@
                                            class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-700 transition-all hover:bg-amber-100">
                                             Editar
                                         </a>
-                                        <form action="{{ route('client.ventas.destroy', $note) }}" method="POST" class="inline" onsubmit="return confirm('Eliminar esta nota? Esta accion no se puede deshacer.');">
+                                        {{-- <form action="{{ route('client.ventas.destroy', $note) }}" method="POST" class="inline" onsubmit="return confirm('Eliminar esta nota? Esta accion no se puede deshacer.');"> --}}
+                                        <form action="{{ route('client.ventas.destroy', ['note' => $note, 'redirect_to_customer' => $note->customer_id]) }}" method="POST" class="inline" onsubmit="return confirm('Eliminar esta nota? Esta accion no se puede deshacer.');">    
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-700 transition-all hover:bg-rose-100">
@@ -642,17 +643,28 @@
                             ];
                         @endphp
                         <tr class="bg-white hover:bg-slate-50/70 transition-colors">
-                            <td class="px-4 py-4 border-l-4 theme-border-primary">
+                       <td class="px-4 py-4 border-l-4 theme-border-primary">
+                            <a href="{{ route('client.animals.edit', $animal) }}" class="group block min-w-0 transition-all">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-11 h-11 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm shadow-sm ring-1 ring-white">
+                                    
+                                    {{-- Inicial del Animal --}}
+                                    <div class="w-11 h-11 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm shadow-sm ring-1 ring-white transition-all group-hover:scale-105 group-hover:opacity-90">
                                         {{ substr($animal->name, 0, 1) }}
                                     </div>
+                                    
+                                    {{-- Nombre y Badge --}}
                                     <div class="min-w-0">
-                                        <span class="block text-sm font-black theme-text-heading leading-tight">{{ $animal->name }}</span>
-                                        <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500">Paciente</span>
+                                        <span class="block text-sm font-black theme-text-heading leading-tight transition-colors group-hover:text-[var(--theme-primary)] group-hover:underline decoration-2">
+                                            {{ $animal->name }}
+                                        </span>
+                                        <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500 transition-colors group-hover:bg-slate-200">
+                                            Paciente
+                                        </span>
                                     </div>
+                                    
                                 </div>
-                            </td>
+                            </a>
+                        </td>
                             <td class="px-4 py-4">
                                 <span class="text-xs font-semibold text-slate-600">{{ $animal->animalType->name ?? 'N/A' }}</span>
                                 <span class="block text-[10px] text-slate-400">{{ $animal->color ?? 'Sin color' }}</span>

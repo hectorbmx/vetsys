@@ -72,6 +72,9 @@ En el sistema legacy, el flujo era:
 
 Queremos replicar ese comportamiento dentro del nuevo sistema, sin eliminar las notas existentes.
 
+entonces aunque las notas se van a crear igual que ahora, nose van a mostrar en la pantalla como notas individuales lo que se va a mostrar en la pestaña cuentas
+http://127.0.0.1:8000/client/customers/332 son los cortes generedos a ese cliente de fecha A a fecha B al conboton para imprimir justo como se hace en la pestaña configuracion y este es el link actual http://127.0.0.1:8000/client/customers/332/statements/1/pdf para imprimir
+
 ---
 
 ## 4. Decisión de arquitectura
@@ -95,6 +98,9 @@ La diferencia estará en cómo se presentan y cómo se cobran.
 
 En modo mensual, las notas serán el respaldo interno de los servicios realizados, pero el usuario del tenant verá principalmente cortes mensuales / estados de cuenta.
 
+- (la idea es solo ocualtar de la vista las notas creadas y cuando el tenant cree un corte o un estado de cuenta, traer todas las notas generadas como ya se hace actualmente en estre punto hay que detenernos a detallar bien)
+
+- uno de los cambios clave es que en esta vist http://127.0.0.1:8000/client/animals/1655/edit en la pestaña historial de servicios se mustran las notas creadas  para saber lo que se le hizo a un animal hay que ver los detalles, (preguintar a carlos si podria funcionar como esta hoy) el sistema legacy muestra el historial de servicios realizados (fuera de notas) para el proposito que buscamos repito, no es necesario borrar la funcion de notas solo ocultar el folio y exponer todos los servicios realizados a un animal  libre sin estar agrupado en notas 
 ---
 
 ## 5. Configuración por tenant

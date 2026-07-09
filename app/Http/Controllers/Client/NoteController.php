@@ -448,6 +448,24 @@ public function update(Request $request, Note $note)
         ->with('success', "Nota {$note->folio} actualizada correctamente.");
 }
 
+// public function destroy(Note $note)
+// {
+//     $tenant = auth()->user()->tenant;
+
+//     abort_if($note->tenant_id !== $tenant->id, 403);
+//     $note->load(['payments', 'details']);
+//     $this->abortIfNoteHasPayments($note);
+
+//     DB::transaction(function () use ($tenant, $note) {
+//         app(InventoryService::class)->reverseSaleConsumption($tenant, $note, ':delete');
+//         $note->details()->delete();
+//         $note->delete();
+//     });
+
+//     return redirect()
+//         ->route('client.ventas.index')
+//         ->with('success', "Nota {$note->folio} eliminada correctamente.");
+// }
 public function destroy(Note $note)
 {
     $tenant = auth()->user()->tenant;
@@ -462,6 +480,18 @@ public function destroy(Note $note)
         $note->delete();
     });
 
+    // Capturamos si viene el cliente en los parámetros de la URL
+    $customerId = request('redirect_to_customer');
+
+    if ($customerId) {
+        return redirect()
+            ->route('client.customers.show', $customerId)
+            ->with('success', "Nota {$note->folio} eliminada correctamente.")
+            // Opcional: Mandar al usuario directo a la pestaña de notas
+            ->with('activeCustomerTab', 'notas'); 
+    }
+
+    // Comportamiento por defecto en caso de que se elimine desde otra sección
     return redirect()
         ->route('client.ventas.index')
         ->with('success', "Nota {$note->folio} eliminada correctamente.");

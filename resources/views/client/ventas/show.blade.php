@@ -17,10 +17,10 @@
                    class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
                     🖨️ Ver Ticket
                 </a>
-                <a href="{{ route('client.ventas.index') }}"
+                {{-- <a href="{{ route('client.customers.index') }}"
                    class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors">
                     ← Volver
-                </a>
+                </a> --}}
             </div>
         </div>
 
