@@ -33,6 +33,7 @@ class NoteController extends Controller
 
         $notes = $tenant->notes()
             ->with('customer')
+            ->withCount('payments')
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('folio', 'LIKE', "%{$search}%")
@@ -94,6 +95,8 @@ class NoteController extends Controller
         $tenant = auth()->user()->tenant;
         $paymentMethods = $tenant->paymentMethods()->where('is_active', true)->get();
         $prefilledCustomer = null;
+        $editingNote = null;
+        $initialSaleState = null;
 
         if ($request->filled('customer_id')) {
             $customer = $tenant->customers()
@@ -115,7 +118,7 @@ class NoteController extends Controller
             }
         }
 
-        return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer'));
+        return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer', 'editingNote', 'initialSaleState'));
     }
 
     /**
@@ -251,8 +254,18 @@ class NoteController extends Controller
 
             $totalNota = $subtotalPorMascota * $animalIds->count();
 
-            $ultimoFolio = $tenant->notes()->lockForUpdate()->max('id') ?? 0;
-            $nuevoFolio = 'VT-' . str_pad($ultimoFolio + 1, 5, '0', STR_PAD_LEFT);
+            $ultimoFolio = Note::withTrashed()
+                ->where('tenant_id', $tenant->id)
+                ->lockForUpdate()
+                ->max('id') ?? 0;
+            $folioSequence = $ultimoFolio + 1;
+            do {
+                $nuevoFolio = 'VT-' . str_pad($folioSequence, 5, '0', STR_PAD_LEFT);
+                $folioSequence++;
+            } while (Note::withTrashed()
+                ->where('tenant_id', $tenant->id)
+                ->where('folio', $nuevoFolio)
+                ->exists());
 
             $montoRecibido = $generateStripeLink ? 0 : (float) ($request->amount_received ?? 0);
             $status = $montoRecibido >= $totalNota ? 'PAGADA' : 'PENDIENTE';
@@ -329,6 +342,130 @@ class NoteController extends Controller
 
         return $redirect->with('success', "Nota {$note->folio} generada correctamente.");
     }
+
+public function edit(Note $note)
+{
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
+
+    $note->load(['customer.animals', 'details.catalogItem.inventory', 'details.animal', 'payments']);
+    $this->abortIfNoteHasPayments($note);
+
+    $paymentMethods = $tenant->paymentMethods()->where('is_active', true)->get();
+    $animalIds = $note->details->pluck('animal_id')->filter()->unique()->values();
+    $customerAnimals = $note->customer->animals()
+        ->where(function ($query) use ($animalIds) {
+            $query->where('status', 'active')
+                ->orWhereIn('id', $animalIds);
+        })
+        ->select('id', 'customer_id', 'name')
+        ->get();
+
+    $prefilledCustomer = [
+        'id' => $note->customer->id,
+        'full_name' => $note->customer->full_name,
+        'phone' => $note->customer->phone,
+        'animals' => $customerAnimals,
+    ];
+
+    $initialSaleState = [
+        'selectedAnimalIds' => $animalIds->map(fn ($id) => (string) $id)->values(),
+        'noteDate' => optional($note->date_at)->format('Y-m-d'),
+        'basket' => $note->details
+            ->groupBy('catalog_item_id')
+            ->map(function ($details) {
+                $first = $details->first();
+                $item = $first->catalogItem;
+
+                return [
+                    'id' => $first->catalog_item_id,
+                    'name' => $item?->name ?? 'Concepto eliminado',
+                    'quantity' => (float) $first->quantity,
+                    'price' => (float) $first->price_at_sale,
+                    'has_inventory' => (bool) ($item?->has_inventory ?? false),
+                    'stock_actual' => (float) ($item?->inventory?->stock_actual ?? 0),
+                    'stock_minimo' => (float) ($item?->inventory?->stock_minimo ?? 0),
+                    'allow_negative_stock' => (bool) ($item?->inventory?->allow_negative_stock ?? false),
+                ];
+            })
+            ->values(),
+    ];
+
+    $editingNote = $note;
+
+    return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer', 'editingNote', 'initialSaleState'));
+}
+
+public function update(Request $request, Note $note)
+{
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
+    $note->load(['payments', 'details']);
+    $this->abortIfNoteHasPayments($note);
+
+    $this->validateSaleRequest($request, $tenant, false);
+
+    DB::transaction(function () use ($request, $tenant, $note) {
+        $note->refresh();
+        $this->abortIfNoteHasPayments($note);
+
+        $inventoryService = app(InventoryService::class);
+        $inventorySuffix = ':update:'.now()->timestamp;
+        $inventoryService->reverseSaleConsumption($tenant, $note, $inventorySuffix);
+
+        $animalIds = collect($request->animal_ids)->map(fn ($id) => (int) $id)->unique()->values();
+        $subtotalPorMascota = collect($request->items)->sum(fn ($itemData) => $itemData['quantity'] * $itemData['price']);
+        $totalNota = $subtotalPorMascota * $animalIds->count();
+
+        $note->details()->delete();
+        $note->update([
+            'customer_id' => $request->customer_id,
+            'total' => $totalNota,
+            'status' => 'PENDIENTE',
+            'date_at' => $request->date_at,
+        ]);
+
+        $inventoryService->consumeForSale($tenant, $request->items, $animalIds->count(), $note, $inventorySuffix);
+
+        foreach ($animalIds as $animalId) {
+            foreach ($request->items as $itemData) {
+                $note->details()->create([
+                    'tenant_id' => $tenant->id,
+                    'catalog_item_id' => $itemData['id'],
+                    'animal_id' => $animalId,
+                    'quantity' => $itemData['quantity'],
+                    'price_at_sale' => $itemData['price'],
+                    'subtotal' => $itemData['quantity'] * $itemData['price'],
+                ]);
+            }
+        }
+    });
+
+    return redirect()
+        ->route('client.ventas.show', $note)
+        ->with('success', "Nota {$note->folio} actualizada correctamente.");
+}
+
+public function destroy(Note $note)
+{
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
+    $note->load(['payments', 'details']);
+    $this->abortIfNoteHasPayments($note);
+
+    DB::transaction(function () use ($tenant, $note) {
+        app(InventoryService::class)->reverseSaleConsumption($tenant, $note, ':delete');
+        $note->details()->delete();
+        $note->delete();
+    });
+
+    return redirect()
+        ->route('client.ventas.index')
+        ->with('success', "Nota {$note->folio} eliminada correctamente.");
+}
 public function show(Note $note)
 {
     $tenant = auth()->user()->tenant;
@@ -495,5 +632,58 @@ private function cardPaymentMethodForTenant(int $tenantId): ?PaymentMethod
         ->where('is_active', true)
         ->get()
         ->first(fn (PaymentMethod $method) => $this->isCardPaymentMethod($method));
+}
+
+private function validateSaleRequest(Request $request, $tenant, bool $requiresPaymentFields = true): void
+{
+    $rules = [
+        'customer_id' => [
+            'required',
+            'integer',
+            Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)),
+        ],
+        'date_at' => 'required|date',
+        'animal_ids' => 'required|array|min:1',
+        'animal_ids.*' => [
+            'required',
+            'integer',
+            Rule::exists('animals', 'id')->where(function ($query) use ($tenant, $request) {
+                return $query
+                    ->where('tenant_id', $tenant->id)
+                    ->where('customer_id', $request->customer_id);
+            }),
+        ],
+        'items' => 'required|array|min:1',
+        'items.*.id' => [
+            'required',
+            'integer',
+            Rule::exists('catalog_items', 'id')->where(fn ($query) => $query
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)),
+        ],
+        'items.*.quantity' => 'required|numeric|min:0.01',
+        'items.*.price' => 'required|numeric|min:0',
+    ];
+
+    if ($requiresPaymentFields) {
+        $rules['amount_received'] = 'nullable|numeric|min:0';
+        $rules['operation_type'] = ['required', Rule::in(['credito', 'contado'])];
+        $rules['payment_method_id'] = [
+            'required_if:operation_type,contado',
+            'nullable',
+            Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                ->where('tenant_id', $tenant->id)
+                ->where('is_active', true)),
+        ];
+    }
+
+    $request->validate($rules);
+}
+
+private function abortIfNoteHasPayments(Note $note): void
+{
+    if ($note->payments()->exists()) {
+        abort(403, 'No se puede editar o eliminar una nota con pagos registrados.');
+    }
 }
 }

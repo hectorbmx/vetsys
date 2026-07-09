@@ -190,10 +190,25 @@
 
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
-                              
-                                       <a href="{{ route('client.ventas.show', $note->id) }}"
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('client.ventas.show', $note->id) }}"
                                         class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
-                                        title="Ver ficha">🔍</a>
+                                        title="Ver ficha">&#128269;</a>
+
+                                    @if(($note->payments_count ?? 0) === 0)
+                                        <a href="{{ route('client.ventas.edit', $note) }}"
+                                            class="p-1.5 text-slate-400 hover:text-amber-600 transition-colors"
+                                            title="Editar nota">&#9998;</a>
+
+                                        <form action="{{ route('client.ventas.destroy', $note) }}" method="POST" class="inline" onsubmit="return confirm('Eliminar esta nota? Esta accion no se puede deshacer.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors" title="Eliminar nota">
+                                                &#128465;
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

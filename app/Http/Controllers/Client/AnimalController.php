@@ -146,8 +146,11 @@ class AnimalController extends Controller
         'birthdate'      => ['nullable', 'date'],          // Sin guion bajo_
         'color'          => ['nullable', 'string', 'max:100'],
         'weight'         => ['nullable', 'numeric', 'between:0,999.99'],
-        'microchip'      => ['nullable', 'string', 'max:255'],
+        'microchip'      => ['nullable', 'string', 'regex:/^\d{15}$/'],
         'notes'          => ['nullable', 'string'],
+        'allergies'      => ['nullable', 'string'],
+    ], [
+        'microchip.regex' => 'El microchip debe contener exactamente 15 digitos numericos.',
     ]);
 
     // 2. Inyectamos los datos obligatorios del sistema
@@ -316,10 +319,13 @@ class AnimalController extends Controller
             'birthdate' => ['nullable', 'date'],
             'color' => ['nullable', 'string', 'max:100'],
             'weight' => ['nullable', 'numeric', 'between:0,999.99'],
-            'microchip' => ['nullable', 'string', 'max:255'],
+            'microchip' => ['nullable', 'string', 'regex:/^\d{15}$/'],
             'microchip_image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:10240'],
             'status' => ['required', 'in:active,inactive,deceased,transferred'],
             'notes' => ['nullable', 'string'],
+            'allergies' => ['nullable', 'string'],
+        ], [
+            'microchip.regex' => 'El microchip debe contener exactamente 15 digitos numericos.',
         ]);
 
         $newImagePath = null;

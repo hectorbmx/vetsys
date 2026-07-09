@@ -33,6 +33,7 @@ class Animal extends Model
         'microchip_finalized_at',
         'status',
         'notes',
+        'allergies',
     ];
 
     protected $casts = [

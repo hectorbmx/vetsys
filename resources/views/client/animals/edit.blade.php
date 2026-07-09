@@ -163,8 +163,9 @@
             </div>
         </div>
 
-        <a href="{{ route('client.animals.index') }}" class="inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
-            Volver a Pacientes
+        <a href="{{ route('client.animals.index') }}" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
+            <span class="text-base leading-none">&larr;</span>
+            <span>Volver a Pacientes</span>
         </a>
     </div>
 
@@ -290,7 +291,7 @@
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Microchip</label>
                         <div class="flex flex-col gap-2 sm:flex-row">
-                            <input type="text" name="microchip" value="{{ old('microchip', $animal->microchip) }}" class="min-w-0 flex-1 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
+                            <input type="text" name="microchip" value="{{ old('microchip', $animal->microchip) }}" inputmode="numeric" pattern="[0-9]{15}" maxlength="15" title="Debe contener exactamente 15 digitos numericos" class="min-w-0 flex-1 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
                             @if($animal->microchip_image_path)
                                 <a href="{{ route('public.microchip-letters.print', $animal->microchip_print_token) }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                                     Imprimir chip
@@ -308,6 +309,9 @@
                         @error('microchip_image')
                             <p class="text-xs font-semibold text-red-600">{{ $message }}</p>
                         @enderror
+                        @error('microchip')
+                            <p class="text-xs font-semibold text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="space-y-2">
@@ -321,9 +325,15 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas Clinicas / Alergias</label>
-                    <textarea name="notes" rows="4" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none">{{ old('notes', $animal->notes) }}</textarea>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas Clinicas</label>
+                        <textarea name="notes" rows="4" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none">{{ old('notes', $animal->notes) }}</textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Alergias</label>
+                        <textarea name="allergies" rows="4" class="w-full bg-amber-50/60 border border-amber-100 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white focus:border-amber-300 focus:ring-4 focus:ring-amber-100 transition-all outline-none resize-none">{{ old('allergies', $animal->allergies) }}</textarea>
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">

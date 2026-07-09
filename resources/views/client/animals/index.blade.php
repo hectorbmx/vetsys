@@ -149,6 +149,7 @@
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dueño</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Club</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Peso</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Alergias</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
                     </tr>
@@ -159,11 +160,11 @@
                             {{-- Info Básica del Animal --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm">
+                                    <a href="{{ route('client.animals.edit', $animal) }}" class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm transition-transform hover:scale-105" title="Ver ficha de {{ $animal->name }}">
                                         {{ substr($animal->name, 0, 1) }}
-                                    </div>
+                                    </a>
                                     <div>
-                                        <h4 class="text-sm font-bold theme-text-heading leading-tight">{{ $animal->name }}</h4>
+                                        <a href="{{ route('client.animals.edit', $animal) }}" class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors">{{ $animal->name }}</a>
                                         <p class="text-[10px] font-medium text-slate-400 mt-0.5">
                                             Edad: {{ $animal->birthdate ? $animal->birthdate->age . ' años' : 'No registrada' }}
                                         </p>
@@ -203,6 +204,17 @@
                                 {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
                             </td>
 
+                            <td class="px-6 py-4">
+                                @if(filled($animal->allergies))
+                                    <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700" title="{{ $animal->allergies }}">
+                                        <span class="text-sm leading-none">&#9888;&#65039;</span>
+                                        <span>{{ \Illuminate\Support\Str::limit($animal->allergies, 24) }}</span>
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-300 font-bold">--</span>
+                                @endif
+                            </td>
+
                             {{-- Status Toggle Dinámico --}}
                    <td class="px-6 py-4">
     <form action="{{ route('client.animals.toggle', $animal->id) }}" method="POST">
@@ -227,17 +239,17 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     
-                                    <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">🔍</a> -->
+                                    <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">&#128269;</a> -->
                                     <a href="{{ route('client.animals.edit',$animal) }}" 
                                         class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
-                                        title="Ver ficha">🔍</a>
+                                        title="Ver ficha">&#128269;</a>
                                 </div>
                             </td>
                              
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
+                            <td colspan="8" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-slate-400">No hay pacientes registrados para los criterios de búsqueda.</p>
                             </td>
                         </tr>
@@ -421,10 +433,15 @@
                         </div>
                     </div>
 
-                    {{-- Notas Clínicas --}}
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas Clínicas / Alergias</label>
-                        <textarea name="notes" rows="3" placeholder="Ej. Alérgico a la penicilina, comportamiento nervioso..." class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none shadow-inner"></textarea>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas Clinicas</label>
+                            <textarea name="notes" rows="3" placeholder="Ej. Comportamiento nervioso, indicaciones generales..." class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none shadow-inner"></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Alergias</label>
+                            <textarea name="allergies" rows="3" placeholder="Ej. Penicilina, pollo, anestesia..." class="w-full bg-amber-50/60 border border-amber-100 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white focus:border-amber-300 focus:ring-4 focus:ring-amber-100 transition-all outline-none resize-none shadow-inner"></textarea>
+                        </div>
                     </div>
                 </div>
 

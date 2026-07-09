@@ -311,6 +311,9 @@ a           |-------------------------------------------------------------------
         Route::get('ventas', [NoteController::class, 'index'])->name('ventas.index');
         Route::get('ventas/crear', [NoteController::class, 'create'])->name('ventas.create');
         Route::post('ventas', [NoteController::class, 'store'])->name('ventas.store');
+        Route::get('ventas/{note}/editar', [NoteController::class, 'edit'])->name('ventas.edit');
+        Route::put('ventas/{note}', [NoteController::class, 'update'])->name('ventas.update');
+        Route::delete('ventas/{note}', [NoteController::class, 'destroy'])->name('ventas.destroy');
         Route::get('ventas/{note}', [NoteController::class, 'show'])->name('ventas.show');
         Route::get('ventas/{note}/ticket', [NoteController::class, 'ticket'])->name('ventas.ticket');
         Route::post('ventas/{note}/stripe-payment-link', [NoteController::class, 'createStripePaymentLink'])->name('ventas.stripe-payment-link');

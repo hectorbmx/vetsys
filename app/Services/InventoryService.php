@@ -100,7 +100,7 @@ class InventoryService
      *
      * This method must be called inside the transaction that creates the note.
      */
-    public function consumeForSale(Tenant $tenant, array $items, int $quantityMultiplier, Note $note): void
+    public function consumeForSale(Tenant $tenant, array $items, int $quantityMultiplier, Note $note, string $idempotencySuffix = ''): void
     {
         $requestedByItem = collect($items)
             ->groupBy(fn (array $item) => (int) $item['id'])
@@ -166,13 +166,47 @@ class InventoryService
                 auth()->id(),
                 'Venta',
                 "Descuento automatico por nota {$note->folio}.",
-                "sale:{$note->id}:catalog-item:{$catalogItemId}"
+                "sale:{$note->id}:catalog-item:{$catalogItemId}{$idempotencySuffix}"
             );
 
             if ($movement->wasRecentlyCreated && $this->levelRank($resultingLevel) > $this->levelRank($previousLevel)) {
                 $inventory->refresh();
                 $this->notifyStockLevel($tenant, $catalogItem, $inventory, $note, $resultingLevel);
             }
+        }
+    }
+
+    public function reverseSaleConsumption(Tenant $tenant, Note $note, string $idempotencySuffix = ''): void
+    {
+        $quantities = $note->details()
+            ->where('tenant_id', $tenant->id)
+            ->with('catalogItem.inventory')
+            ->get()
+            ->groupBy('catalog_item_id')
+            ->map(fn ($details) => $details->sum(fn ($detail) => (float) $detail->quantity));
+
+        foreach ($quantities as $catalogItemId => $quantity) {
+            $catalogItem = CatalogItem::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereKey($catalogItemId)
+                ->with('inventory')
+                ->first();
+
+            if (! $catalogItem?->has_inventory || ! $catalogItem->inventory) {
+                continue;
+            }
+
+            $this->recordMovement(
+                $tenant,
+                $catalogItem->inventory,
+                'return',
+                (float) $quantity,
+                $note,
+                auth()->id(),
+                'Reversion de venta',
+                "Reversion automatica por ajuste de nota {$note->folio}.",
+                "sale-reversal:{$note->id}:catalog-item:{$catalogItemId}{$idempotencySuffix}"
+            );
         }
     }
 

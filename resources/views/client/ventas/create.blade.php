@@ -1,10 +1,17 @@
 @extends('layouts.client')
 
-@section('title', 'Primera Venta')
+@section('title', $editingNote ? 'Editar Nota' : 'Primera Venta')
 @section('contextual-tour', 'first-sale')
 
 @section('content')
 <div x-data="salesPOS()" x-init="initPOS()" class="p-6 max-w-7xl mx-auto space-y-6">
+    <div x-show="isSubmitting" x-cloak x-transition.opacity class="fixed inset-0 z-[140] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading" x-text="isEditing ? 'Actualizando nota' : 'Guardando nota'"></p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Procesando la informacion. No cierres esta ventana.</p>
+        </div>
+    </div>
 
     {{-- MARQUESINA DE RECUPERACIÓN (SALVAVIDAS CONTRA ACCIDENTES) --}}
     <div x-show="showRecoveryAlert" x-cloak x-collapse class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
@@ -28,16 +35,19 @@
     {{-- ENCABEZADO --}}
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Nueva Nota de Venta</h1>
+            <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">{{ $editingNote ? 'Editar Nota de Venta' : 'Nueva Nota de Venta' }}</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">Genera cargos a clientes, asigna conceptos a pacientes y procesa pagos al instante.</p>
         </div>
-        <a href="{{ route('client.ventas.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
+        <a href="{{ route('client.ventas.index') }}" @click="confirmClose($event)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
             ← Volver al Historial
         </a>
     </div>
 
-    <form :action="storeRoute" method="POST" @submit="handleSubmit($event)">
+    <form :action="storeRoute" method="POST" @submit="handleSubmit($event)" @keydown.enter.prevent>
         @csrf
+        <template x-if="isEditing">
+            <input type="hidden" name="_method" value="PUT">
+        </template>
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
@@ -232,7 +242,7 @@
 
                     
                     {{-- MÓDULO DE LIQUIDACIÓN / CAJA (Contado o Crédito) --}}
-<div class="space-y-4" :class="{'opacity-50 pointer-events-none': basket.length === 0 || selectedAnimalIds.length === 0}">
+<div x-show="!isEditing" class="space-y-4" :class="{'opacity-50 pointer-events-none': basket.length === 0 || selectedAnimalIds.length === 0}">
     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Método de Operación</label>
     
     {{-- Selector de tipo tipo Toggle con Botones Estilizados --}}
@@ -285,8 +295,8 @@
 </div>
 
                     {{-- BOTÓN PRINCIPAL DE ENVÍO --}}
-                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
-                        <span x-text="isStripeCardPayment() ? 'Guardar nota y generar link Stripe' : '🛒 Procesar y Guardar Nota'"></span>
+                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="isSubmitting || basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
+                        <span x-text="submitLabel()"></span>
                     </button>
                 </div>
             </div>
@@ -300,10 +310,13 @@
 function salesPOS() {
     return {
         // Rutas y configuración
-        storeRoute: "{{ route('client.ventas.store') }}",
+        storeRoute: "{{ $editingNote ? route('client.ventas.update', $editingNote) : route('client.ventas.store') }}",
         searchCustomerUrl: "{{ route('client.api.buscar-clientes') }}",
         searchItemUrl: "{{ route('client.api.buscar-articulos') }}",
         prefilledCustomer: @js($prefilledCustomer),
+        initialSaleState: @js($initialSaleState),
+        isEditing: @js((bool) $editingNote),
+        isSubmitting: false,
         
         // Estados de búsqueda
         customerQuery: '',
@@ -327,6 +340,18 @@ function salesPOS() {
 
         // Inicializador del componente
         initPOS() {
+            if (this.initialSaleState) {
+                this.selectedCustomer = this.prefilledCustomer;
+                this.customerQuery = this.prefilledCustomer?.full_name ?? '';
+                this.selectedAnimalIds = (this.initialSaleState.selectedAnimalIds || []).map(id => String(id));
+                this.noteDate = this.initialSaleState.noteDate || this.noteDate;
+                this.basket = this.initialSaleState.basket || [];
+                this.paymentType = 'credito';
+                this.amountReceived = 0;
+                this.calculateTotals();
+                return;
+            }
+
             if (this.prefilledCustomer) {
                 localStorage.removeItem('vet_pos_backup');
                 this.selectedCustomer = this.prefilledCustomer;
@@ -482,6 +507,10 @@ function salesPOS() {
 
         // Persistencia local (Guarda el progreso de la sesión ante apagones/accidentes)
         saveToLocalStorage() {
+            if (this.isEditing) {
+                return;
+            }
+
             if (this.selectedCustomer || this.basket.length > 0) {
                 let state = {
                     customer: this.selectedCustomer,
@@ -525,6 +554,10 @@ function salesPOS() {
         },
 
         isStripeCardPayment() {
+            if (this.isEditing) {
+                return false;
+            }
+
             if (this.paymentType !== 'contado' || !this.paymentMethodId) {
                 return false;
             }
@@ -538,6 +571,28 @@ function salesPOS() {
         // Limpieza de seguridad al procesar exitosamente la venta
         handleSubmit(event) {
             if (this.hasBlockingStock()) {
+                event.preventDefault();
+                return;
+            }
+
+            this.isSubmitting = true;
+            localStorage.removeItem('vet_pos_backup');
+        },
+
+        submitLabel() {
+            if (this.isEditing) {
+                return 'Actualizar Nota';
+            }
+
+            return this.isStripeCardPayment() ? 'Guardar nota y generar link Stripe' : 'Procesar y Guardar Nota';
+        },
+
+        confirmClose(event) {
+            if (this.isSubmitting || (this.basket.length === 0 && this.selectedCustomer === null)) {
+                return;
+            }
+
+            if (!confirm('Estas seguro que quieres cerrar la nota? Los cambios no guardados se perderan.')) {
                 event.preventDefault();
             }
         }

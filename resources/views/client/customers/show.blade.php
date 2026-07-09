@@ -351,13 +351,29 @@
                                 </span>
                             </td>
                             <td class="py-4 text-right">
-                                @if($note->balance > 0)
-                                    <button type="button" @click="openPayment = true" class="inline-flex items-center justify-center theme-button-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm mr-2">Pagar</button>
-                                @endif
-                                <a href="{{ route('client.ventas.show', $note) }}"
-                                   class="inline-flex items-center justify-center theme-button-dark px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
-                                    Ver nota
-                                </a>
+                                <div class="flex flex-wrap items-center justify-end gap-2">
+                                    @if($note->balance > 0)
+                                        <button type="button" @click="openPayment = true" class="inline-flex items-center justify-center theme-button-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">Pagar</button>
+                                    @endif
+                                    <a href="{{ route('client.ventas.show', $note) }}"
+                                       class="inline-flex items-center justify-center theme-button-dark px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
+                                        Ver nota
+                                    </a>
+
+                                    @if($note->payments->isEmpty())
+                                        <a href="{{ route('client.ventas.edit', $note) }}"
+                                           class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-700 transition-all hover:bg-amber-100">
+                                            Editar
+                                        </a>
+                                        <form action="{{ route('client.ventas.destroy', $note) }}" method="POST" class="inline" onsubmit="return confirm('Eliminar esta nota? Esta accion no se puede deshacer.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-700 transition-all hover:bg-rose-100">
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
 
                                 @if($note->balance > 0)
                                     <div x-show="openPayment" x-cloak class="fixed inset-0 z-50 flex items-center justify-center theme-overlay backdrop-blur-sm p-4" @keydown.escape.window="openPayment = false">
