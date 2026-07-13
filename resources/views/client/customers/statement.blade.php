@@ -386,7 +386,7 @@
     </div>
 
     {{-- SECCION --}}
-         DATOS DEL CLIENTE
+         {{-- DATOS DEL CLIENTE --}}
     {{-- SECCION --}}
     <div class="client-box">
         <div class="client-box-left">
@@ -405,7 +405,7 @@
     </div>
 
     {{-- SECCION --}}
-         NOTAS POR MES
+         {{-- NOTAS POR MES --}}
     {{-- SECCION --}}
     @if($usesMonthlyCutoffBilling ?? false)
         @forelse($serviceDetailsByMonth ?? collect() as $month => $details)
@@ -591,7 +591,7 @@
     </div>
 
     {{-- SECCION --}}
-         RESUMEN FINAL
+         {{-- RESUMEN FINAL --}}
     {{-- SECCION --}}
     <div class="summary-section">
         <div class="summary-box">
@@ -617,7 +617,7 @@
     </div>
 
     {{-- SECCION --}}
-         FOOTER
+         {{-- FOOTER --}}
     {{-- SECCION --}}
     <div class="footer">
         Documento generado automáticamente : {{ $tenant->business_name ?? $tenant->name }} a· {{ now()->format('d/m/Y H:i') }}
