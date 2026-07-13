@@ -128,6 +128,8 @@ class ConfiguracionController extends Controller
     $activeHomeRoute = TenantHomeRoutes::normalize($tenant?->default_home_route);
     $menuModuleOptions = TenantMenuModules::all();
     $visibleMenuModules = TenantMenuModules::normalize($tenant?->visible_menu_modules);
+    $billingModeOptions = Tenant::billingModeOptions();
+    $activeBillingMode = $tenant?->normalizedBillingMode() ?? Tenant::BILLING_MODE_NOTE_BASED;
     $appointmentConfiguration = $appointmentConfigurationService->viewData($tenant, $user);
 
     $this->ensureTenantRolesExist();
@@ -160,7 +162,9 @@ class ConfiguracionController extends Controller
         'homeRouteOptions',
         'activeHomeRoute',
         'menuModuleOptions',
-        'visibleMenuModules'
+        'visibleMenuModules',
+        'billingModeOptions',
+        'activeBillingMode'
     ), $appointmentConfiguration));
 }
 
@@ -203,6 +207,26 @@ public function updateMenuModules(Request $request)
     return redirect()
         ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
         ->with('success', 'Modulos visibles actualizados correctamente.');
+}
+
+public function updateBillingMode(Request $request)
+{
+    $user = $request->user();
+    $tenant = $user->tenant;
+
+    abort_unless($tenant && $this->isTenantAdmin($user), 403);
+
+    $data = $request->validate([
+        'billing_mode' => ['required', Rule::in(Tenant::billingModeKeys())],
+    ]);
+
+    $tenant->update([
+        'billing_mode' => $data['billing_mode'],
+    ]);
+
+    return redirect()
+        ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
+        ->with('success', 'Modo de cobranza actualizado correctamente.');
 }
 
 public function updateThemePalette(Request $request)

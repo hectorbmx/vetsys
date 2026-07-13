@@ -46,14 +46,6 @@
         </div>
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <form method="GET" action="{{ route('client.animals.index') }}" class="relative w-full sm:w-80">
-                <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar paciente, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
-                @if(request()->filled('q'))
-                    <a href="{{ route('client.animals.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
-                @endif
-            </form>
             <button data-tour="add-animal" @click="animalModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
                 <span class="text-sm transition-transform group-hover:scale-125">+</span>
                 Nuevo Paciente
@@ -118,12 +110,9 @@
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="animals-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Database de Pacientes</h3>
-            <div class="flex flex-wrap items-center justify-end gap-3">
-                @if(request()->filled('q'))
-                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ request('q') }}</span>
-                @endif
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Database de Pacientes</h3>
                 <form method="GET" action="{{ route('client.animals.index') }}" class="flex items-center gap-2">
                     @if(request()->filled('q'))
                         <input type="hidden" name="q" value="{{ request('q') }}">
@@ -136,6 +125,19 @@
                     </select>
                     <span class="text-[10px] font-bold text-slate-400">filas</span>
                 </form>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <form method="GET" action="{{ route('client.animals.index') }}" class="relative w-full sm:max-w-md">
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar paciente, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+                    @if(request()->filled('q'))
+                        <a href="{{ route('client.animals.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                    @endif
+                </form>
+                @if(request()->filled('q'))
+                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ request('q') }}</span>
+                @endif
             </div>
         </div>
 

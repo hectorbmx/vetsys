@@ -5,7 +5,7 @@
 @section('contextual-tour', 'customers')
 
 @section('content')
-<div class="space-y-8" x-data="{ customerModal: false }">
+<div class="space-y-8" x-data="customersIndex()">
     
     {{-- INCLUSIÓN DEL SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -46,17 +46,6 @@
         </div>
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <form method="GET" action="{{ route('client.customers.index') }}" class="relative w-full sm:w-80">
-                <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar cliente, correo o telefono..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
-                @if(request('status'))
-                    <input type="hidden" name="status" value="{{ request('status') }}">
-                @endif
-                @if(request()->filled('q') || request()->filled('status'))
-                    <a href="{{ route('client.customers.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
-                @endif
-            </form>
             <button data-tour="add-customer" @click="customerModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
                 <span class="text-sm transition-transform group-hover:scale-125">+</span>
                 Nuevo Cliente
@@ -121,12 +110,9 @@
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="customers-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Listado de Clientes</h3>
-            <div class="flex flex-wrap items-center justify-end gap-3">
-                @if(request()->filled('q') || request()->filled('status'))
-                    <span class="text-[11px] font-bold text-slate-400">Filtros activos</span>
-                @endif
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Listado de Clientes</h3>
                 <form method="GET" action="{{ route('client.customers.index') }}" class="flex items-center gap-2">
                     @if(request()->filled('q'))
                         <input type="hidden" name="q" value="{{ request('q') }}">
@@ -143,6 +129,22 @@
                     <span class="text-[10px] font-bold text-slate-400">filas</span>
                 </form>
             </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <form method="GET" action="{{ route('client.customers.index') }}" class="relative w-full sm:max-w-md">
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar cliente, correo o telefono..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    @if(request()->filled('q') || request()->filled('status'))
+                        <a href="{{ route('client.customers.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                    @endif
+                </form>
+                @if(request()->filled('q') || request()->filled('status'))
+                    <span class="text-[11px] font-bold text-slate-400">Filtros activos</span>
+                @endif
+            </div>
         </div>
 
         {{-- TABLA CON RECORRIDO DINÁMICO --}}
@@ -156,6 +158,9 @@
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">APP</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                        @if($usesMonthlyCutoffBilling)
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Corte</th>
+                        @endif
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
                     </tr>
                 </thead>
@@ -190,10 +195,12 @@
                             {{-- Mascotas (Relación belongsTo/hasMany dinámico) --}}
                             {{-- Cantidad de Mascotas --}}
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center text-[10px] font-black theme-text-primary theme-bg-primary-soft px-2.5 py-1 rounded-full">
+                                <a href="{{ route('client.customers.show', ['customer' => $customer->id, 'tab' => 'mascotas']) }}"
+                                   class="inline-flex items-center text-[10px] font-black theme-text-primary theme-bg-primary-soft px-2.5 py-1 rounded-full transition hover:scale-105 focus:outline-none theme-focus-primary"
+                                   title="Ver caballos de {{ $customer->full_name }}">
                                     {{ $customer->animals_count ?? $customer->animals->count() }}
                                     {{ ($customer->animals_count ?? $customer->animals->count()) == 1 ? 'caballo' : 'caballos ' }}
-                                </span>
+                                </a>
                             </td>
                             {{-- <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1.5 max-w-[220px]">
@@ -210,12 +217,16 @@
                             {{-- Adeudo General --}}
                             <td class="px-6 py-4">
                                 @php($generalDebt = (float) ($customer->general_debt ?? 0))
-                                <div class="text-xs font-black {{ $generalDebt > 0 ? 'text-rose-600' : 'text-slate-400' }}">
-                                    ${{ number_format($generalDebt, 2) }}
-                                </div>
-                                <div class="text-[9px] font-medium {{ $generalDebt > 0 ? 'text-rose-400' : 'text-emerald-500' }} mt-0.5">
-                                    {{ $generalDebt > 0 ? 'Pendiente' : 'Sin adeudo' }}
-                                </div>
+                                <a href="{{ route('client.customers.show', ['customer' => $customer->id, 'tab' => 'notas']) }}"
+                                   class="inline-block rounded-lg transition hover:bg-slate-50 focus:outline-none theme-focus-primary"
+                                   title="Ver cobranza de {{ $customer->full_name }}">
+                                    <div class="text-xs font-black {{ $generalDebt > 0 ? 'text-rose-600' : 'text-slate-400' }}">
+                                        ${{ number_format($generalDebt, 2) }}
+                                    </div>
+                                    <div class="text-[9px] font-medium {{ $generalDebt > 0 ? 'text-rose-400' : 'text-emerald-500' }} mt-0.5">
+                                        {{ $generalDebt > 0 ? 'Pendiente' : 'Sin adeudo' }}
+                                    </div>
+                                </a>
                             </td>
 
                             {{-- Status Toggle Dinámico --}}
@@ -257,6 +268,22 @@
                     </form>
                 </td>
 
+                            @if($usesMonthlyCutoffBilling)
+                                <td class="px-6 py-4">
+                                    <button type="button"
+                                            @click="openStatementModal({
+                                                id: {{ $customer->id }},
+                                                name: @js($customer->full_name),
+                                                previewUrl: @js(route('client.customers.statements.preview', $customer)),
+                                                storeUrl: @js(route('client.customers.statements.store-manual', $customer))
+                                            })"
+                                            class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-all hover:bg-emerald-100 hover:text-emerald-700"
+                                            title="Crear corte de {{ $customer->full_name }}">
+                                        $
+                                    </button>
+                                </td>
+                            @endif
+
                             {{-- Acciones --}}
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
@@ -270,7 +297,7 @@
                     @empty
                         {{-- Estado vacío si la consulta no devuelve nada --}}
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
+                            <td colspan="{{ $usesMonthlyCutoffBilling ? 8 : 7 }}" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-slate-400">No se encontraron clientes registrados en este Tenant.</p>
                             </td>
                         </tr>
@@ -284,6 +311,8 @@
             {{ $customers->links() }}
         </div>
     </div>
+
+    @include('client.customers.partials.statement-modal')
 
     {{-- MODAL NUEVO CUSTOMER --}}
     <div x-show="customerModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" x-data="{ loading: false }">
@@ -348,3 +377,15 @@
 
 </div>
 @endsection
+
+@push('scripts')
+@include('client.customers.partials.statement-modal-script')
+<script>
+    window.customersIndex = function () {
+        return {
+            customerModal: false,
+            ...statementModalState(),
+        };
+    };
+</script>
+@endpush

@@ -234,6 +234,49 @@
             </div>
         </form>
 
+        <form action="{{ route('client.mi-configuracion.billing-mode.update') }}" method="POST" class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+            @csrf
+            @method('PATCH')
+
+            <div class="border-b border-slate-100 bg-slate-50/50 p-6">
+                <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Modo de cobranza</h3>
+                <p class="mt-1 text-[11px] font-medium text-slate-400">Define si el tenant trabaja por notas individuales o por cortes mensuales tipo cuenta corriente.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
+                @foreach($billingModeOptions as $modeKey => $option)
+                    <label class="relative flex cursor-pointer gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:border-slate-300 {{ $activeBillingMode === $modeKey ? 'theme-border-primary ring-4 theme-ring-primary' : 'border-slate-200' }}">
+                        <input
+                            type="radio"
+                            name="billing_mode"
+                            value="{{ $modeKey }}"
+                            @checked($activeBillingMode === $modeKey)
+                            @disabled(!$canManageTeam)
+                            class="mt-1 theme-text-primary focus:ring-0"
+                        >
+                        <span>
+                            <span class="block text-xs font-black uppercase tracking-widest theme-text-heading">{{ $option['label'] }}</span>
+                            <span class="mt-1 block text-[11px] font-semibold text-slate-400">{{ $option['description'] }}</span>
+                            <span class="mt-3 inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">{{ $modeKey }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-[11px] font-semibold text-slate-400">
+                    Este cambio no modifica como se guardan las notas; solo activa la experiencia visual de cobranza correspondiente.
+                </p>
+                @if($canManageTeam)
+                    <button type="submit" class="theme-button-primary rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-widest">
+                        Guardar modo de cobranza
+                    </button>
+                @else
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Solo administradores</span>
+                @endif
+            </div>
+        </form>
+
         <form action="{{ route('client.mi-configuracion.menu-modules.update') }}" method="POST" class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
             @csrf
             @method('PATCH')

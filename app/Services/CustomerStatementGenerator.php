@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\CustomerStatement;
 use App\Models\Note;
+use App\Models\NoteDetail;
 use App\Models\Payment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -12,15 +13,37 @@ use Illuminate\Support\Facades\Storage;
 
 class CustomerStatementGenerator
 {
-    public function generateStored(Customer $customer): CustomerStatement
+    public function previewRange(Customer $customer, Carbon $from, Carbon $to): array
     {
-        $setting = $customer->accountSetting;
+        $chargesByAnimal = NoteDetail::query()
+            ->with('animal')
+            ->where('note_details.tenant_id', $customer->tenant_id)
+            ->whereHas('note', fn ($query) => $query
+                ->where('tenant_id', $customer->tenant_id)
+                ->where('customer_id', $customer->id)
+                ->where('status', '!=', 'CANCELADA')
+                ->whereBetween('date_at', [$from, $to]))
+            ->get()
+            ->groupBy(fn (NoteDetail $detail) => $detail->animal?->name ?? 'Sin paciente')
+            ->map(fn ($details, string $animalName) => [
+                'animal' => $animalName,
+                'services_count' => (int) $details->count(),
+                'total' => round((float) $details->sum('subtotal'), 2),
+            ])
+            ->values();
 
-        if (!$setting) {
-            throw new \RuntimeException('El cliente no tiene configuracion contable.');
-        }
+        return [
+            'period_start' => $from->toDateString(),
+            'period_end' => $to->toDateString(),
+            'animals_count' => $chargesByAnimal->count(),
+            'services_count' => (int) $chargesByAnimal->sum('services_count'),
+            'total' => round((float) $chargesByAnimal->sum('total'), 2),
+            'rows' => $chargesByAnimal,
+        ];
+    }
 
-        [$from, $to] = $this->closedPeriodForCutoff($setting->cutoff_day);
+    public function generateStoredForRange(Customer $customer, Carbon $from, Carbon $to): CustomerStatement
+    {
         $tenant = $customer->tenant;
         $statementData = $this->buildStatementData($customer, $from, $to);
 
@@ -39,14 +62,18 @@ class CustomerStatementGenerator
             $from,
             $to,
             $statementData['notesByMonth'],
+            $statementData['serviceDetailsByMonth'],
             $statementData['payments'],
             $statementData['period_charges'],
             $statementData['period_payments'],
             $statementData['ending_balance'],
-            $statementData['previous_balance']
+            $statementData['previous_balance'],
+            $tenant->usesMonthlyCutoffBilling()
         );
 
         Storage::disk('local')->put($path, $pdf->output());
+
+        $setting = $customer->accountSetting;
 
         $statement = CustomerStatement::updateOrCreate(
             [
@@ -56,7 +83,7 @@ class CustomerStatementGenerator
                 'period_end' => $to->toDateString(),
             ],
             [
-                'cutoff_day' => $setting->cutoff_day,
+                'cutoff_day' => $setting?->cutoff_day ?? (int) $to->day,
                 'previous_balance' => $statementData['previous_balance'],
                 'period_charges' => $statementData['period_charges'],
                 'period_payments' => $statementData['period_payments'],
@@ -72,6 +99,56 @@ class CustomerStatementGenerator
         app(PortalNotificationService::class)->statementGenerated($statement->fresh('customer'));
 
         return $statement;
+    }
+
+    public function generateStored(Customer $customer): CustomerStatement
+    {
+        $setting = $customer->accountSetting;
+
+        if (!$setting) {
+            throw new \RuntimeException('El cliente no tiene configuracion contable.');
+        }
+
+        [$from, $to] = $this->closedPeriodForCutoff($setting->cutoff_day);
+        return $this->generateStoredForRange($customer, $from, $to);
+    }
+
+    public function calculateRangeTotals(Customer $customer, Carbon $from, Carbon $to): array
+    {
+        $statementData = $this->buildStatementData($customer, $from, $to);
+
+        return [
+            'previous_balance' => round((float) $statementData['previous_balance'], 2),
+            'period_charges' => round((float) $statementData['period_charges'], 2),
+            'period_payments' => round((float) $statementData['period_payments'], 2),
+            'ending_balance' => round((float) $statementData['ending_balance'], 2),
+        ];
+    }
+
+    public function dataForRange(Customer $customer, Carbon $from, Carbon $to): array
+    {
+        return $this->buildStatementData($customer, $from, $to);
+    }
+
+    public function makePdfForRange(Customer $customer, Carbon $from, Carbon $to, ?bool $usesMonthlyCutoffBilling = null)
+    {
+        $tenant = $customer->tenant;
+        $statementData = $this->buildStatementData($customer, $from, $to);
+
+        return $this->makeStatementPdf(
+            $customer,
+            $tenant,
+            $from,
+            $to,
+            $statementData['notesByMonth'],
+            $statementData['serviceDetailsByMonth'],
+            $statementData['payments'],
+            $statementData['period_charges'],
+            $statementData['period_payments'],
+            $statementData['ending_balance'],
+            $statementData['previous_balance'],
+            $usesMonthlyCutoffBilling ?? $tenant->usesMonthlyCutoffBilling()
+        );
     }
 
     public function shouldGenerateToday(Customer $customer, ?Carbon $date = null): bool
@@ -91,11 +168,13 @@ class CustomerStatementGenerator
         Carbon $from,
         Carbon $to,
         $notesByMonth,
+        $serviceDetailsByMonth,
         $payments,
         float $totalInvoiced,
         float $totalPaid,
         float $totalDebt,
-        ?float $previousBalance = null
+        ?float $previousBalance = null,
+        bool $usesMonthlyCutoffBilling = false
     ) {
         return Pdf::loadView('client.customers.statement', [
             'customer' => $customer,
@@ -103,11 +182,13 @@ class CustomerStatementGenerator
             'from' => $from,
             'to' => $to,
             'notesByMonth' => $notesByMonth,
+            'serviceDetailsByMonth' => $serviceDetailsByMonth,
             'payments' => $payments,
             'totalInvoiced' => $totalInvoiced,
             'totalPaid' => $totalPaid,
             'totalDebt' => $totalDebt,
             'previousBalance' => $previousBalance,
+            'usesMonthlyCutoffBilling' => $usesMonthlyCutoffBilling,
         ])
             ->setPaper('letter', 'portrait')
             ->setOption('defaultFont', 'sans-serif')
@@ -121,6 +202,7 @@ class CustomerStatementGenerator
                 'details.catalogItem',
                 'details.animal',
             ])
+            ->where('tenant_id', $customer->tenant_id)
             ->where('customer_id', $customer->id)
             ->where('status', '!=', 'CANCELADA')
             ->whereBetween('date_at', [$from, $to])
@@ -128,27 +210,53 @@ class CustomerStatementGenerator
             ->get();
 
         $payments = Payment::with('paymentMethod')
+            ->where('tenant_id', $customer->tenant_id)
             ->where('customer_id', $customer->id)
             ->whereBetween('created_at', [$from, $to])
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $previousCharges = (float) Note::where('customer_id', $customer->id)
-            ->where('status', '!=', 'CANCELADA')
-            ->whereDate('date_at', '<', $from->toDateString())
-            ->sum('total');
+        $serviceDetails = NoteDetail::query()
+            ->with(['note', 'animal', 'catalogItem'])
+            ->where('note_details.tenant_id', $customer->tenant_id)
+            ->join('notes', 'notes.id', '=', 'note_details.note_id')
+            ->where('notes.tenant_id', $customer->tenant_id)
+            ->where('notes.customer_id', $customer->id)
+            ->where('notes.status', '!=', 'CANCELADA')
+            ->whereNull('notes.deleted_at')
+            ->whereBetween('notes.date_at', [$from, $to])
+            ->select('note_details.*')
+            ->orderBy('notes.date_at', 'asc')
+            ->orderBy('note_details.id', 'asc')
+            ->get();
+
+        $previousCharges = (float) NoteDetail::where('note_details.tenant_id', $customer->tenant_id)
+            ->whereHas('note', fn ($query) => $query
+                ->where('tenant_id', $customer->tenant_id)
+                ->where('customer_id', $customer->id)
+                ->where('status', '!=', 'CANCELADA')
+                ->whereDate('date_at', '<', $from->toDateString()))
+            ->sum('subtotal');
 
         $previousPayments = (float) Payment::where('customer_id', $customer->id)
+            ->where('tenant_id', $customer->tenant_id)
             ->where('created_at', '<', $from)
             ->sum('amount');
 
         $previousBalance = max($previousCharges - $previousPayments, 0);
-        $periodCharges = (float) $notes->sum('total');
+        $periodCharges = (float) NoteDetail::where('note_details.tenant_id', $customer->tenant_id)
+            ->whereHas('note', fn ($query) => $query
+                ->where('tenant_id', $customer->tenant_id)
+                ->where('customer_id', $customer->id)
+                ->where('status', '!=', 'CANCELADA')
+                ->whereBetween('date_at', [$from, $to]))
+            ->sum('subtotal');
         $periodPayments = (float) $payments->sum('amount');
         $endingBalance = max($previousBalance + $periodCharges - $periodPayments, 0);
 
         return [
             'notesByMonth' => $notes->groupBy(fn ($note) => ucfirst($note->date_at->translatedFormat('F Y'))),
+            'serviceDetailsByMonth' => $serviceDetails->groupBy(fn (NoteDetail $detail) => ucfirst($detail->note->date_at->translatedFormat('F Y'))),
             'payments' => $payments,
             'previous_balance' => $previousBalance,
             'period_charges' => $periodCharges,

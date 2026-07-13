@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogItem;
 use App\Models\Customer;
 use App\Models\Note;
+use App\Models\NoteDetail;
 use App\Models\PaymentMethod;
 use App\Services\StripeNotePaymentService;
 use App\Services\CustomerPaymentService;
@@ -30,6 +31,7 @@ class NoteController extends Controller
         $perPage = in_array($requestedPerPage, $allowedPerPage, true)
             ? $requestedPerPage
             : 15;
+        $usesMonthlyCutoffBilling = $tenant->usesMonthlyCutoffBilling();
 
         $notes = $tenant->notes()
             ->with('customer')
@@ -48,6 +50,38 @@ class NoteController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $serviceDetails = null;
+
+        if ($usesMonthlyCutoffBilling) {
+            $serviceDetails = NoteDetail::query()
+                ->where('note_details.tenant_id', $tenant->id)
+                ->join('notes', 'notes.id', '=', 'note_details.note_id')
+                ->where('notes.status', '!=', 'CANCELADA')
+                ->with(['note.customer', 'animal', 'catalogItem'])
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('notes.folio', 'LIKE', "%{$search}%")
+                            ->orWhereHas('note.customer', function ($subQuery) use ($search) {
+                                $subQuery->where('name', 'LIKE', "%{$search}%")
+                                    ->orWhere('last_name', 'LIKE', "%{$search}%")
+                                    ->orWhere('phone', 'LIKE', "%{$search}%");
+                            })
+                            ->orWhereHas('animal', function ($subQuery) use ($search) {
+                                $subQuery->where('name', 'LIKE', "%{$search}%");
+                            })
+                            ->orWhereHas('catalogItem', function ($subQuery) use ($search) {
+                                $subQuery->where('name', 'LIKE', "%{$search}%")
+                                    ->orWhere('sku', 'LIKE', "%{$search}%");
+                            });
+                    });
+                })
+                ->select('note_details.*')
+                ->orderByDesc('notes.date_at')
+                ->orderByDesc('note_details.id')
+                ->paginate($perPage)
+                ->withQueryString();
+        }
+
         // KPIs del mes actual
         $startOfMonth = now()->startOfMonth();
         $endOfMonth = now()->endOfMonth();
@@ -64,6 +98,18 @@ class NoteController extends Controller
 
         $monthNoteIds = $monthNotes->pluck('id');
 
+        if ($usesMonthlyCutoffBilling) {
+            $monthDetails = NoteDetail::query()
+                ->where('note_details.tenant_id', $tenant->id)
+                ->whereIn('note_details.note_id', $monthNoteIds)
+                ->get();
+
+            $totalSalesMonth = (float) $monthDetails->sum('subtotal');
+            $totalNotesMonth = $monthDetails->count();
+            $paidNotesMonth = 0;
+            $pendingNotesMonth = $totalNotesMonth;
+        }
+
         // Adeudo general: saldo real de todas las notas que siguen pendientes.
         $totalPending = $tenant->notes()
             ->where('status', 'PENDIENTE')
@@ -77,6 +123,8 @@ class NoteController extends Controller
 
         return view('client.ventas.index', compact(
             'notes',
+            'serviceDetails',
+            'usesMonthlyCutoffBilling',
             'totalSalesMonth',
             'totalPending',
             'totalNotesMonth',
@@ -515,10 +563,35 @@ public function show(Note $note)
         ->orderBy('name')
         ->get();
 
+    $usesMonthlyCutoffBilling = $tenant->usesMonthlyCutoffBilling();
+    $customerAccountBalance = 0.0;
+
+    if ($usesMonthlyCutoffBilling) {
+        $totalCharges = (float) \App\Models\NoteDetail::query()
+            ->where('note_details.tenant_id', $tenant->id)
+            ->whereHas('note', fn ($query) => $query
+                ->where('tenant_id', $tenant->id)
+                ->where('customer_id', $note->customer_id)
+                ->where('status', '!=', 'CANCELADA'))
+            ->sum('subtotal');
+
+        $totalPayments = (float) $note->customer->payments()
+            ->where('tenant_id', $tenant->id)
+            ->sum('amount');
+
+        $customerAccountBalance = max($totalCharges - $totalPayments, 0);
+    }
+
     // Agrupar detalles por animal para mostrarlos ordenados
     $detailsByAnimal = $note->details->groupBy('animal_id');
 
-    return view('client.ventas.show', compact('note', 'detailsByAnimal', 'paymentMethods'));
+    return view('client.ventas.show', compact(
+        'note',
+        'detailsByAnimal',
+        'paymentMethods',
+        'usesMonthlyCutoffBilling',
+        'customerAccountBalance'
+    ));
 }
 
 public function ticket(Note $note)
@@ -560,10 +633,19 @@ public function publicTicket(string $token)
 
 public function createStripePaymentLink(Note $note)
 {
-    abort_if($note->tenant_id !== auth()->user()->tenant->id, 403);
+    $tenant = auth()->user()->tenant;
+
+    abort_if($note->tenant_id !== $tenant->id, 403);
+
+    if ($tenant->usesMonthlyCutoffBilling()) {
+        return redirect()
+            ->route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'notas'])
+            ->with('activeCustomerTab', 'notas')
+            ->with('error', 'En modo cuentas mensuales, registra abonos desde la cuenta del cliente.');
+    }
 
     try {
-        $paymentMethod = $this->cardPaymentMethodForTenant(auth()->user()->tenant->id);
+        $paymentMethod = $this->cardPaymentMethodForTenant($tenant->id);
         $paymentLink = app(StripeNotePaymentService::class)->createLink($note, $paymentMethod?->id);
     } catch (\Throwable $exception) {
         report($exception);
@@ -581,6 +663,13 @@ public function storeManualPayment(Request $request, Note $note)
     $tenant = auth()->user()->tenant;
 
     abort_if($note->tenant_id !== $tenant->id, 403);
+
+    if ($tenant->usesMonthlyCutoffBilling()) {
+        return redirect()
+            ->route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'notas'])
+            ->with('activeCustomerTab', 'notas')
+            ->with('error', 'En modo cuentas mensuales, registra abonos desde la cuenta del cliente.');
+    }
 
     $data = $request->validate([
         'amount' => ['required', 'numeric', 'min:0.01'],

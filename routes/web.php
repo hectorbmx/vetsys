@@ -208,6 +208,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::get('telemedicina/expedientes/{token}/cartas/{vaccinationLetter}', [TelemedicineController::class, 'letter'])->name('telemedicine.vaccination-letters.show');
         Route::get('telemedicina/expedientes/{token}/videos/{animalVideo}', [TelemedicineController::class, 'video'])->name('telemedicine.animal-videos.show');
         Route::get('telemedicina/expedientes/{token}/radiologia/{radiologyImage}', [TelemedicineController::class, 'radiologyImage'])->name('telemedicine.radiology-images.show');
+        Route::delete('animals/{animal}/service-details/{detail}', [AnimalController::class, 'destroyServiceDetail'])->name('animals.service-details.destroy');
         Route::resource('animals', AnimalController::class);
         Route::delete('animals/{animal}/microchip-image', [AnimalController::class, 'destroyMicrochipImage'])->name('animals.microchip-image.destroy');
         Route::patch('animals/{animal}/toggle', [AnimalController::class, 'toggleStatus'])->name('animals.toggle');
@@ -265,6 +266,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::patch('mi-configuracion', [ClientConfiguracionController::class, 'update'])->name('mi-configuracion.update');
         Route::patch('mi-configuracion/apariencia', [ClientConfiguracionController::class, 'updateThemePalette'])->name('mi-configuracion.appearance.update');
         Route::patch('mi-configuracion/pantalla-inicio', [ClientConfiguracionController::class, 'updateHomeRoute'])->name('mi-configuracion.home-route.update');
+        Route::patch('mi-configuracion/modo-cobranza', [ClientConfiguracionController::class, 'updateBillingMode'])->name('mi-configuracion.billing-mode.update');
         Route::patch('mi-configuracion/modulos-menu', [ClientConfiguracionController::class, 'updateMenuModules'])->name('mi-configuracion.menu-modules.update');
         Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
         Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
@@ -330,7 +332,11 @@ a           |-------------------------------------------------------------------
         Route::get('customers/{customer}/payments/preview', [PaymentController::class, 'preview'])->name('customers.payments.preview');
         Route::get('customers/{customer}/statement', [StatementController::class, 'generate'])->name('customers.statement.generate');
         Route::patch('customers/{customer}/account-settings', [CustomerController::class, 'updateAccountSettings'])->name('customers.account-settings.update');
+        Route::get('customers/{customer}/statements/preview', [StatementController::class, 'preview'])->name('customers.statements.preview');
+        Route::post('customers/{customer}/statements/manual', [StatementController::class, 'storeManual'])->name('customers.statements.store-manual');
         Route::post('customers/{customer}/statements', [StatementController::class, 'storeGenerated'])->name('customers.statements.store');
+        Route::post('customers/{customer}/statements/{statement}/recalculate', [StatementController::class, 'recalculate'])->name('customers.statements.recalculate');
+        Route::get('customers/{customer}/statements/{statement}', [StatementController::class, 'show'])->name('customers.statements.show');
         Route::get('customers/{customer}/statements/{statement}/pdf', [StatementController::class, 'showStored'])->name('customers.statements.pdf');
 
         /*

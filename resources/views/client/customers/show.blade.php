@@ -1,31 +1,54 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('content')
-<div x-data="{ tab: '{{ session('activeCustomerTab', request('tab', 'mascotas')) }}', ...pagoModal({{ $customer->id }}), openStatementModal: false }" class="p-6 max-w-7xl mx-auto space-y-6">
+<div
+    x-data="{
+        tab: '{{ session('activeCustomerTab', request('tab', 'mascotas')) }}',
+        hidePortalAccess: false,
+        hideCustomerKpis: false,
+        init() {
+            this.hidePortalAccess = localStorage.getItem('customerProfile.hidePortalAccess') === '1';
+            this.hideCustomerKpis = localStorage.getItem('customerProfile.hideCustomerKpis') === '1';
+        },
+        togglePortalAccess() {
+            this.hidePortalAccess = !this.hidePortalAccess;
+            localStorage.setItem('customerProfile.hidePortalAccess', this.hidePortalAccess ? '1' : '0');
+        },
+        toggleCustomerKpis() {
+            this.hideCustomerKpis = !this.hideCustomerKpis;
+            localStorage.setItem('customerProfile.hideCustomerKpis', this.hideCustomerKpis ? '1' : '0');
+        },
+        ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }})
+    }"
+    class="p-6 max-w-7xl mx-auto space-y-6"
+>
 
     {{-- CABECERA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
             <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin teléfono' }}
+                {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
             </p>
         </div>
         <div class="flex items-center gap-3">
-             <button @click="open = true" class="theme-button-primary px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
-                + Registrar Pago
-            </button>
-            <button @click="openStatementModal = true" class="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
-                Ver Estado
-            </button>
-            <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">← Volver</a>
+            @unless($usesMonthlyCutoffBilling)
+                <button @click="open = true" class="theme-button-primary px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                    + Registrar Pago
+                </button>
+            @endunless
+            {{-- <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">&larr; Volver</a> --}}
+        <a href="{{ route('client.customers.index') }}"
+   class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">
+    &larr; Volver
+</a>
         </div>
     </div>
 
     {{-- FLASH --}}
     @if(session('success'))
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-3 rounded-2xl text-xs font-bold">
-            ✓ {{ session('success') }}
+            &#10003; {{ session('success') }}
         </div>
     @endif
     @if(session('error'))
@@ -50,7 +73,30 @@
         $portalUser = $latestPortalAccess?->user ?? $customer->portalUserLinks->first()?->user;
         $assignedPatientsCount = $customer->finalUserPatientAssignments->whereNull('revoked_at')->count();
     @endphp
-    <div class="bg-white border border-slate-200 rounded-[24px] p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex justify-end">
+        <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/80 p-1 shadow-sm">
+            <button
+                type="button"
+                @click="togglePortalAccess()"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                :title="hidePortalAccess ? 'Mostrar acceso app' : 'Ocultar acceso app'"
+                :aria-label="hidePortalAccess ? 'Mostrar acceso app' : 'Ocultar acceso app'"
+            >
+                <span x-text="hidePortalAccess ? '▣' : '▢'"></span>
+            </button>
+            <button
+                type="button"
+                @click="toggleCustomerKpis()"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                :title="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
+                :aria-label="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
+            >
+                <span x-text="hideCustomerKpis ? '\u25A6' : '\u25A4'"></span>
+            </button>
+        </div>
+    </div>
+
+    <div x-show="!hidePortalAccess" x-cloak class="bg-white border border-slate-200 rounded-[24px] p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
             <div class="flex items-center gap-3">
                 <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl {{ $activePortalAccess ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400' }} text-xs font-black">APP</span>
@@ -76,83 +122,138 @@
         </form>
     </div>
 
-   {{-- KPIs --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        {{-- KPI 1: Adeudo General (ROSE) --}}
-        <div class="group bg-gradient-to-br from-rose-500 to-red-600 border border-rose-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl text-white">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-rose-100 uppercase tracking-widest">Adeudo General</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black tracking-tight">${{ number_format($customer->outstanding_balance, 2) }}</span>
+   {{-- KPIs dinamicos --}}
+    <div x-show="!hideCustomerKpis" x-cloak>
+        @if($usesMonthlyCutoffBilling)
+            <div x-show="tab === 'mascotas'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Caballos registrados</p>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-black tracking-tight">{{ $horsesTotal }}</span>
+                            <span class="text-[10px] font-medium text-indigo-100">caballo(s)</span>
+                        </div>
+                        <p class="text-[10px] text-indigo-100 font-medium">{{ $horsesInactive }} inactivo(s)</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#9679;</div>
                 </div>
-                <p class="text-[10px] text-rose-100 font-medium">
-                    {{ $customer->saleNotes->filter(fn ($note) => $note->balance > 0)->count() }} nota(s) pendiente(s)
-                </p>
-                @if($customer->credit_balance > 0)
-                    <p class="text-[10px] font-black text-rose-100 mt-2">Saldo a favor: ${{ number_format($customer->credit_balance, 2) }}</p>
-                @endif
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⚠️</div>
-        </div>
 
-        {{-- KPI 2: Último Pago (EMERALD) --}}
-        <div class="group bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl text-white">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Último Pago</p>
-                @php $lastPayment = $customer->payments->sortByDesc('created_at')->first(); @endphp
-                @if($lastPayment)
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-3xl font-black tracking-tight">${{ number_format($lastPayment->amount, 2) }}</span>
+                <div class="group bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Ultimo caballo atendido</p>
+                        @if($lastHorseService)
+                            <span class="block text-3xl font-black tracking-tight truncate max-w-[220px]">{{ $lastHorseService->animal->name ?? 'Sin paciente' }}</span>
+                            <p class="text-[10px] text-emerald-100 font-medium">
+                                {{ optional($lastHorseService->note?->date_at)->format('d/m/Y') ?? '--' }} &middot; {{ $lastHorseService->catalogItem->name ?? 'Servicio' }}
+                            </p>
+                        @else
+                            <span class="block text-3xl font-black tracking-tight">Sin datos</span>
+                            <p class="text-[10px] text-emerald-100 font-medium">Aun no hay servicios registrados</p>
+                        @endif
                     </div>
-                    <p class="text-[10px] text-emerald-100 font-medium">
-                        {{ $lastPayment->created_at->format('d/m/Y') }} · {{ $lastPayment->paymentMethod->name ?? 'N/A' }}
-                    </p>
-                @else
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-3xl font-black tracking-tight">$0.00</span>
-                    </div>
-                    <p class="text-[10px] text-emerald-100 font-medium">Sin pagos registrados</p>
-                @endif
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💸</div>
-        </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#10003;</div>
+                </div>
 
-        {{-- KPI 3: Mascotas (INDIGO) --}}
-        <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border border-indigo-700 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl text-white">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Pacientes Registrados</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-black tracking-tight">{{ $customer->animals->count() }}</span>
-                    <span class="text-[10px] font-medium text-indigo-100">paciente(s)</span>
+                <div class="group bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-slate-200 uppercase tracking-widest">Servicios del mes</p>
+                        <span class="block text-3xl font-black tracking-tight">{{ $monthlyHorseServicesCount }}</span>
+                        <p class="text-[10px] text-slate-200 font-medium">${{ number_format($monthlyHorseServicesTotal, 2) }} acumulados</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#36;</div>
                 </div>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🐾</div>
-        </div>
+
+            <div x-show="tab === 'notas'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="group bg-gradient-to-br from-rose-500 to-red-600 border border-rose-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-rose-100 uppercase tracking-widest">Cargos acumulados</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($billingChargesTotal, 2) }}</span>
+                        <p class="text-[10px] text-rose-100 font-medium">{{ $billingServiceCharges->count() }} servicios registrados</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">!</div>
+                </div>
+
+                <div class="group bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Cargos del mes</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($monthlyHorseServicesTotal, 2) }}</span>
+                        <p class="text-[10px] text-emerald-100 font-medium">{{ $monthlyHorseServicesCount }} servicio(s) este mes</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#36;</div>
+                </div>
+
+                <div class="group {{ $billingBalance > 0 ? 'bg-gradient-to-br from-rose-600 to-pink-700 border-rose-700' : 'bg-gradient-to-br from-slate-600 to-slate-800 border-slate-700' }} border rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Balance actual</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($billingBalance, 2) }}</span>
+                        <p class="text-[10px] text-white/80 font-medium">{{ $billingBalance > 0 ? 'Saldo pendiente' : 'Sin adeudo pendiente' }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#9679;</div>
+                </div>
+            </div>
+
+            <div x-show="tab === 'pagos'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="group bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Total abonado</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($billingPaymentsTotal, 2) }}</span>
+                        <p class="text-[10px] text-emerald-100 font-medium">{{ $customer->payments->count() }} pago(s) registrados</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#36;</div>
+                </div>
+
+                <div class="group bg-gradient-to-br from-cyan-500 to-teal-600 border border-cyan-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-cyan-100 uppercase tracking-widest">Abonos del mes</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($monthlyPaymentsTotal, 2) }}</span>
+                        <p class="text-[10px] text-cyan-100 font-medium">{{ $monthlyPaymentsCount }} pago(s) este mes</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#10003;</div>
+                </div>
+
+                <div class="group {{ $billingBalance > 0 ? 'bg-gradient-to-br from-rose-600 to-pink-700 border-rose-700' : 'bg-gradient-to-br from-slate-600 to-slate-800 border-slate-700' }} border rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Balance actual</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($billingBalance, 2) }}</span>
+                        <p class="text-[10px] text-white/80 font-medium">{{ $billingBalance > 0 ? 'Saldo pendiente' : 'Sin adeudo pendiente' }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#9679;</div>
+                </div>
+            </div>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="group bg-gradient-to-br from-rose-500 to-red-600 border border-rose-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-rose-100 uppercase tracking-widest">Adeudo General</p>
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($customer->outstanding_balance, 2) }}</span>
+                        <p class="text-[10px] text-rose-100 font-medium">{{ $customer->saleNotes->filter(fn ($note) => $note->balance > 0)->count() }} nota(s) pendiente(s)</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">!</div>
+                </div>
+
+                <div class="group bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-600 rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Ultimo Pago</p>
+                        @php $lastPayment = $customer->payments->sortByDesc('created_at')->first(); @endphp
+                        <span class="block text-3xl font-black tracking-tight">${{ number_format($lastPayment?->amount ?? 0, 2) }}</span>
+                        <p class="text-[10px] text-emerald-100 font-medium">{{ $lastPayment ? $lastPayment->created_at->format('d/m/Y') : 'Sin pagos registrados' }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#36;</div>
+                </div>
+
+                <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border-indigo-700 border rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Pacientes Registrados</p>
+                        <span class="block text-3xl font-black tracking-tight">{{ $customer->animals->count() }}</span>
+                        <p class="text-[10px] text-indigo-100 font-medium">paciente(s)</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#9679;</div>
+                </div>
+            </div>
+        @endif
     </div>
     
-    {{-- MODAL ESTADO DE CUENTA --}}
-    <div x-show="openStatementModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" x-cloak>
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl" @click.outside="openStatementModal = false">
-            <h3 class="text-sm font-black text-slate-800 mb-4">Seleccionar Período</h3>
-            <form action="{{ route('client.customers.statement.generate', $customer->id) }}" method="GET" target="_blank">
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[9px] font-bold text-slate-400 uppercase">Fecha Inicial</label>
-                        <input type="date" name="date_from" value="{{ date('Y-m-01') }}" class="w-full border-slate-200 rounded-lg text-xs p-2 mt-1" required>
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-slate-400 uppercase">Fecha Final</label>
-                        <input type="date" name="date_to" value="{{ date('Y-m-d') }}" class="w-full border-slate-200 rounded-lg text-xs p-2 mt-1" required>
-                    </div>
-                </div>
-                <div class="flex gap-2 mt-6">
-                    <button type="button" @click="openStatementModal = false" class="flex-1 px-4 py-2 text-xs font-bold text-slate-500 bg-slate-100 rounded-xl">Cancelar</button>
-                    <button type="submit" class="flex-1 px-4 py-2 text-xs font-bold text-white theme-bg-primary rounded-xl">Generar PDF</button>
-                </div>
-            </form>
-        </div>
-    </div>
         {{-- ============================================================
              MODAL DE PAGO
              ============================================================ --}}
@@ -175,10 +276,10 @@
                 {{-- Header modal --}}
                 <div class="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                        <h2 class="text-base font-black theme-text-heading">Registrar Pago</h2>
+                        <h2 class="text-base font-black theme-text-heading">{{ $usesMonthlyCutoffBilling ? 'Registrar Abono' : 'Registrar Pago' }}</h2>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{{ $customer->full_name }}</p>
                     </div>
-                    <button @click="open = false" class="text-slate-400 hover:text-slate-600 transition-colors text-xl font-light">✕</button>
+                    <button @click="open = false" class="text-slate-400 hover:text-slate-600 transition-colors text-xl font-light">&times;</button>
                 </div>
 
                 {{-- Formulario --}}
@@ -189,7 +290,7 @@
                         {{-- Monto --}}
                         <div>
                             <label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5">
-                                Monto a pagar
+                                {{ $usesMonthlyCutoffBilling ? 'Monto del abono' : 'Monto a pagar' }}
                             </label>
                             <div class="relative">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
@@ -207,10 +308,10 @@
                             </div>
                         </div>
 
-                        {{-- Método de pago --}}
+                        {{-- Metodo de pago --}}
                         <div>
                             <label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5">
-                                Método de Pago
+                                Metodo de Pago
                             </label>
                             <select
                                 name="payment_method_id"
@@ -235,19 +336,31 @@
                             <input
                                 type="text"
                                 name="reference"
-                                placeholder="N° de transferencia, cheque, etc."
+                                placeholder="No. de transferencia, cheque, etc."
                                 class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none theme-input focus:ring-2 theme-ring-primary transition-all"
                             />
                         </div>
 
+                        @if($usesMonthlyCutoffBilling)
+                        <div class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Saldo actual</span>
+                                <span class="text-sm font-black theme-text-heading">${{ number_format($billingBalance, 2) }}</span>
+                            </div>
+                            <p class="mt-2 text-[11px] font-semibold text-slate-400">
+                                El abono se aplicara al saldo general del cliente.
+                            </p>
+                        </div>
+                        @endif
+
                         {{-- PREVIEW FIFO --}}
                         <div
-                            x-show="distribution.length > 0 || leftover > 0"
+                            x-show="!isMonthlyMode && (distribution.length > 0 || leftover > 0)"
                             x-transition
                             class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden"
                         >
                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 pt-4 pb-2">
-                                Distribución del pago
+                                Distribucion del pago
                             </p>
                             <div class="divide-y divide-slate-100">
                                 <template x-for="row in distribution" :key="row.folio">
@@ -256,7 +369,7 @@
                                             <p class="text-xs font-black text-slate-700" x-text="row.folio"></p>
                                             <p class="text-[10px] text-slate-400">
                                                 Saldo: $<span x-text="fmt(row.balance)"></span>
-                                                → $<span x-text="fmt(row.new_balance)" :class="row.new_balance <= 0 ? 'text-emerald-500 font-black' : 'text-slate-500'"></span>
+                                                &rarr; $<span x-text="fmt(row.new_balance)" :class="row.new_balance <= 0 ? 'text-emerald-500 font-black' : 'text-slate-500'"></span>
                                             </p>
                                         </div>
                                         <span class="text-xs font-black text-emerald-600">
@@ -274,8 +387,8 @@
                         </div>
 
                         {{-- Estado de carga del preview --}}
-                        <p x-show="loading" class="text-[10px] text-slate-400 text-center animate-pulse">
-                            Calculando distribución...
+                        <p x-show="loading && !isMonthlyMode" class="text-[10px] text-slate-400 text-center animate-pulse">
+                            Calculando distribucion...
                         </p>
 
                     </div>
@@ -293,18 +406,27 @@
                             type="submit"
                             class="flex-1 py-3 theme-button-primary disabled:bg-slate-200 disabled:text-slate-400 rounded-xl text-xs font-black transition-all"
                         >
-                            Registrar pago / Generar link
+                            {{ $usesMonthlyCutoffBilling ? 'Registrar abono / Generar link' : 'Registrar pago / Generar link' }}
                         </button>
                     </div>
                 </form>
             </div>
             </div>
 
-            {{-- NAVEGACIÓN DE TABS --}}
+            {{-- NAVEGACION DE TABS --}}
     <div class="flex gap-2 border-b border-slate-200">
-        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Caballos</button>
-        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Cuentas</button>
-        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Historial de Pagos</button>
+        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="relative px-4 pr-7 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+            Caballos
+            <span class="absolute -right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->animals->count() }}</span>
+        </button>
+        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="relative px-4 pr-10 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+            {{ $usesMonthlyCutoffBilling ? 'Cuentas' : 'Notas' }}
+            {{-- <span class="absolute -    right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full {{ $usesMonthlyCutoffBilling && $billingBalance > 0 ? 'bg-rose-50 text-rose-600 ring-rose-100' : 'bg-slate-100 text-slate-500 ring-slate-200' }} px-1.5 text-[10px] font-black leading-none shadow-sm ring-1">{{ $usesMonthlyCutoffBilling ? '$'.number_format($billingBalance, 0) : $customer->saleNotes->count() }}</span> --}}
+        </button>
+        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="relative px-4 pr-7 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+            Historial de Pagos
+            <span class="absolute -right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->payments->count() }}</span>
+        </button>
         <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
         <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
     </div>
@@ -312,8 +434,99 @@
     {{-- CONTENIDO DE TABS --}}
     <div class="bg-white border border-slate-200 rounded-[24px] overflow-hidden">
 
-        {{-- TAB: NOTAS --}}
+        {{-- TAB: NOTAS / CUENTAS --}}
         <div x-show="tab === 'notas'" class="p-6">
+            @if($usesMonthlyCutoffBilling)
+            <div class="flex justify-between items-center gap-4 mb-5">
+                <div>
+                    <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Cortes del cliente</h2>
+                    <p class="text-[11px] text-slate-400 font-semibold mt-1">Resumen de estados de cuenta generados para este cliente.</p>
+                </div>
+                {{-- <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
+                   class="theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
+                    Agregar servicios
+                </a> --}}
+            </div>
+
+            <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+                @if($customer->accountSetting)
+                    <form action="{{ route('client.customers.statements.store', $customer) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="theme-button-dark rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
+                            Generar corte
+                        </button>
+                    </form>
+                @else
+                    <button type="button" disabled class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Configura cuenta
+                    </button>
+                @endif
+                <button type="button"
+                        @click="openStatementModal({
+                            id: {{ $customer->id }},
+                            name: @js($customer->full_name),
+                            previewUrl: @js(route('client.customers.statements.preview', $customer)),
+                            storeUrl: @js(route('client.customers.statements.store-manual', $customer))
+                        })"
+                        class="theme-button-primary rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
+                    Crear cuenta por rango
+                </button>
+                <span class="text-[11px] font-semibold text-slate-400">Genera el ultimo periodo cerrado segun el dia de corte configurado. Para rangos manuales usa la tabla general de clientes.</span>
+            </div>
+
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
+                        <th class="pb-4">Periodo</th>
+                        <th class="pb-4 text-right">Consumo</th>
+                        <th class="pb-4 text-right">Pagos</th>
+                        <th class="pb-4 text-right">Saldo final</th>
+                        <th class="pb-4 text-center">Estado</th>
+                        <th class="pb-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @forelse($customer->statements as $statement)
+                        <tr>
+                            <td class="py-4 text-xs font-bold theme-text-heading">
+                                {{ $statement->period_start?->format('d/m/Y') ?? '--' }} - {{ $statement->period_end?->format('d/m/Y') ?? '--' }}
+                                @if($statement->needs_recalculation ?? false)
+                                    <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-amber-700">
+                                        Recalculo disponible
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="py-4 text-right text-xs font-black theme-text-heading">${{ number_format((float) $statement->period_charges, 2) }}</td>
+                            <td class="py-4 text-right text-xs font-black text-emerald-600">${{ number_format((float) $statement->period_payments, 2) }}</td>
+                            <td class="py-4 text-right text-xs font-black {{ (float) $statement->ending_balance > 0 ? 'text-rose-600' : 'theme-text-heading' }}">${{ number_format((float) $statement->ending_balance, 2) }}</td>
+                            <td class="py-4 text-center">
+                                <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">{{ $statement->status }}</span>
+                            </td>
+                            <td class="py-4 text-right">
+                                <div class="flex flex-wrap items-center justify-end gap-2">
+                                    <a href="{{ route('client.customers.statements.show', [$customer, $statement]) }}" class="rounded-xl border border-slate-200 px-3 py-2 text-[10px] font-black uppercase tracking-widest theme-text-primary theme-hover-text-heading">Abrir</a>
+                                    @if($statement->pdf_path)
+                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="rounded-xl border border-slate-100 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">PDF</a>
+                                    @endif
+                                    <form action="{{ route('client.customers.statements.recalculate', [$customer, $statement]) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition {{ ($statement->needs_recalculation ?? false) ? 'border-amber-300 bg-amber-100 text-amber-800 shadow-sm hover:bg-amber-200' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
+                                            Recalcular
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="py-8 text-center text-xs font-bold text-slate-400">
+                                Aun no hay cortes generados para este cliente.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            @else
             <div class="flex justify-between items-center gap-4 mb-5">
                 <div>
                     <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Notas de Venta</h2>
@@ -321,7 +534,7 @@
                 </div>
                 <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
                    class="theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
-                    Nueva cuenta
+                    Nueva nota
                 </a>
             </div>
 
@@ -421,6 +634,7 @@
                     @endforelse
                 </tbody>
             </table>
+            @endif
         </div>
 
         {{-- TAB: MASCOTAS --}}
@@ -525,7 +739,7 @@
                         <input
                             type="text"
                             name="color"
-                            placeholder="Ej. Café con blanco"
+                            placeholder="Ej. Cafe con blanco"
                             class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
@@ -548,7 +762,7 @@
                     <input
                         type="text"
                         name="microchip"
-                        placeholder="Número de microchip"
+                        placeholder="Numero de microchip"
                         class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                     >
                 </div>
@@ -587,11 +801,15 @@
     {{-- CONTENIDO DEL TAB --}}
     <div >
 
-        {{-- Botón agregar (siempre visible arriba a la derecha) --}}
-        <div class="flex justify-end mb-4">
+        {{-- Acciones del tab --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
+            <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
+               class="inline-flex items-center justify-center theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
+                Agregar servicios
+            </a>
             <button
                 @click="open = true"
-                class="flex items-center gap-2 px-4 py-2 theme-button-primary text-xs font-black rounded-xl transition-colors"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-button-primary text-xs font-black rounded-xl transition-colors"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -676,7 +894,7 @@
                             </td>
                             <td class="px-4 py-4">
                                 <span class="text-xs font-medium text-slate-600">
-                                    {{ $animal->birthdate ? \Carbon\Carbon::parse($animal->birthdate)->age . ' años' : 'N/A' }}
+                                    {{ $animal->birthdate ? \Carbon\Carbon::parse($animal->birthdate)->age . ' anos' : 'N/A' }}
                                 </span>
                             </td>
                             <td class="px-4 py-4">
@@ -769,12 +987,21 @@
 </div>
         {{-- TAB: PAGOS --}}
         <div x-show="tab === 'pagos'" class="p-6">
+            <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+                <button type="button" @click="open = true" class="theme-button-primary rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
+                    {{ $usesMonthlyCutoffBilling ? 'Registrar abono' : 'Registrar pago' }}
+                </button>
+                <span class="text-[11px] font-semibold text-slate-400">
+                    {{ $usesMonthlyCutoffBilling ? 'Registra abonos globales contra el saldo del cliente.' : 'Registra pagos para las notas pendientes del cliente.' }}
+                </span>
+            </div>
+
             <table class="w-full text-left">
                 <thead>
                     <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100">
                         <th class="pb-4">Fecha</th>
                         <th class="pb-4">Referencia</th>
-                        <th class="pb-4">Método</th>
+                        <th class="pb-4">Metodo</th>
                         <th class="pb-4 text-right">Aplicado</th>
                         <th class="pb-4 text-right">Saldo a favor</th>
                         <th class="pb-4 text-right">Monto</th>
@@ -822,25 +1049,25 @@
 
                     {{-- Correo --}}
                     <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Correo Electrónico</label>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Correo Electronico</label>
                         <input type="email" name="email" value="{{ old('email', $customer->email) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
-                    {{-- Teléfono --}}
+                    {{-- Telefono --}}
                     <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Teléfono Principal</label>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Telefono Principal</label>
                         <input type="text" name="phone" value="{{ old('phone', $customer->phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
-                    {{-- Teléfono Secundario --}}
+                    {{-- Telefono Secundario --}}
                     <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Teléfono Secundario</label>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Telefono Secundario</label>
                         <input type="text" name="secondary_phone" value="{{ old('secondary_phone', $customer->secondary_phone) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
-                    {{-- Dirección --}}
+                    {{-- Direccion --}}
                     <div class="md:col-span-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Dirección</label>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Direccion</label>
                         <input type="text" name="address" value="{{ old('address', $customer->address) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
                     </div>
 
@@ -855,7 +1082,7 @@
                 <div class="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-6 py-4">
                     <div>
                         <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Estatus del Cliente</p>
-                        <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Define si el cliente está activo para realizar nuevas notas de venta.</p>
+                        <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Define si el cliente esta activo para realizar nuevas notas de venta.</p>
                     </div>
                     <div x-data="{ active: @js($customer->status === 'active') }" class="flex items-center">
                         <input type="hidden" name="status" :value="active ? 'active' : 'inactive'">
@@ -953,67 +1180,6 @@
                 </form>
             </div>
 
-            <div class="mt-6 border border-slate-100 rounded-2xl overflow-hidden">
-                <div class="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                        <h3 class="text-xs font-black theme-text-heading uppercase tracking-widest">Estados de Cuenta Guardados</h3>
-                        <p class="text-[11px] font-semibold text-slate-400 mt-1">Genera el ultimo periodo cerrado segun el dia de corte configurado.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[10px] font-bold text-slate-400">{{ $customer->statements->count() }} registro(s)</span>
-                        @if($accountSetting)
-                            <form action="{{ route('client.customers.statements.store', $customer) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="theme-button-primary px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                    Generar Estado
-                                </button>
-                            </form>
-                        @else
-                            <span class="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-2 rounded-xl">Configura primero</span>
-                        @endif
-                    </div>
-                </div>
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                            <th class="px-5 py-3">Periodo</th>
-                            <th class="px-5 py-3">Consumo</th>
-                            <th class="px-5 py-3">Pagos</th>
-                            <th class="px-5 py-3">Saldo Final</th>
-                            <th class="px-5 py-3">Estado</th>
-                            <th class="px-5 py-3 text-right">PDF</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @forelse($customer->statements as $statement)
-                            <tr>
-                                <td class="px-5 py-4 text-xs font-bold theme-text-heading">
-                                    {{ $statement->period_start->format('d/m/Y') }} - {{ $statement->period_end->format('d/m/Y') }}
-                                </td>
-                                <td class="px-5 py-4 text-xs font-black">${{ number_format($statement->period_charges, 2) }}</td>
-                                <td class="px-5 py-4 text-xs font-black text-emerald-600">${{ number_format($statement->period_payments, 2) }}</td>
-                                <td class="px-5 py-4 text-xs font-black theme-text-heading">${{ number_format($statement->ending_balance, 2) }}</td>
-                                <td class="px-5 py-4">
-                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">{{ $statement->status }}</span>
-                                </td>
-                                <td class="px-5 py-4 text-right">
-                                    @if($statement->pdf_path)
-                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="text-[10px] font-black uppercase tracking-widest theme-text-primary theme-hover-text-heading">Abrir</a>
-                                    @else
-                                        <span class="text-[10px] font-bold text-slate-300">Sin PDF</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-5 py-10 text-center text-xs font-bold text-slate-400">
-                                    Aun no hay estados de cuenta guardados para este cliente.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
         </div>
     </div>
 </div>

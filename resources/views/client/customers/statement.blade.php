@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>Estado de Cuenta — {{ $customer->full_name }}</title>
+    <title>Estado de Cuenta - {{ $customer->full_name }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,7 +14,7 @@
             background: #ffffff;
         }
 
-        /* ── CABECERA ─────────────────────────────────────────── */
+        /* CABECERA */
         .header {
             padding: 20px 24px 16px;
             border-bottom: 3px solid #38B2AC;
@@ -57,13 +57,24 @@
             line-height: 1.6;
         }
 
-        /* ── DATOS DEL CLIENTE ──────────────────────────────────── */
+        /* DATOS DEL CLIENTE */
         .client-box {
             margin: 0 24px 16px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             padding: 10px 14px;
+        }
+        .client-box-left {
+            display: inline-block;
+            width: 62%;
+            vertical-align: middle;
+        }
+        .client-box-right {
+            display: inline-block;
+            width: 36%;
+            vertical-align: middle;
+            text-align: right;
         }
         .client-box-title {
             font-size: 7px;
@@ -83,10 +94,23 @@
             color: #64748b;
             margin-top: 2px;
         }
+        .period-total-label {
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            margin-bottom: 3px;
+        }
+        .period-total-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
 
-        /* ── SECCIÓN MES ────────────────────────────────────────── */
+        /* SECCION */
         .month-section {
-            margin: 0 24px 14px;
+            margin: 0 24px 8px;
         }
         .month-title {
             font-size: 10px;
@@ -94,11 +118,11 @@
             color: #0f172a;
             background: #f1f5f9;
             border-left: 3px solid #38B2AC;
-            padding: 5px 10px;
-            margin-bottom: 6px;
+            padding: 4px 10px;
+            margin-bottom: 4px;
         }
 
-        /* ── NOTA ───────────────────────────────────────────────── */
+        /* NOTA */
         .note-block {
             margin-bottom: 10px;
             border: 1px solid #e2e8f0;
@@ -129,7 +153,7 @@
             color: #0f172a;
         }
 
-        /* ── MASCOTA ────────────────────────────────────────────── */
+        /* MASCOTA */
         .animal-block {
             padding: 4px 10px 4px 18px;
             border-bottom: 1px solid #f8fafc;
@@ -143,7 +167,7 @@
             letter-spacing: 0.06em;
         }
 
-        /* ── TABLA DE SERVICIOS ─────────────────────────────────── */
+        /* TABLA DE SERVICIOS */
         .services-table {
             width: 100%;
             border-collapse: collapse;
@@ -169,12 +193,53 @@
         .services-table td.right { text-align: right; }
         .services-table tr:last-child td { border-bottom: none; }
 
-        /* ── NOTA SIN MASCOTA ───────────────────────────────────── */
+        .monthly-charges-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            line-height: 1.15;
+        }
+        .monthly-charges-table th {
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            padding: 5px 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .monthly-charges-table th.right { text-align: right; }
+        .monthly-charges-table td {
+            font-size: 8px;
+            color: #334155;
+            padding: 2px 10px;
+            border-bottom: none;
+            vertical-align: top;
+        }
+        .monthly-charges-table tbody tr {
+            border-bottom: 1px solid #f8fafc;
+        }
+        .monthly-charges-table td.right { text-align: right; }
+        .monthly-charges-table tbody tr:last-child { border-bottom: none; }
+        .charge-patient {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .charge-reference {
+            font-size: 7px;
+            color: #94a3b8;
+            margin-top: 1px;
+        }
+
+        /* NOTA SIN MASCOTA */
         .no-animal-block {
             padding: 4px 10px 4px 18px;
         }
 
-        /* ── TOTALES DE NOTA ────────────────────────────────────── */
+        /* NOTA */
         .note-footer {
             background: #f8fafc;
             padding: 5px 10px;
@@ -204,7 +269,7 @@
             color: #10b981;
         }
 
-        /* ── SECCIÓN PAGOS ──────────────────────────────────────── */
+        /* SECCION */
         .payments-section {
             margin: 0 24px 14px;
             page-break-inside: avoid;
@@ -245,7 +310,7 @@
         .payments-table td.right { text-align: right; font-weight: 700; color: #10b981; }
         .payments-table tr:last-child td { border-bottom: none; }
 
-        /* ── RESUMEN FINAL ──────────────────────────────────────── */
+        /* RESUMEN FINAL */
         .summary-section {
             margin: 0 24px 20px;
             page-break-inside: avoid;
@@ -285,7 +350,7 @@
             background: #f8fafc;
         }
 
-        /* ── FOOTER ─────────────────────────────────────────────── */
+        /* FOOTER */
         .footer {
             margin: 0 24px;
             padding-top: 10px;
@@ -298,9 +363,9 @@
 </head>
 <body>
 
-    {{-- ══════════════════════════════════════════════════════════
+    {{-- SECCION --}}
          CABECERA
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- SECCION --}}
     <div class="header">
         <div class="header-inner">
             <div class="header-left">
@@ -313,29 +378,90 @@
             <div class="header-right">
                 <div class="doc-title">Estado de Cuenta</div>
                 <div class="doc-meta">
-                    Período: {{ $from->format('d/m/Y') }} — {{ $to->format('d/m/Y') }}<br>
+                    Perí­odo: {{ $from->format('d/m/Y') }} al {{ $to->format('d/m/Y') }}<br>
                     Generado: {{ now()->format('d/m/Y H:i') }}
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════
+    {{-- SECCION --}}
          DATOS DEL CLIENTE
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- SECCION --}}
     <div class="client-box">
-        <div class="client-box-title">Cliente</div>
-        <div class="client-name">{{ $customer->full_name }}</div>
-        <div class="client-meta">
-            @if($customer->email) {{ $customer->email }} &nbsp;·&nbsp; @endif
-            @if($customer->phone) Tel. {{ $customer->phone }} @endif
-            @if($customer->address) <br>{{ $customer->address }} @endif
+        <div class="client-box-left">
+            <div class="client-box-title">Cliente</div>
+            <div class="client-name">{{ $customer->full_name }}</div>
+            <div class="client-meta">
+                @if($customer->email) {{ $customer->email }} &nbsp;-&nbsp; @endif
+                @if($customer->phone) Tel. {{ $customer->phone }} @endif
+                @if($customer->address) <br>{{ $customer->address }} @endif
+            </div>
+        </div>
+        <div class="client-box-right">
+            <div class="period-total-label">Total periodo</div>
+            <div class="period-total-value">${{ number_format($totalInvoiced, 2) }}</div>
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════
+    {{-- SECCION --}}
          NOTAS POR MES
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- SECCION --}}
+    @if($usesMonthlyCutoffBilling ?? false)
+        @forelse($serviceDetailsByMonth ?? collect() as $month => $details)
+            <div class="month-section">
+                <div class="month-title">{{ $month }}</div>
+                <table class="monthly-charges-table">
+                    <thead>
+                        <tr>
+                            <th style="width:22%">Paciente</th>
+                            <th style="width:38%">Servicio</th>
+                            <th class="right" style="width:12%">Cant.</th>
+                            <th class="right" style="width:14%">Precio</th>
+                            <th class="right" style="width:14%">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    @php
+        $groupedDetails = $details->groupBy(function ($detail) {
+            $animalId = $detail->animal_id ?? $detail->animal?->id ?? 'no-animal';
+            $noteId   = $detail->note_id ?? $detail->note?->id ?? 'no-note';
+
+            return $animalId . '|' . $noteId;
+        });
+    @endphp
+
+    @foreach($groupedDetails as $group)
+        @foreach($group->values() as $index => $detail)
+            <tr>
+                @if($index === 0)
+                    <td rowspan="{{ $group->count() }}" style="vertical-align: top;">
+                        <div class="charge-patient">{{ $detail->animal->name ?? 'Sin paciente' }}</div>
+                        <div class="charge-reference">
+                            {{ $detail->note?->date_at?->format('d/m/Y') ?? '--' }}
+                            @if($detail->note?->folio)
+                                - Ref. {{ $detail->note->folio }}
+                            @endif
+                        </div>
+                    </td>
+                @endif
+
+                <td>{{ $detail->catalogItem->name ?? 'Servicio eliminado' }}</td>
+                <td class="right">{{ number_format((float) $detail->quantity, 2) }}</td>
+                <td class="right">${{ number_format((float) $detail->price_at_sale, 2) }}</td>
+                <td class="right">${{ number_format((float) $detail->subtotal, 2) }}</td>
+            </tr>
+        @endforeach
+    @endforeach
+</tbody>
+                </table>
+            </div>
+        @empty
+            <div style="margin: 0 24px; padding: 20px; text-align:center; color:#94a3b8; font-size:9px; border:1px dashed #e2e8f0; border-radius:6px;">
+                No hay servicios registrados en este periodo.
+            </div>
+        @endforelse
+    @else
     @forelse($notesByMonth as $month => $notes)
         <div class="month-section">
             <div class="month-title">{{ $month }}</div>
@@ -360,7 +486,7 @@
                     @foreach($withAnimal as $animalId => $details)
                         @php $animal = $details->first()->animal; @endphp
                         <div class="animal-block">
-                            <div class="animal-name">🐾 {{ $animal->name ?? 'Mascota #'.$animalId }}</div>
+                            <div class="animal-name">{{ $animal->name ?? 'Mascota #'.$animalId }}</div>
                             <table class="services-table">
                                 <thead>
                                     <tr>
@@ -430,10 +556,9 @@
             No hay notas de venta en este período.
         </div>
     @endforelse
+    @endif
 
-    {{-- ══════════════════════════════════════════════════════════
-         PAGOS DEL PERÍODO
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- PAGOS DEL PERIODO --}}
     <div class="payments-section">
         <div class="section-title">Pagos Registrados</div>
 
@@ -460,14 +585,14 @@
             </table>
         @else
             <div style="padding: 12px; text-align:center; color:#94a3b8; font-size:9px; border:1px dashed #e2e8f0; border-radius:4px;">
-                Sin pagos en este período.
+                Sin pagos en este perí­odo.
             </div>
         @endif
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════
+    {{-- SECCION --}}
          RESUMEN FINAL
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- SECCION --}}
     <div class="summary-section">
         <div class="summary-box">
             @isset($previousBalance)
@@ -477,7 +602,7 @@
                 </div>
             @endisset
             <div class="summary-row">
-                <span class="summary-label">Total Facturado (período)</span>
+                <span class="summary-label">Total Facturado (perí­odo)</span>
                 <span class="summary-value">${{ number_format($totalInvoiced, 2) }}</span>
             </div>
             <div class="summary-row">
@@ -491,11 +616,11 @@
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════
+    {{-- SECCION --}}
          FOOTER
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- SECCION --}}
     <div class="footer">
-        Documento generado automáticamente · {{ $tenant->business_name ?? $tenant->name }} · {{ now()->format('d/m/Y H:i') }}
+        Documento generado automáticamente : {{ $tenant->business_name ?? $tenant->name }} a· {{ now()->format('d/m/Y H:i') }}
     </div>
 
 </body>

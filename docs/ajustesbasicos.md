@@ -9,4 +9,6 @@ fecha de creacion 8-jul-2026
 
 - al guardar la nota nos lleva a http://127.0.0.1:8000/client/ventas/224 lo cual esta bien, pero si en esa pantalla le damos volver nos regresa a notas, nos deberia regresar al cliente con el que estabamos trbajando agregando notas 
 
+- en http://127.0.0.1:8000/client/clubes/4/edit?tab=miembros vamos a darle vida al nombre del caballo en el tab miembros para que nos lleve alos detalles de ese animal http://127.0.0.1:8000/client/animals/1655/edit
+
 -  en http://127.0.0.1:8000/client/customers/332 en la pestaña de las notas,cuando eliminamos una la pagina redirecciona a 

@@ -10,17 +10,24 @@
         <div class="flex items-start justify-between">
             <div>
                 <h1 class="text-2xl font-black theme-text-heading tracking-tight">{{ $note->folio }}</h1>
-                <p class="text-sm text-slate-400 font-medium mt-0.5">{{ $note->date_at->format('d/m/Y') }}</p>
+                <p class="text-sm text-slate-400 font-medium mt-0.5">
+                    {{ $note->date_at->format('d/m/Y') }}
+                    @if($usesMonthlyCutoffBilling ?? false)
+                        <span class="ml-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500">Respaldo interno</span>
+                    @endif
+                </p>
             </div>
             <div class="flex items-center gap-2">
                 <a href="{{ route('client.ventas.ticket', $note) }}"
                    class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                    🖨️ Ver Ticket
+                    Ver ticket
                 </a>
-                {{-- <a href="{{ route('client.customers.index') }}"
-                   class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors">
-                    ← Volver
-                </a> --}}
+                @if($usesMonthlyCutoffBilling ?? false)
+                    <a href="{{ route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'notas']) }}"
+                       class="text-xs font-bold theme-text-primary hover:theme-text-heading border theme-border-primary-soft px-3 py-1.5 rounded-lg transition-colors">
+                        Ir a cuenta
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -36,7 +43,7 @@
             </div>
         @endif
 
-        @if(session('payment_link_url'))
+        @if(!($usesMonthlyCutoffBilling ?? false) && session('payment_link_url'))
             <div x-data="{ copied: false, url: @js(session('payment_link_url')) }" class="bg-[#F4F3FF] border border-[#DAD7FE] rounded-[20px] shadow-sm p-5 space-y-3">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
@@ -61,26 +68,47 @@
                    class="text-base font-black theme-text-heading theme-hover-text-primary transition-colors">
                     {{ $note->customer->full_name }}
                 </a>
-                <p class="text-xs text-slate-400 mt-0.5">📞 {{ $note->customer->phone ?? 'Sin teléfono' }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">{{ $note->customer->phone ?? 'Sin telefono' }}</p>
             </div>
 
             <div class="text-right space-y-1">
-                @if($note->status === 'PAGADA')
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">🟢 Pagada</span>
+                @if($usesMonthlyCutoffBilling ?? false)
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-600 bg-slate-100 px-3 py-1 rounded-full">Cargo interno</span>
+                @elseif($note->status === 'PAGADA')
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">Pagada</span>
                 @elseif($note->status === 'PENDIENTE')
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full">🟡 Crédito / Pendiente</span>
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full">Credito / Pendiente</span>
                 @else
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-3 py-1 rounded-full">⚪ Cancelada</span>
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Cancelada</span>
                 @endif
             </div>
         </div>
+
+
+        @if($usesMonthlyCutoffBilling ?? false)
+            <div class="bg-slate-900 text-white rounded-[20px] shadow-sm p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-300">Modo cuentas mensuales</p>
+                    <h2 class="mt-1 text-lg font-black">Esta nota alimenta la cuenta del cliente.</h2>
+                    <p class="mt-1 text-xs font-semibold text-slate-300">Los pagos se registran como abonos globales, no contra este folio.</p>
+                </div>
+                <div class="flex flex-col gap-2 sm:items-end">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-300">Balance global</p>
+                    <p class="text-2xl font-black">${{ number_format($customerAccountBalance ?? 0, 2) }}</p>
+                    <div class="flex gap-2">
+                        <a href="{{ route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'notas']) }}" class="rounded-xl bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-900">Ver cuentas</a>
+                        <a href="{{ route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'pagos']) }}" class="rounded-xl border border-white/20 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white">Ver abonos</a>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- DETALLES POR MASCOTA --}}
         @foreach($detailsByAnimal as $animalId => $details)
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <p class="text-xs font-black theme-text-heading uppercase tracking-wide">
-                        🐾 {{ $details->first()->animal->name ?? 'Sin mascota' }}
+                        {{ $details->first()->animal->name ?? 'Sin mascota' }}
                     </p>
                 </div>
                 <table class="w-full text-left">
@@ -126,11 +154,11 @@
                     <span class="font-black theme-text-heading">${{ number_format($note->total, 2) }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                    <span class="font-semibold text-slate-600">Pagado</span>
+                    <span class="font-semibold text-slate-600">{{ ($usesMonthlyCutoffBilling ?? false) ? 'Abonos aplicados internamente' : 'Pagado' }}</span>
                     <span class="font-black text-emerald-600">${{ number_format($note->amount_paid, 2) }}</span>
                 </div>
                 <div class="border-t border-slate-100 pt-2 flex justify-between text-sm">
-                    <span class="font-black text-slate-700">Saldo pendiente</span>
+                    <span class="font-black text-slate-700">{{ ($usesMonthlyCutoffBilling ?? false) ? 'Balance interno de la nota' : 'Saldo pendiente' }}</span>
                     <span class="font-black {{ $note->balance > 0 ? 'text-rose-600' : 'text-slate-400' }}">
                         ${{ number_format($note->balance, 2) }}
                     </span>
@@ -138,7 +166,7 @@
             </div>
         </div>
 
-        @if($note->balance > 0)
+        @if(!($usesMonthlyCutoffBilling ?? false) && $note->balance > 0)
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6 space-y-4">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div class="border border-[#DAD7FE] bg-[#F4F3FF] rounded-2xl p-4 space-y-3">
@@ -157,7 +185,7 @@
                     <div x-data="{ openManualPayment: false }" class="border border-emerald-100 bg-emerald-50 rounded-2xl p-4 space-y-3">
                         <div>
                             <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Pago manual a esta nota</p>
-                            <p class="text-xs text-slate-500 font-semibold mt-1">Registra efectivo, transferencia u otro metodo aplicado solo a {{ $note->folio }}.</p>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Registra un pago directo para este folio.</p>
                         </div>
                         <button type="button"
                                 @click="openManualPayment = true"
@@ -204,7 +232,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Metodo de pago</label>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Metodo</label>
                                         <select name="payment_method_id"
                                                 required
                                                 class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold theme-text-heading bg-white theme-input">
@@ -248,7 +276,7 @@
                                 <div>
                                     <p class="text-xs font-black theme-text-heading">${{ number_format((float) $link->amount, 2) }} {{ $link->currency }}</p>
                                     <p class="text-[11px] font-semibold text-slate-400">
-                                        {{ ucfirst($link->status) }} · {{ $link->created_at->format('d/m/Y H:i') }}
+                                        {{ ucfirst($link->status) }} &middot; {{ $link->created_at->format('d/m/Y H:i') }}
                                     </p>
                                 </div>
                                 <button type="button"
@@ -263,16 +291,15 @@
             </div>
         @endif
 
-        {{-- PAGOS REGISTRADOS --}}
         @if($note->payments->isNotEmpty())
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <p class="text-xs font-black theme-text-heading uppercase tracking-wide">💳 Pagos Registrados</p>
+                    <p class="text-xs font-black theme-text-heading uppercase tracking-wide">{{ ($usesMonthlyCutoffBilling ?? false) ? 'Abonos aplicados internamente' : 'Pagos registrados' }}</p>
                 </div>
                 <table class="w-full text-left">
                     <thead>
                         <tr class="border-b border-slate-100">
-                            <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Método</th>
+                            <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Metodo</th>
                             <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Referencia</th>
                             <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Monto aplicado</th>
                         </tr>
@@ -281,10 +308,10 @@
                         @foreach($note->payments as $payment)
                             <tr>
                                 <td class="px-6 py-3 text-xs font-bold theme-text-heading">
-                                    {{ $payment->paymentMethod->name ?? '—' }}
+                                    {{ $payment->paymentMethod->name ?? '-' }}
                                 </td>
                                 <td class="px-6 py-3 text-xs text-slate-500 font-medium">
-                                    {{ $payment->reference ?? '—' }}
+                                    {{ $payment->reference ?? '-' }}
                                 </td>
                                 <td class="px-6 py-3 text-xs font-black text-emerald-600 text-right">
                                     ${{ number_format($payment->pivot->amount_applied, 2) }}
@@ -298,3 +325,4 @@
 
     </div>
 @endsection
+

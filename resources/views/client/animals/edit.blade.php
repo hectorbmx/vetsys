@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
-    tab: @js(session('animalTab', old('intent') ? 'reportes' : 'datos')),
+    tab: @js(request('tab', session('animalTab', old('intent') ? 'reportes' : 'datos'))),
     loading: false,
     microchipUploading: false,
     vaccinationFormOpen: @js($errors->has('date') || $errors->has('vaccine_name') || $errors->has('image')),
@@ -352,12 +352,58 @@
         </div>
 
         <div x-show="tab === 'historial'" class="p-6" x-cloak>
+            <div class="mb-5 flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <p class="text-sm font-black theme-text-heading">Historial de servicios</p>
+                        <p class="mt-1 text-[11px] font-semibold text-slate-400">Mostrando {{ ucfirst($serviceMonth->translatedFormat('F Y')) }}.</p>
+                    </div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <a href="{{ request()->fullUrlWithQuery(['tab' => 'historial', 'service_month' => $serviceMonth->copy()->subMonth()->format('Y-m'), 'services_page' => null]) }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100">Mes anterior</a>
+                        <form method="GET" action="{{ route('client.animals.edit', $animal) }}" class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <input type="hidden" name="tab" value="historial">
+                            <input type="hidden" name="services_q" value="{{ $serviceSearch }}">
+                            <input type="hidden" name="services_per_page" value="{{ $servicePerPage }}">
+                            <div>
+                                <label class="mb-1 block text-[10px] font-black uppercase tracking-widest text-slate-400">Mes / ano</label>
+                                <input type="month" name="service_month" value="{{ $serviceMonth->format('Y-m') }}" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading focus:outline-none theme-input">
+                            </div>
+                            <button type="submit" class="rounded-xl theme-button-dark px-4 py-2 text-[10px] font-black uppercase tracking-widest">Aplicar</button>
+                        </form>
+                        <a href="{{ request()->fullUrlWithQuery(['tab' => 'historial', 'service_month' => $serviceMonth->copy()->addMonth()->format('Y-m'), 'services_page' => null]) }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100">Mes siguiente</a>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <form method="GET" action="{{ route('client.animals.edit', $animal) }}" class="flex flex-1 flex-col gap-2 sm:flex-row">
+                        <input type="hidden" name="tab" value="historial">
+                        <input type="hidden" name="service_month" value="{{ $serviceMonth->format('Y-m') }}">
+                        <input type="hidden" name="services_per_page" value="{{ $servicePerPage }}">
+                        <input type="text" name="services_q" value="{{ $serviceSearch }}" placeholder="Buscar servicio, producto o folio..." class="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold theme-text-heading focus:outline-none theme-input">
+                        <button type="submit" class="rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-widest">Buscar</button>
+                        @if($serviceSearch !== '')
+                            <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial', 'service_month' => $serviceMonth->format('Y-m'), 'services_per_page' => $servicePerPage]) }}" class="inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200">Limpiar</a>
+                        @endif
+                    </form>
+                    <form method="GET" action="{{ route('client.animals.edit', $animal) }}" class="flex items-center justify-end gap-2">
+                        <input type="hidden" name="tab" value="historial">
+                        <input type="hidden" name="service_month" value="{{ $serviceMonth->format('Y-m') }}">
+                        <input type="hidden" name="services_q" value="{{ $serviceSearch }}">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                        <select name="services_per_page" onchange="this.form.submit()" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black theme-text-heading focus:outline-none theme-input">
+                            @foreach($allowedServicePerPage as $option)
+                                <option value="{{ $option }}" @selected($servicePerPage === $option)>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+            </div>
             <div class="overflow-hidden border border-slate-100 rounded-2xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100">
                             <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota</th>
+                            {{-- <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota</th> --}}
                             <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio / Producto</th>
                             <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cant.</th>
                             <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Subtotal</th>
@@ -375,19 +421,26 @@
                             @endphp
                             <tr class="hover:bg-slate-50/60 transition-colors">
                                 <td class="px-4 py-3 text-xs font-bold theme-text-heading">{{ optional($detail->note?->date_at)->format('d/m/Y') ?? '--' }}</td>
-                                <td class="px-4 py-3 text-xs font-bold text-slate-500">{{ $detail->note->folio ?? 'Sin folio' }}</td>
+                                {{-- <td class="px-4 py-3 text-xs font-bold text-slate-500">{{ $detail->note->folio ?? 'Sin folio' }}</td> --}}
                                 <td class="px-4 py-3 text-xs font-bold theme-text-heading">{{ $detail->catalogItem->name ?? 'Concepto eliminado' }}</td>
                                 <td class="px-4 py-3 text-xs font-bold text-right text-slate-500">{{ $detail->quantity }}</td>
                                 <td class="px-4 py-3 text-xs font-black text-right theme-text-heading">${{ number_format($detail->subtotal, 2) }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('client.ventas.show', $detail->note) }}" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" title="Ver Detalles">
-                                            🔍
-                                        </a>
-                                        @if($note->customer->phone)
+                                        {{-- <a href="{{ route('client.ventas.show', $detail->note) }}" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" title="Ver Detalles">
+                                            Ver
+                                        </a> --}}
+                                        {{-- @if($note->customer->phone)
                                             <a href="{{ $whatsappUrl }}" target="_blank" class="p-2 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors" title="Enviar por WhatsApp">
                                                 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                                             </a>
+                                        @endif --}}
+                                        @if($usesMonthlyCutoffBilling)
+                                            <form action="{{ route('client.animals.service-details.destroy', [$animal, $detail]) }}" method="POST" onsubmit="return confirm('Eliminar este servicio del historial del paciente? Esta accion recalculara el total de la nota interna.')" class="inline-flex">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Eliminar servicio">&times;</button>
+                                            </form>
                                         @endif
                                     </div>
                                 </td>
@@ -399,6 +452,9 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-4">
+                {{ $serviceHistory->appends(['tab' => 'historial'])->links() }}
             </div>
         </div>
 

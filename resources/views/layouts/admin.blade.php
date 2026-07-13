@@ -80,8 +80,8 @@
         <form method="POST" action="{{ route('logout') }}" class="w-full">
             @csrf
             <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all group text-left">
-                <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center group-hover:rotate-12 transition-transform">â†ª</span>
-                <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm">Cerrar sesiÃ³n</span>
+                <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center group-hover:rotate-12 transition-transform">&rarr;</span>
+                <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm">Cerrar sesion</span>
             </button>
         </form>
     </div>

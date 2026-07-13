@@ -6,12 +6,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Animal;
 use App\Models\Customer;
+use App\Models\CustomerStatement;
 use App\Models\AnimalType;
 use App\Models\Club;
+use App\Models\NoteDetail;
+use App\Services\CustomerStatementGenerator;
+use App\Services\InventoryService;
 use App\Services\TenantOnboardingService;
 use App\Services\CustomerPortalAccessService;
 use App\Services\MicrochipImageOptimizer;
 use App\Services\MicrochipLetterPdfService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -192,9 +198,10 @@ class AnimalController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Animal $animal)
+    public function edit(Request $request, Animal $animal)
     {
         $tenantId = auth()->user()->tenant_id;
+        $tenant = auth()->user()->tenant;
 
         abort_unless($animal->tenant_id === $tenantId, 404);
 
@@ -238,11 +245,45 @@ class AnimalController extends Controller
             ->orderBy('name')
             ->get();
 
-        $serviceHistory = $animal->noteDetails()
-            ->where('tenant_id', $tenantId)
+        $allowedServicePerPage = [10, 15, 30, 50, 100];
+        $requestedServicePerPage = $request->integer('services_per_page', 15);
+        $servicePerPage = in_array($requestedServicePerPage, $allowedServicePerPage, true)
+            ? $requestedServicePerPage
+            : 15;
+
+        try {
+            $serviceMonth = Carbon::createFromFormat('Y-m', $request->input('service_month', now()->format('Y-m')))->startOfMonth();
+        } catch (Exception $exception) {
+            $serviceMonth = now()->startOfMonth();
+        }
+
+        $serviceSearch = trim((string) $request->input('services_q', ''));
+        $usesMonthlyCutoffBilling = (bool) $tenant?->usesMonthlyCutoffBilling();
+
+        $serviceHistory = NoteDetail::query()
+            ->where('note_details.tenant_id', $tenantId)
+            ->where('note_details.animal_id', $animal->id)
+            ->join('notes', 'notes.id', '=', 'note_details.note_id')
+            ->whereNull('notes.deleted_at')
+            ->whereBetween('notes.date_at', [
+                $serviceMonth->copy()->startOfMonth(),
+                $serviceMonth->copy()->endOfMonth(),
+            ])
             ->with(['note.customer', 'catalogItem'])
-            ->latest()
-            ->get();
+            ->when($serviceSearch !== '', function ($query) use ($serviceSearch) {
+                $query->where(function ($searchQuery) use ($serviceSearch) {
+                    $searchQuery
+                        ->where('notes.folio', 'like', "%{$serviceSearch}%")
+                        ->orWhereHas('catalogItem', function ($catalogQuery) use ($serviceSearch) {
+                            $catalogQuery->where('name', 'like', "%{$serviceSearch}%");
+                        });
+                });
+            })
+            ->select('note_details.*')
+            ->orderByDesc('notes.date_at')
+            ->orderByDesc('note_details.id')
+            ->paginate($servicePerPage, ['*'], 'services_page')
+            ->withQueryString();
 
         $portalUserIds = $animal->customer?->portalAccesses()
             ->where('status', 'active')
@@ -259,9 +300,70 @@ class AnimalController extends Controller
             'animalTypes',
             'clubs',
             'serviceHistory',
+            'serviceSearch',
+            'serviceMonth',
+            'servicePerPage',
+            'allowedServicePerPage',
+            'usesMonthlyCutoffBilling',
             'hasActivePortalAccess',
             'isVisibleInPortal'
         ));
+    }
+
+    public function destroyServiceDetail(Animal $animal, NoteDetail $detail)
+    {
+        $tenant = auth()->user()->tenant;
+
+        abort_unless($tenant?->usesMonthlyCutoffBilling(), 403);
+        abort_unless($animal->tenant_id === $tenant->id, 404);
+        abort_unless($detail->tenant_id === $tenant->id && $detail->animal_id === $animal->id, 404);
+
+        $detail->load(['note.details', 'catalogItem.inventory']);
+        $note = $detail->note;
+
+        DB::transaction(function () use ($tenant, $detail, $note) {
+            $catalogItem = $detail->catalogItem;
+
+            if ($catalogItem?->has_inventory && $catalogItem->inventory) {
+                app(InventoryService::class)->recordMovement(
+                    $tenant,
+                    $catalogItem->inventory,
+                    'return',
+                    (float) $detail->quantity,
+                    $note,
+                    auth()->id(),
+                    'Reversion de servicio monthly',
+                    "Reversion por eliminacion de renglon en nota {$note->folio}.",
+                    "monthly-detail-delete:{$detail->id}"
+                );
+            }
+
+            $detail->delete();
+
+            $note->update([
+                'total' => (float) $note->details()
+                    ->where('tenant_id', $tenant->id)
+                    ->sum('subtotal'),
+            ]);
+        });
+
+        if ($note?->date_at && $note?->customer_id) {
+            $generator = app(CustomerStatementGenerator::class);
+
+            CustomerStatement::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('customer_id', $note->customer_id)
+                ->whereDate('period_start', '<=', $note->date_at->toDateString())
+                ->whereDate('period_end', '>=', $note->date_at->toDateString())
+                ->get()
+                ->each(fn (CustomerStatement $statement) => $generator->generateStoredForRange(
+                    $note->customer,
+                    $statement->period_start->copy()->startOfDay(),
+                    $statement->period_end->copy()->endOfDay()
+                ));
+        }
+
+        return back()->with('success', 'Servicio eliminado del historial correctamente.');
     }
 
     public function togglePortalVisibility(Animal $animal, CustomerPortalAccessService $portalAccessService)

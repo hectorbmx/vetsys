@@ -172,6 +172,7 @@
                                                     <span x-text="animal.name.charAt(0)"></span>
                                                 </div>
                                                 <div>
+                                                    
                                                     <p class="text-sm font-bold theme-text-heading leading-tight" x-text="animal.name"></p>
                                                 </div>
                                             </div>

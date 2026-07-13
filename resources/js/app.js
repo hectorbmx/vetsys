@@ -5,7 +5,7 @@ import { initializeContextualTours } from './contextual-tours';
 window.Alpine = Alpine;
 
 // Componentes Alpine
-Alpine.data('pagoModal', (customerId) => ({
+Alpine.data('pagoModal', (customerId, isMonthlyMode = false, accountBalance = 0) => ({
     open: false,
     amount: '',
     loading: false,
@@ -13,6 +13,8 @@ Alpine.data('pagoModal', (customerId) => ({
     leftover: 0,
     paymentMethodId: '',
     isCard: false,
+    isMonthlyMode,
+    accountBalance,
 
     fmt(val) {
         return parseFloat(val).toLocaleString('es-MX', {
@@ -22,6 +24,12 @@ Alpine.data('pagoModal', (customerId) => ({
     },
 
     async fetchPreview() {
+        if (this.isMonthlyMode) {
+            this.distribution = [];
+            this.leftover = 0;
+            return;
+        }
+
         const amt = parseFloat(this.amount);
         if (!amt || amt <= 0) {
             this.distribution = [];

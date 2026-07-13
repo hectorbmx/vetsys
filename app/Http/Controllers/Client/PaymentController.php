@@ -58,6 +58,7 @@ class PaymentController extends Controller
     public function store(Request $request, Customer $customer)
     {
         $tenantId = auth()->user()->tenant_id;
+        $tenant = auth()->user()->tenant;
         abort_if($customer->tenant_id !== $tenantId, 403);
         $data = $this->validatePayment($request, $tenantId);
         $method = PaymentMethod::findOrFail($data['payment_method_id']);
@@ -77,11 +78,12 @@ class PaymentController extends Controller
             ]
         ));
 
-        app(TenantOnboardingService::class)->reconcileSafely(auth()->user()->tenant);
+        app(TenantOnboardingService::class)->reconcileSafely($tenant);
 
         return redirect()
             ->route('client.customers.show', $customer)
-            ->with('success', 'Pago registrado correctamente.');
+            ->with('activeCustomerTab', 'notas')
+            ->with('success', $tenant?->usesMonthlyCutoffBilling() ? 'Abono registrado correctamente.' : 'Pago registrado correctamente.');
     }
 
     public function createStripePaymentLink(Request $request, Customer $customer)
@@ -133,8 +135,11 @@ class PaymentController extends Controller
             return back()->with('error', 'No se pudo generar el link Stripe: ' . $exception->getMessage());
         }
 
+        $usesMonthlyCutoffBilling = auth()->user()->tenant?->usesMonthlyCutoffBilling() ?? false;
+
         return back()
-            ->with('success', 'Link de pago general generado correctamente.')
+            ->with('activeCustomerTab', 'notas')
+            ->with('success', $usesMonthlyCutoffBilling ? 'Link de abono generado correctamente.' : 'Link de pago general generado correctamente.')
             ->with('customer_payment_link_url', route('public.customer-payments.show', $paymentLink->token));
     }
 }

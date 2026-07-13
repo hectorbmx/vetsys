@@ -11,6 +11,9 @@ class Tenant extends Model
 {
     use HasFactory;
 
+    public const BILLING_MODE_NOTE_BASED = 'note_based';
+    public const BILLING_MODE_MONTHLY_CUTOFF = 'monthly_cutoff';
+
     protected $fillable = [
         'name',
         'slug',
@@ -34,6 +37,7 @@ class Tenant extends Model
         'theme_palette',
         'default_home_route',
         'visible_menu_modules',
+        'billing_mode',
     ];
 
     protected $casts = [
@@ -45,6 +49,46 @@ class Tenant extends Model
         'is_active' => 'boolean',
         'visible_menu_modules' => 'array',
     ];
+
+    public static function billingModeOptions(): array
+    {
+        return [
+            self::BILLING_MODE_NOTE_BASED => [
+                'label' => 'Por nota de venta',
+                'description' => 'Cada nota conserva saldo propio y los pagos se aplican a notas especificas.',
+            ],
+            self::BILLING_MODE_MONTHLY_CUTOFF => [
+                'label' => 'Corte mensual',
+                'description' => 'Los servicios se ven como cargos libres y los pagos abonan al saldo global del cliente.',
+            ],
+        ];
+    }
+
+    public static function billingModeKeys(): array
+    {
+        return array_keys(self::billingModeOptions());
+    }
+
+    public function normalizedBillingMode(): string
+    {
+        if (in_array($this->billing_mode, ['monthly', 'monthly_based'], true)) {
+            return self::BILLING_MODE_MONTHLY_CUTOFF;
+        }
+
+        return in_array($this->billing_mode, self::billingModeKeys(), true)
+            ? $this->billing_mode
+            : self::BILLING_MODE_NOTE_BASED;
+    }
+
+    public function usesNoteBasedBilling(): bool
+    {
+        return $this->normalizedBillingMode() === self::BILLING_MODE_NOTE_BASED;
+    }
+
+    public function usesMonthlyCutoffBilling(): bool
+    {
+        return $this->normalizedBillingMode() === self::BILLING_MODE_MONTHLY_CUTOFF;
+    }
 
     public static function activationCodeHash(string $code): string
     {

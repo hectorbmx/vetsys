@@ -10,6 +10,7 @@ use App\Rules\GloballyUniqueEmail;
 use App\Services\CustomerStripePaymentProcessor;
 use App\Services\CustomerPortalAccessService;
 use App\Services\StripeCustomerPaymentService;
+use App\Services\CustomerStatementGenerator;
 use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -50,7 +51,9 @@ class CustomerController extends Controller
         ->paginate($perPage)
         ->withQueryString();
 
-    return view('client.customers.index', compact('customers', 'perPage'));
+    $usesMonthlyCutoffBilling = auth()->user()->tenant?->usesMonthlyCutoffBilling() ?? false;
+
+    return view('client.customers.index', compact('customers', 'perPage', 'usesMonthlyCutoffBilling'));
 }
 
     public function toggleStatus(Customer $customer)
@@ -118,6 +121,7 @@ class CustomerController extends Controller
 public function show($id)
 {
     $this->reconcilePendingStripePayments((int) $id);
+    $tenant = auth()->user()->tenant;
 
     $customer = Customer::with([
         'saleNotes.details.catalogItem',
@@ -134,6 +138,73 @@ public function show($id)
     ])->findOrFail($id);
     $this->authorizeTenant($customer);
 
+    $usesMonthlyCutoffBilling = $tenant?->usesMonthlyCutoffBilling() ?? false;
+    $billingServiceCharges = \App\Models\NoteDetail::query()
+        ->where('note_details.tenant_id', $tenant->id)
+        ->whereHas('note', fn ($query) => $query
+            ->where('customer_id', $customer->id)
+            ->where('tenant_id', $tenant->id))
+        ->with(['note', 'catalogItem', 'animal'])
+        ->join('notes', 'notes.id', '=', 'note_details.note_id')
+        ->orderByDesc('notes.date_at')
+        ->orderByDesc('note_details.id')
+        ->select('note_details.*')
+        ->get();
+    $billingChargesTotal = (float) $billingServiceCharges->sum('subtotal');
+    $billingPaymentsTotal = (float) $customer->payments->sum('amount');
+    $billingBalance = $billingChargesTotal - $billingPaymentsTotal;
+    $horsesTotal = $customer->animals->count();
+    $horsesInactive = $customer->animals->where('status', '!=', 'active')->count();
+    $lastHorseService = \App\Models\NoteDetail::query()
+        ->where('note_details.tenant_id', $tenant->id)
+        ->whereHas('note', fn ($query) => $query
+            ->where('customer_id', $customer->id)
+            ->where('tenant_id', $tenant->id)
+            ->where('status', '!=', 'CANCELADA'))
+        ->whereNotNull('animal_id')
+        ->with(['note', 'catalogItem', 'animal'])
+        ->join('notes', 'notes.id', '=', 'note_details.note_id')
+        ->orderByDesc('notes.date_at')
+        ->orderByDesc('note_details.id')
+        ->select('note_details.*')
+        ->first();
+    $monthlyHorseServices = \App\Models\NoteDetail::query()
+        ->where('note_details.tenant_id', $tenant->id)
+        ->whereHas('note', fn ($query) => $query
+            ->where('customer_id', $customer->id)
+            ->where('tenant_id', $tenant->id)
+            ->where('status', '!=', 'CANCELADA')
+            ->whereBetween('date_at', [now()->startOfMonth(), now()->endOfMonth()]))
+        ->get();
+    $monthlyHorseServicesCount = $monthlyHorseServices->count();
+    $monthlyHorseServicesTotal = (float) $monthlyHorseServices->sum('subtotal');
+    $monthlyPayments = $customer->payments
+        ->filter(fn ($payment) => $payment->created_at?->betweenIncluded(now()->startOfMonth(), now()->endOfMonth()));
+    $monthlyPaymentsCount = $monthlyPayments->count();
+    $monthlyPaymentsTotal = (float) $monthlyPayments->sum('amount');
+
+    if ($usesMonthlyCutoffBilling) {
+        $statementGenerator = app(CustomerStatementGenerator::class);
+
+        $customer->statements->each(function ($statement) use ($customer, $statementGenerator) {
+            $currentTotals = $statementGenerator->calculateRangeTotals(
+                $customer,
+                $statement->period_start->copy()->startOfDay(),
+                $statement->period_end->copy()->endOfDay()
+            );
+
+            $needsRecalculation =
+                round((float) $statement->period_charges, 2) !== $currentTotals['period_charges']
+                || round((float) $statement->period_payments, 2) !== $currentTotals['period_payments']
+                || round((float) $statement->ending_balance, 2) !== $currentTotals['ending_balance'];
+
+            $statement->setAttribute('needs_recalculation', $needsRecalculation);
+            $statement->setAttribute('current_period_charges', $currentTotals['period_charges']);
+            $statement->setAttribute('current_period_payments', $currentTotals['period_payments']);
+            $statement->setAttribute('current_ending_balance', $currentTotals['ending_balance']);
+        });
+    }
+
     $paymentMethods = \App\Models\PaymentMethod::where('tenant_id', auth()->user()->tenant_id)
     ->where('is_active', true)
     ->get();
@@ -149,7 +220,24 @@ public function show($id)
         ->get();
 
     // return view('client.customers.show', compact('customer','paymentMethods'));
-        return view('client.customers.show', compact('customer', 'paymentMethods', 'animalTypes', 'clubs'));
+        return view('client.customers.show', compact(
+            'customer',
+            'paymentMethods',
+            'animalTypes',
+            'clubs',
+            'usesMonthlyCutoffBilling',
+            'billingServiceCharges',
+            'billingChargesTotal',
+            'billingPaymentsTotal',
+            'billingBalance',
+            'horsesTotal',
+            'horsesInactive',
+            'lastHorseService',
+            'monthlyHorseServicesCount',
+            'monthlyHorseServicesTotal',
+            'monthlyPaymentsCount',
+            'monthlyPaymentsTotal'
+        ));
 
 }
 

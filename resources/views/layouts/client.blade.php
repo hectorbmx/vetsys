@@ -22,7 +22,7 @@
       data-theme-palette="{{ $layoutThemePalette }}"
       x-data="{ sidebarOpen: true }"
       @hasSection('contextual-tour') data-contextual-tour="@yield('contextual-tour')" @endif>
-{{-- Toast de NotificaciÃ³n Global --}}
+{{-- Toast de Notificacion Global --}}
 @if(session('success'))
     <div x-data="{ show: true }" 
          x-init="setTimeout(() => show = false, 3000)" 
@@ -30,7 +30,7 @@
          x-transition:enter="transition ease-out duration-300"
          x-transition:leave="transition ease-in duration-200"
          class="fixed bottom-5 right-5 z-[100] theme-surface-dark px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
-        <span class="text-xl">âœ…</span>
+        <span class="text-xl">&#10003;</span>
         <p class="text-[10px] font-black uppercase tracking-widest">{{ session('success') }}</p>
     </div>
 @endif
@@ -40,10 +40,10 @@
          class="fixed bottom-5 right-5 z-[100] max-w-md bg-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-start gap-3 border border-rose-500">
         <span class="text-xl">!</span>
         <div>
-            <p class="text-[10px] font-black uppercase tracking-widest">No se pudo completar la operaciÃ³n</p>
+            <p class="text-[10px] font-black uppercase tracking-widest">No se pudo completar la operacion</p>
             <p class="text-xs font-semibold mt-1">{{ session('error') ?: $errors->first() }}</p>
         </div>
-        <button type="button" @click="show = false" class="ml-2 text-white/80 hover:text-white font-black">Ã—</button>
+        <button type="button" @click="show = false" class="ml-2 text-white/80 hover:text-white font-black">&times;</button>
     </div>
 @endif
 <div class="min-h-screen flex">
@@ -128,7 +128,7 @@
             @endforeach
         </nav>
 
-        {{-- Footer Sidebar con Datos de SesiÃ³n del Cliente --}}
+        {{-- Footer Sidebar con Datos de Sesion del Cliente --}}
         <div class="px-3 py-4 border-t border-white/5 theme-bg-sidebar-footer">
             <div class="flex items-center gap-3 px-3 py-2 overflow-hidden mb-2">
                 <div class="w-8 h-8 rounded-lg theme-bg-primary flex-shrink-0 flex items-center justify-center text-xs font-black theme-text-primary-ink">
@@ -142,12 +142,12 @@
                 </div>
             </div>
 
-            {{-- Formulario de Cierre de SesiÃ³n Seguro --}}
+            {{-- Formulario de Cierre de Sesion Seguro --}}
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all group text-left">
-                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center group-hover:rotate-12 transition-transform">â†ª</span>
-                    <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm">Cerrar sesiÃ³n</span>
+                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center group-hover:rotate-12 transition-transform">&rarr;</span>
+                    <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm">Cerrar sesion</span>
                 </button>
             </form>
         </div>
@@ -158,7 +158,7 @@
         :class="sidebarOpen ? 'ml-64' : 'ml-20'"
         class="sidebar-transition flex-1 flex flex-col min-w-0">
 
-        {{-- Topbar con Blur y BotÃ³n Toggle --}}
+        {{-- Topbar con Blur y Boton Toggle --}}
         <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40">
             <div class="flex items-center gap-4">
                 {{-- BOTON DE COLAPSO (TOGGLE) --}}
@@ -173,7 +173,7 @@
                     </svg>
                 </button>
                 
-                {{-- Breadcrumb DinÃ¡mico --}}
+                {{-- Breadcrumb Dinamico --}}
                 <nav class="flex text-xs font-medium text-slate-400 uppercase tracking-widest" aria-label="Breadcrumb">
                     <span>Panel</span>
                     <span class="mx-2">/</span>
@@ -181,7 +181,7 @@
                 </nav>
             </div>
 
-            {{-- InformaciÃ³n de usuario en el costado derecho --}}
+            {{-- Informacion de usuario en el costado derecho --}}
             <div class="flex items-center gap-3">
                 <button type="button"
                         data-tour-launch

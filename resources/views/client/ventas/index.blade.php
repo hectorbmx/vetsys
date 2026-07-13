@@ -6,19 +6,15 @@
     {{-- ENCABEZADO --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Historial de Ventas</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.</p>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">
+                {{ $usesMonthlyCutoffBilling ? 'Historial de Servicios' : 'Historial de Ventas' }}
+            </h1>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                {{ $usesMonthlyCutoffBilling ? 'Consulta los servicios realizados que alimentan las cuentas mensuales.' : 'Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.' }}
+            </p>
         </div>
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <form method="GET" action="{{ route('client.ventas.index') }}" class="relative w-full sm:w-80">
-                <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar folio, cliente o teléfono..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
-                @if(request()->filled('q'))
-                    <a href="{{ route('client.ventas.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
-                @endif
-            </form>
             <a href="{{ route('client.ventas.create') }}" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all whitespace-nowrap">
                 + Nueva Nota de Venta
             </a>
@@ -34,7 +30,7 @@
             <div class="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
             <div class="relative z-10 flex items-center justify-between w-full">
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Ventas del Mes</p>
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">{{ $usesMonthlyCutoffBilling ? 'Cargos del Mes' : 'Ventas del Mes' }}</p>
                     <div class="flex items-baseline gap-2">
                         <span class="text-3xl font-black text-white tracking-tight">${{ number_format($totalSalesMonth, 2) }}</span>
                     </div>
@@ -57,21 +53,25 @@
             <div class="absolute -left-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
             <div class="relative z-10 flex items-center justify-between w-full">
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">Notas Generadas</p>
+                    <p class="text-[10px] font-black text-white/80 uppercase tracking-widest">{{ $usesMonthlyCutoffBilling ? 'Servicios Realizados' : 'Notas Generadas' }}</p>
                     <div class="flex items-baseline gap-2">
                         <span class="text-3xl font-black text-white tracking-tight">{{ $totalNotesMonth }}</span>
-                        <span class="text-[10px] font-medium text-white/80">este mes</span>
+                        <span class="text-[10px] font-medium text-white/80">{{ $usesMonthlyCutoffBilling ? 'cargos este mes' : 'este mes' }}</span>
                     </div>
-                    <div class="flex gap-3 mt-2">
-                        <div class="flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            <span class="text-[9px] font-bold text-white uppercase">{{ $paidNotesMonth }} Pagadas</span>
+                    @if($usesMonthlyCutoffBilling)
+                        <p class="text-[10px] font-bold text-white/80 uppercase mt-2">Agrupados despues por corte mensual</p>
+                    @else
+                        <div class="flex gap-3 mt-2">
+                            <div class="flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                <span class="text-[9px] font-bold text-white uppercase">{{ $paidNotesMonth }} Pagadas</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                                <span class="text-[9px] font-bold text-white uppercase">{{ $pendingNotesMonth }} Pendientes</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-                            <span class="text-[9px] font-bold text-white uppercase">{{ $pendingNotesMonth }} Pendientes</span>
-                        </div>
-                    </div>
+                    @endif
                 </div>
                 <div class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📄</div>
             </div>
@@ -96,12 +96,9 @@
 
     {{-- TABLA HISTÓRICA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Notas registradas</h3>
-            <div class="flex flex-wrap items-center justify-end gap-3">
-                @if(request()->filled('q'))
-                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ request('q') }}</span>
-                @endif
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">{{ $usesMonthlyCutoffBilling ? 'Servicios realizados' : 'Notas registradas' }}</h3>
                 <form method="GET" action="{{ route('client.ventas.index') }}" class="flex items-center gap-2">
                     @if(request()->filled('q'))
                         <input type="hidden" name="q" value="{{ request('q') }}">
@@ -115,9 +112,89 @@
                     <span class="text-[10px] font-bold text-slate-400">filas</span>
                 </form>
             </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <form method="GET" action="{{ route('client.ventas.index') }}" class="relative w-full sm:max-w-md">
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="{{ $usesMonthlyCutoffBilling ? 'Buscar servicio, paciente, cliente o folio...' : 'Buscar folio, cliente o telefono...' }}" class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+                    @if(request()->filled('q'))
+                        <a href="{{ route('client.ventas.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                    @endif
+                </form>
+                @if(request()->filled('q'))
+                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ request('q') }}</span>
+                @endif
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
+                @if($usesMonthlyCutoffBilling)
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/50">
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Paciente</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio / Producto</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cantidad</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Precio</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Subtotal</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Referencia</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($serviceDetails as $detail)
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-6 py-4 text-xs font-semibold text-slate-600">
+                                    {{ $detail->note?->date_at?->format('d/m/Y') ?? '--' }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($detail->note?->customer)
+                                        <a href="{{ route('client.customers.show', $detail->note->customer) }}"
+                                           class="text-xs font-bold theme-text-heading block theme-hover-text-primary hover:underline transition-colors">
+                                            {{ $detail->note->customer->full_name }}
+                                        </a>
+                                        <span class="text-[10px] text-slate-400 font-medium block">{{ $detail->note->customer->phone ?? 'Sin telefono' }}</span>
+                                    @else
+                                        <span class="text-xs font-bold text-slate-400">Cliente no disponible</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($detail->animal)
+                                        <a href="{{ route('client.animals.edit', $detail->animal) }}"
+                                           class="text-xs font-bold theme-text-heading block theme-hover-text-primary hover:underline transition-colors">
+                                            {{ $detail->animal->name }}
+                                        </a>
+                                    @else
+                                        <span class="text-xs font-bold text-slate-400">Sin paciente</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-xs font-black theme-text-heading block">{{ $detail->catalogItem->name ?? 'Servicio eliminado' }}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold">{{ ucfirst($detail->catalogItem->type ?? 'cargo') }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right text-xs font-bold theme-text-heading">{{ number_format((float) $detail->quantity, 2) }}</td>
+                                <td class="px-6 py-4 text-right text-xs font-bold text-slate-600">${{ number_format((float) $detail->price_at_sale, 2) }}</td>
+                                <td class="px-6 py-4 text-right text-xs font-black theme-text-heading">${{ number_format((float) $detail->subtotal, 2) }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    @if($detail->note)
+                                        <a href="{{ route('client.ventas.show', $detail->note) }}"
+                                           class="text-[10px] font-mono font-black theme-text-primary hover:underline">
+                                            {{ $detail->note->folio }}
+                                        </a>
+                                    @else
+                                        <span class="text-[10px] font-bold text-slate-400">--</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
+                                    No se han registrado servicios para los criterios seleccionados.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                @else
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/50">
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Folio</th>
@@ -219,11 +296,12 @@
                         </tr>
                     @endforelse
                 </tbody>
+                @endif
             </table>
         </div>
 
         <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $notes->links() }}
+            {{ $usesMonthlyCutoffBilling ? $serviceDetails->links() : $notes->links() }}
         </div>
     </div>
 
