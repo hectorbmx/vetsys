@@ -162,11 +162,11 @@
                             {{-- Info Básica del Animal --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <a href="{{ route('client.animals.edit', $animal) }}" class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm transition-transform hover:scale-105" title="Ver ficha de {{ $animal->name }}">
+                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm transition-transform hover:scale-105" title="Ver ficha de {{ $animal->name }}">
                                         {{ substr($animal->name, 0, 1) }}
                                     </a>
                                     <div>
-                                        <a href="{{ route('client.animals.edit', $animal) }}" class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors">{{ $animal->name }}</a>
+                                        <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors">{{ $animal->name }}</a>
                                         <p class="text-[10px] font-medium text-slate-400 mt-0.5">
                                             Edad: {{ $animal->birthdate ? $animal->birthdate->age . ' años' : 'No registrada' }}
                                         </p>
@@ -242,7 +242,7 @@
                                 <div class="flex items-center justify-end gap-2">
                                     
                                     <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">&#128269;</a> -->
-                                    <a href="{{ route('client.animals.edit',$animal) }}" 
+                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" 
                                         class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
                                         title="Ver ficha">&#128269;</a>
                                 </div>

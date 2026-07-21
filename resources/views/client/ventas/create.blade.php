@@ -4,7 +4,7 @@
 @section('contextual-tour', 'first-sale')
 
 @section('content')
-<div x-data="salesPOS()" x-init="initPOS()" class="p-6 max-w-7xl mx-auto space-y-6">
+<div x-data="salesPOS()" x-init="initPOS()" class="-mt-6 px-6 pb-6 max-w-7xl mx-auto space-y-6">
     <div x-show="isSubmitting" x-cloak x-transition.opacity class="fixed inset-0 z-[140] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
         <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
             <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>

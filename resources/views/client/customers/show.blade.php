@@ -9,6 +9,9 @@
         init() {
             this.hidePortalAccess = localStorage.getItem('customerProfile.hidePortalAccess') === '1';
             this.hideCustomerKpis = localStorage.getItem('customerProfile.hideCustomerKpis') === '1';
+            if (@js($usesMonthlyCutoffBilling) && this.tab === 'configuracion') {
+                this.tab = 'notas';
+            }
         },
         togglePortalAccess() {
             this.hidePortalAccess = !this.hidePortalAccess;
@@ -18,7 +21,8 @@
             this.hideCustomerKpis = !this.hideCustomerKpis;
             localStorage.setItem('customerProfile.hideCustomerKpis', this.hideCustomerKpis ? '1' : '0');
         },
-        ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }})
+        ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }}),
+        ...statementModalState()
     }"
     class="p-6 max-w-7xl mx-auto space-y-6"
 >
@@ -414,21 +418,23 @@
             </div>
 
             {{-- NAVEGACION DE TABS --}}
-    <div class="flex gap-2 border-b border-slate-200">
-        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="relative px-4 pr-7 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+    <div class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="relative rounded-xl border px-4 pr-8 py-3 text-xs font-black uppercase tracking-widest transition-all">
             Caballos
-            <span class="absolute -right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->animals->count() }}</span>
+            <span class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->animals->count() }}</span>
         </button>
-        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="relative px-4 pr-10 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="relative rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
             {{ $usesMonthlyCutoffBilling ? 'Cuentas' : 'Notas' }}
             {{-- <span class="absolute -    right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full {{ $usesMonthlyCutoffBilling && $billingBalance > 0 ? 'bg-rose-50 text-rose-600 ring-rose-100' : 'bg-slate-100 text-slate-500 ring-slate-200' }} px-1.5 text-[10px] font-black leading-none shadow-sm ring-1">{{ $usesMonthlyCutoffBilling ? '$'.number_format($billingBalance, 0) : $customer->saleNotes->count() }}</span> --}}
         </button>
-        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="relative px-4 pr-7 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="relative rounded-xl border px-4 pr-8 py-3 text-xs font-black uppercase tracking-widest transition-all">
             Historial de Pagos
-            <span class="absolute -right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->payments->count() }}</span>
+            <span class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->payments->count() }}</span>
         </button>
-        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos</button>
-        <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Configuracion</button>
+        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Datos</button>
+        @unless($usesMonthlyCutoffBilling)
+            <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Configuracion</button>
+        @endunless
     </div>
 
     {{-- CONTENIDO DE TABS --}}
@@ -448,19 +454,7 @@
                 </a> --}}
             </div>
 
-            <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4">
-                @if($customer->accountSetting)
-                    <form action="{{ route('client.customers.statements.store', $customer) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="theme-button-dark rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
-                            Generar corte
-                        </button>
-                    </form>
-                @else
-                    <button type="button" disabled class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        Configura cuenta
-                    </button>
-                @endif
+                <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4">
                 <button type="button"
                         @click="openStatementModal({
                             id: {{ $customer->id }},
@@ -468,10 +462,10 @@
                             previewUrl: @js(route('client.customers.statements.preview', $customer)),
                             storeUrl: @js(route('client.customers.statements.store-manual', $customer))
                         })"
-                        class="theme-button-primary rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
-                    Crear cuenta por rango
+                        class="theme-button-dark rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
+                    Generar corte
                 </button>
-                <span class="text-[11px] font-semibold text-slate-400">Genera el ultimo periodo cerrado segun el dia de corte configurado. Para rangos manuales usa la tabla general de clientes.</span>
+                <span class="text-[11px] font-semibold text-slate-400">Selecciona manualmente el inicio y fin del corte para previsualizar servicios disponibles antes de generarlo.</span>
             </div>
 
             <table class="w-full text-left">
@@ -824,11 +818,11 @@
                 <thead>
                     <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
                         <th class="px-4 py-3 pb-4">Nombre</th>
-                        <th class="px-4 py-3 pb-4">Especie / Raza</th>
+                        <th class="px-4 py-3 pb-4 text-center">Historial</th>
+                        <th class="px-4 py-3 pb-4 text-center">Vacunacion</th>
                         <th class="px-4 py-3 pb-4">Sexo</th>
                         <th class="px-4 py-3 pb-4">Edad</th>
                         <th class="px-4 py-3 pb-4">Club</th>
-                        <th class="px-4 py-3 pb-4">Peso</th>
                         <th class="px-4 py-3 pb-4">Estatus</th>
                         <th class="px-4 py-3 pb-4 text-right">Acciones</th>
                     </tr>
@@ -862,7 +856,7 @@
                         @endphp
                         <tr class="bg-white hover:bg-slate-50/70 transition-colors">
                        <td class="px-4 py-4 border-l-4 theme-border-primary">
-                            <a href="{{ route('client.animals.edit', $animal) }}" class="group block min-w-0 transition-all">
+                            <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="group block min-w-0 transition-all">
                                 <div class="flex items-center gap-3">
                                     
                                     {{-- Inicial del Animal --}}
@@ -883,9 +877,21 @@
                                 </div>
                             </a>
                         </td>
-                            <td class="px-4 py-4">
-                                <span class="text-xs font-semibold text-slate-600">{{ $animal->animalType->name ?? 'N/A' }}</span>
-                                <span class="block text-[10px] text-slate-400">{{ $animal->color ?? 'Sin color' }}</span>
+                            <td class="px-4 py-4 text-center">
+                                <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}"
+                                   title="Ver historial de servicios"
+                                   aria-label="Ver historial de servicios de {{ $animal->name }}"
+                                   class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-base text-slate-500 shadow-sm transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700">
+                                    &#128203;
+                                </a>
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'vacunacion']) }}"
+                                   title="Ver cartas de vacunacion"
+                                   aria-label="Ver cartas de vacunacion de {{ $animal->name }}"
+                                   class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-base text-slate-500 shadow-sm transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700">
+                                    &#128137;
+                                </a>
                             </td>
                             <td class="px-4 py-4">
                                 <span class="text-xs font-medium text-slate-600">
@@ -905,9 +911,6 @@
                                 @else
                                     <span class="text-[10px] text-slate-400 font-bold uppercase">Sin club</span>
                                 @endif
-                            </td>
-                            <td class="px-4 py-4 text-xs font-bold text-slate-700">
-                                {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
                             </td>
                             <td class="px-4 py-4">
                                 <form action="{{ route('client.animals.toggle', $animal->id) }}" method="POST">
@@ -932,7 +935,7 @@
                                         App/Web
                                         <span class="text-[10px]" x-text="openShare === {{ $animal->id }} ? '-' : '+'"></span>
                                     </button>
-                                    <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
                                         Detalles
                                     </a>
                                 </div>
@@ -1106,6 +1109,7 @@
         </div>
 
         {{-- TAB: CONFIGURACION CONTABLE --}}
+        @unless($usesMonthlyCutoffBilling)
         <div x-show="tab === 'configuracion'" class="p-6" x-cloak>
             @php
                 $accountSetting = $customer->accountSetting;
@@ -1181,7 +1185,14 @@
             </div>
 
         </div>
+        @endunless
     </div>
+
+    @include('client.customers.partials.statement-modal')
 </div>
 
 @endsection
+
+@push('scripts')
+    @include('client.customers.partials.statement-modal-script')
+@endpush

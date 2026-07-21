@@ -15,15 +15,7 @@ class CustomerStatementGenerator
 {
     public function previewRange(Customer $customer, Carbon $from, Carbon $to): array
     {
-        $chargesByAnimal = NoteDetail::query()
-            ->with('animal')
-            ->where('note_details.tenant_id', $customer->tenant_id)
-            ->whereHas('note', fn ($query) => $query
-                ->where('tenant_id', $customer->tenant_id)
-                ->where('customer_id', $customer->id)
-                ->where('status', '!=', 'CANCELADA')
-                ->whereBetween('date_at', [$from, $to]))
-            ->get()
+        $chargesByAnimal = $this->unstatementedServiceDetailsForRange($customer, $from, $to)
             ->groupBy(fn (NoteDetail $detail) => $detail->animal?->name ?? 'Sin paciente')
             ->map(fn ($details, string $animalName) => [
                 'animal' => $animalName,
@@ -216,19 +208,7 @@ class CustomerStatementGenerator
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $serviceDetails = NoteDetail::query()
-            ->with(['note', 'animal', 'catalogItem'])
-            ->where('note_details.tenant_id', $customer->tenant_id)
-            ->join('notes', 'notes.id', '=', 'note_details.note_id')
-            ->where('notes.tenant_id', $customer->tenant_id)
-            ->where('notes.customer_id', $customer->id)
-            ->where('notes.status', '!=', 'CANCELADA')
-            ->whereNull('notes.deleted_at')
-            ->whereBetween('notes.date_at', [$from, $to])
-            ->select('note_details.*')
-            ->orderBy('notes.date_at', 'asc')
-            ->orderBy('note_details.id', 'asc')
-            ->get();
+        $serviceDetails = $this->unstatementedServiceDetailsForRange($customer, $from, $to);
 
         $previousCharges = (float) NoteDetail::where('note_details.tenant_id', $customer->tenant_id)
             ->whereHas('note', fn ($query) => $query
@@ -244,13 +224,7 @@ class CustomerStatementGenerator
             ->sum('amount');
 
         $previousBalance = max($previousCharges - $previousPayments, 0);
-        $periodCharges = (float) NoteDetail::where('note_details.tenant_id', $customer->tenant_id)
-            ->whereHas('note', fn ($query) => $query
-                ->where('tenant_id', $customer->tenant_id)
-                ->where('customer_id', $customer->id)
-                ->where('status', '!=', 'CANCELADA')
-                ->whereBetween('date_at', [$from, $to]))
-            ->sum('subtotal');
+        $periodCharges = (float) $serviceDetails->sum('subtotal');
         $periodPayments = (float) $payments->sum('amount');
         $endingBalance = max($previousBalance + $periodCharges - $periodPayments, 0);
 
@@ -278,6 +252,56 @@ class CustomerStatementGenerator
         $periodStart = $previousEnd->copy()->addDay()->startOfDay();
 
         return [$periodStart, $periodEnd->endOfDay()];
+    }
+
+    private function unstatementedServiceDetailsForRange(Customer $customer, Carbon $from, Carbon $to)
+    {
+        $coveredRanges = CustomerStatement::query()
+            ->where('tenant_id', $customer->tenant_id)
+            ->where('customer_id', $customer->id)
+            ->where(function ($query) use ($from, $to) {
+                $query
+                    ->whereBetween('period_start', [$from->toDateString(), $to->toDateString()])
+                    ->orWhereBetween('period_end', [$from->toDateString(), $to->toDateString()])
+                    ->orWhere(function ($query) use ($from, $to) {
+                        $query
+                            ->whereDate('period_start', '<=', $from->toDateString())
+                            ->whereDate('period_end', '>=', $to->toDateString());
+                    });
+            })
+            ->where(function ($query) use ($from, $to) {
+                $query
+                    ->whereDate('period_start', '!=', $from->toDateString())
+                    ->orWhereDate('period_end', '!=', $to->toDateString());
+            })
+            ->get(['period_start', 'period_end']);
+
+        return NoteDetail::query()
+            ->with(['note', 'animal', 'catalogItem'])
+            ->where('note_details.tenant_id', $customer->tenant_id)
+            ->join('notes', 'notes.id', '=', 'note_details.note_id')
+            ->where('notes.tenant_id', $customer->tenant_id)
+            ->where('notes.customer_id', $customer->id)
+            ->where('notes.status', '!=', 'CANCELADA')
+            ->whereNull('notes.deleted_at')
+            ->whereBetween('notes.date_at', [$from, $to])
+            ->select('note_details.*')
+            ->orderBy('notes.date_at', 'asc')
+            ->orderBy('note_details.id', 'asc')
+            ->get()
+            ->reject(function (NoteDetail $detail) use ($coveredRanges) {
+                $date = $detail->note?->date_at;
+
+                if (!$date) {
+                    return false;
+                }
+
+                return $coveredRanges->contains(fn (CustomerStatement $statement) => $date->betweenIncluded(
+                    $statement->period_start->copy()->startOfDay(),
+                    $statement->period_end->copy()->endOfDay()
+                ));
+            })
+            ->values();
     }
 
     private function dateForCutoff(Carbon $date, int $cutoffDay): Carbon

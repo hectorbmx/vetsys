@@ -163,34 +163,34 @@
             </div>
         </div>
 
-        <a href="{{ route('client.animals.index') }}" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
+        <a href="{{ $animal->customer ? route('client.customers.show', ['customer' => $animal->customer, 'tab' => 'mascotas']) : route('client.animals.index') }}" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
             <span class="text-base leading-none">&larr;</span>
             <span>Volver a Pacientes</span>
         </a>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-        <div class="border-b border-slate-100 px-6 pt-4">
-            <nav class="flex flex-wrap gap-1">
-                <button data-tour="patient-tab-details" type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+        <div class="border-b border-slate-100 px-6 py-4">
+            <nav class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+                <button data-tour="patient-tab-details" type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Datos del Paciente
                 </button>
-                <button data-tour="patient-tab-history" type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button data-tour="patient-tab-history" type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Historial de Servicios
                 </button>
-                <button data-tour="patient-tab-vaccination" type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button data-tour="patient-tab-vaccination" type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Cartas de Vacunacion
                 </button>
-                <button data-tour="patient-tab-videos" type="button" @click="tab = 'videos'" :class="tab === 'videos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button data-tour="patient-tab-videos" type="button" @click="tab = 'videos'" :class="tab === 'videos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Videos
                 </button>
-                <button data-tour="patient-tab-radiology" type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button data-tour="patient-tab-radiology" type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Radiologia
                 </button>
-                <button type="button" @click="tab = 'reportes'" :class="tab === 'reportes' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button type="button" @click="tab = 'reportes'" :class="tab === 'reportes' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Reportes
                 </button>
-                <button data-tour="patient-tab-telemedicine" type="button" @click="tab = 'telemedicina'" :class="tab === 'telemedicina' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all">
+                <button data-tour="patient-tab-telemedicine" type="button" @click="tab = 'telemedicina'" :class="tab === 'telemedicina' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Telemedicina
                 </button>
             </nav>

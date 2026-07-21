@@ -167,6 +167,9 @@ class NoteController extends Controller
     public function createPaymentLink(Request $request, Note $note)
     {
         abort_if($note->tenant_id !== $request->user()->tenant_id, 404);
+        if ($request->user()->tenant?->usesMonthlyCutoffBilling()) {
+            return $this->monthlyCutoffNotePaymentResponse();
+        }
 
         $data = $request->validate([
             'payment_method_id' => [
@@ -200,6 +203,9 @@ class NoteController extends Controller
     public function storeManualPayment(Request $request, Note $note)
     {
         abort_if($note->tenant_id !== $request->user()->tenant_id, 404);
+        if ($request->user()->tenant?->usesMonthlyCutoffBilling()) {
+            return $this->monthlyCutoffNotePaymentResponse();
+        }
 
         if ($note->balance <= 0) {
             return response()->json([
@@ -253,6 +259,13 @@ class NoteController extends Controller
         return response()->json([
             'data' => $this->serializeNote($note->fresh()->load(['customer', 'details.catalogItem', 'details.animal', 'payments.paymentMethod'])),
         ]);
+    }
+
+    private function monthlyCutoffNotePaymentResponse()
+    {
+        return response()->json([
+            'message' => 'En modo cuentas mensuales, registra abonos desde la cuenta del cliente.',
+        ], 422);
     }
 
     private function validatedData(Request $request, int $tenantId): array

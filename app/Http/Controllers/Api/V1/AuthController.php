@@ -114,6 +114,7 @@ class AuthController extends Controller
                 'phone' => $tenant->phone,
                 'status' => $tenant->status,
                 'is_active' => $tenant->is_active,
+                'billing_mode' => $tenant->normalizedBillingMode(),
                 'plan' => $tenant->plan ? [
                     'id' => $tenant->plan->id,
                     'name' => $tenant->plan->name,

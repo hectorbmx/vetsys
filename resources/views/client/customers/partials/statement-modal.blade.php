@@ -1,5 +1,5 @@
 @if($usesMonthlyCutoffBilling)
-    {{-- MODAL CREAR CORTE --}}
+    {{-- MODAL GENERAR CORTE --}}
     <div x-show="statementModal"
          x-transition
          class="fixed inset-0 z-50 overflow-y-auto"
@@ -9,7 +9,7 @@
             <div class="relative inline-block w-full max-w-3xl overflow-hidden rounded-[20px] bg-white text-left align-middle shadow-2xl">
                 <div class="flex items-center justify-between border-b border-slate-100 bg-slate-700 px-6 py-4 text-white">
                     <div>
-                        <h3 class="text-sm font-black uppercase tracking-widest">Crear cuenta del cliente</h3>
+                        <h3 class="text-sm font-black uppercase tracking-widest">Generar corte</h3>
                         <p class="mt-1 text-xs font-semibold text-white/70" x-text="statementCustomer.name"></p>
                     </div>
                     <button type="button" @click="closeStatementModal()" class="text-2xl font-light text-white/70 hover:text-white">x</button>
@@ -18,6 +18,7 @@
                 <div class="p-6">
                     <div class="rounded-2xl border border-slate-200 p-4">
                         <h4 class="text-sm font-black uppercase tracking-widest theme-text-heading">Seleccionar fechas para el corte</h4>
+                        <p class="mt-1 text-[11px] font-semibold text-slate-400">Busca servicios dentro del rango que no pertenezcan a otro corte.</p>
                         <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
                             <div>
                                 <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha inicio</label>
@@ -61,7 +62,7 @@
                                         <tr class="border-b border-slate-100 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
                                             <th class="py-3">Caballo</th>
                                             <th class="py-3">Cantidad de servicios</th>
-                                            <th class="py-3">Total por servicio</th>
+                                            <th class="py-3">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 text-center">
@@ -95,7 +96,7 @@
                         <button type="submit"
                                 :disabled="!statementPreview || statementPreview.services_count <= 0"
                                 class="rounded-xl bg-slate-700 px-5 py-3 text-xs font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
-                            Crear corte
+                            Generar corte
                         </button>
                     </form>
                 </div>

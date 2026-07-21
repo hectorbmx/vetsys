@@ -1220,6 +1220,11 @@ El perfil del cliente muestra indicadores relevantes segun el tab activo, permit
 
 ## 19. QA comparativo por modo - hallazgos y checkpoints
 
+Roadmap movil relacionado:
+
+- `vetsys/docs/mobile-monthly-cutoff-sync-roadmap.md`
+- `gorozpeApp/docs/mobile-monthly-cutoff-sync-roadmap.md`
+
 Fecha de revision: 2026-07-12
 
 Objetivo:

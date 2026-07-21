@@ -62,10 +62,10 @@
     @endif
 
     {{-- Tabs Navigation --}}
-    <div class="flex gap-2 border-b border-slate-200">
-        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Datos del Club</button>
-        <button @click="tab = 'miembros'" :class="tab === 'miembros' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Miembros ({{ $club->animals_count }})</button>
-        <button @click="tab = 'coggins'" :class="tab === 'coggins' ? 'theme-border-primary theme-text-primary' : 'border-transparent text-slate-400'" class="px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all">Coggins</button>
+    <div class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Datos del Club</button>
+        <button @click="tab = 'miembros'" :class="tab === 'miembros' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Miembros ({{ $club->animals_count }})</button>
+        <button @click="tab = 'coggins'" :class="tab === 'coggins' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Coggins</button>
     </div>
 
     {{-- Tabs Content --}}

@@ -20,7 +20,7 @@
 @endphp
 <body class="bg-slate-50 min-h-screen text-slate-900"
       data-theme-palette="{{ $layoutThemePalette }}"
-      x-data="{ sidebarOpen: true }"
+      x-data="{ sidebarOpen: false }"
       @hasSection('contextual-tour') data-contextual-tour="@yield('contextual-tour')" @endif>
 {{-- Toast de Notificacion Global --}}
 @if(session('success'))
@@ -82,17 +82,24 @@
 </a>
 
         {{-- Nav Links --}}
-        <nav data-tour="main-navigation" class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav data-tour="main-navigation" class="flex-1 px-3 py-6 space-y-1 overflow-visible custom-scrollbar">
                 @php
                     $visibleMenuModules = \App\Support\TenantMenuModules::normalize(auth()->user()->tenant?->visible_menu_modules);
                     $links = [
                         ['module' => 'dashboard', 'route' => 'client.dashboard', 'icon' => '&#9638;', 'label' => 'Dashboard'],
-                        ['module' => 'customers', 'route' => 'client.customers.index', 'icon' => '&#128101;', 'label' => 'Clientes'],
-                        ['module' => 'animals', 'route' => 'client.animals.index', 'icon' => '&#128021;', 'label' => 'Pacientes'],
+                        
+                        ['module' => 'customers', 'route' => 'client.customers.index', 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+</svg>
+', 'label' => 'Clientes'],
+                        ['module' => 'animals', 'route' => 'client.animals.index', 'icon' => '🐎', 'label' => 'Caballos'],
                         ['module' => 'clubs', 'route' => 'client.clubes.index', 'icon' => '&#127943;', 'label' => 'Clubes'],
                         ['module' => 'sales', 'route' => 'client.ventas.index', 'icon' => '&#128722;', 'label' => 'Ventas'],
                         ['module' => 'services', 'route' => 'client.servicios.index', 'icon' => '&#9881;&#65039;', 'label' => 'Servicios'],
-                        ['route' => 'client.mi-configuracion.index', 'icon' => '&#128295;', 'label' => 'Configuracion'],
+                        ['route' => 'client.mi-configuracion.index', 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+</svg>
+', 'label' => 'Configuracion'],
                     ];
 
                     if (auth()->user()->can('view-appointments')) {
@@ -109,23 +116,35 @@
                         return ! isset($link['module']) || in_array($link['module'], $visibleMenuModules, true);
                     }));
                 @endphp
-            @foreach($links as $link)
-                <a href="{{ route($link['route']) }}"
-                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                   {{ request()->routeIs($link['active'] ?? $link['route'])
-                       ? 'theme-nav-active'
-                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                   }}">
-                    
-                    <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ request()->routeIs($link['active'] ?? $link['route']) ? 'theme-text-primary' : 'text-slate-400 group-hover:text-white' }}">
-                        {!! $link['icon'] !!}
-                    </span>
+    @foreach ($links as $link)
+        @php
+            $isActive = request()->routeIs($link['active'] ?? $link['route']);
+        @endphp
 
-                    <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm whitespace-nowrap">
-                        {{ $link['label'] }}
-                    </span>
-                </a>
-            @endforeach
+        <a href="{{ route($link['route']) }}"
+           title="{{ $link['label'] }}"
+           aria-label="{{ $link['label'] }}"
+           class="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                  {{ $isActive ? 'theme-nav-active' : 'text-slate-400 hover:bg-white/5 hover:text-white' }}">
+            @if($isActive)
+                <span class="absolute -left-3 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full theme-bg-primary"></span>
+            @endif
+            
+            <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-lg transition-transform group-hover:scale-110 {{ $isActive ? 'theme-text-primary' : 'text-slate-400 group-hover:text-white' }}">
+                {!! $link['icon'] !!}
+            </span>
+
+            <span x-show="sidebarOpen" x-transition.opacity class="font-medium text-sm whitespace-nowrap">
+                {{ $link['label'] }}
+            </span>
+
+            <span x-show="!sidebarOpen"
+                  x-cloak
+                  class="pointer-events-none absolute left-full top-1/2 ml-3 hidden -translate-y-1/2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white shadow-2xl ring-1 ring-white/10 group-hover:block">
+                {{ $link['label'] }}
+            </span>
+        </a>
+    @endforeach
         </nav>
 
         {{-- Footer Sidebar con Datos de Sesion del Cliente --}}
@@ -162,15 +181,19 @@
         <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40">
             <div class="flex items-center gap-4">
                 {{-- BOTON DE COLAPSO (TOGGLE) --}}
-                <button 
+                <button
+                    type="button"
                     @click="sidebarOpen = !sidebarOpen"
-                    class="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all outline-none theme-focus-primary">
+                    :aria-label="sidebarOpen ? 'Cerrar menu lateral' : 'Abrir menu lateral'"
+                    :title="sidebarOpen ? 'Cerrar menu lateral' : 'Abrir menu lateral'"
+                    class="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-50 px-3 border border-slate-200 text-slate-600 hover:bg-slate-100 transition-all outline-none theme-focus-primary">
                     <svg x-show="sidebarOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                     </svg>
                     <svg x-show="!sidebarOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-cloak>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                     </svg>
+                    <span class="hidden sm:inline text-[10px] font-black uppercase tracking-widest" x-text="sidebarOpen ? 'Cerrar menu' : 'Abrir menu'"></span>
                 </button>
                 
                 {{-- Breadcrumb Dinamico --}}
@@ -186,7 +209,9 @@
                 <button type="button"
                         data-tour-launch
                         hidden
-                        class="inline-flex items-center gap-2 rounded-xl border theme-border-primary-soft theme-bg-primary-soft px-3.5 py-2.5 theme-text-primary-strong transition-all theme-bg-primary-soft-hover theme-focus-primary">
+                        class="inline-flex h-10 items-center gap-2 rounded-xl border theme-border-primary-soft theme-bg-primary-soft px-3.5 py-2.5 theme-text-primary-strong transition-all theme-bg-primary-soft-hover theme-focus-primary"
+                        aria-label="Abrir guia de la pantalla"
+                        title="Abrir guia de la pantalla">
                     <span class="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-black">?</span>
                     <span class="hidden md:inline text-[10px] font-black uppercase tracking-widest">Guia</span>
                 </button>
@@ -264,4 +289,3 @@
 @stack('scripts')
 </body>
 </html>
-
