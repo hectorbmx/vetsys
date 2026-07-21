@@ -905,9 +905,11 @@
                             </td>
                             <td class="px-4 py-4">
                                 @if($animal->club)
-                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest theme-text-primary bg-teal-50 px-2.5 py-1 rounded-full">
+                                    <a href="{{ route('client.clubes.edit', ['clube' => $animal->club, 'tab' => 'miembros']) }}"
+                                       title="Ver miembros del club"
+                                       class="inline-flex text-[9px] font-black uppercase tracking-widest theme-text-primary bg-teal-50 px-2.5 py-1 rounded-full transition-all hover:bg-teal-100 hover:shadow-sm">
                                         {{ $animal->club->name }}
-                                    </span>
+                                    </a>
                                 @else
                                     <span class="text-[10px] text-slate-400 font-bold uppercase">Sin club</span>
                                 @endif
