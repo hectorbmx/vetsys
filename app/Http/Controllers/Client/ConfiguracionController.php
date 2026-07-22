@@ -45,6 +45,7 @@ use App\Services\LetterheadImageOptimizer;
 use App\Services\TenantDocumentTemplateService;
 use App\Services\AppointmentConfigurationService;
 use App\Support\TenantHomeRoutes;
+use App\Support\TenantKpiVisibility;
 use App\Support\TenantMenuModules;
 use App\Support\TenantThemePalettes;
 
@@ -128,6 +129,8 @@ class ConfiguracionController extends Controller
     $activeHomeRoute = TenantHomeRoutes::normalize($tenant?->default_home_route);
     $menuModuleOptions = TenantMenuModules::all();
     $visibleMenuModules = TenantMenuModules::normalize($tenant?->visible_menu_modules);
+    $kpiVisibilityOptions = TenantKpiVisibility::all();
+    $visibleKpiCards = TenantKpiVisibility::normalize($tenant?->kpi_visibility);
     $billingModeOptions = Tenant::billingModeOptions();
     $activeBillingMode = $tenant?->normalizedBillingMode() ?? Tenant::BILLING_MODE_NOTE_BASED;
     $appointmentConfiguration = $appointmentConfigurationService->viewData($tenant, $user);
@@ -163,6 +166,8 @@ class ConfiguracionController extends Controller
         'activeHomeRoute',
         'menuModuleOptions',
         'visibleMenuModules',
+        'kpiVisibilityOptions',
+        'visibleKpiCards',
         'billingModeOptions',
         'activeBillingMode'
     ), $appointmentConfiguration));
@@ -207,6 +212,33 @@ public function updateMenuModules(Request $request)
     return redirect()
         ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
         ->with('success', 'Modulos visibles actualizados correctamente.');
+}
+
+public function updateKpiVisibility(Request $request)
+{
+    $user = $request->user();
+    $tenant = $user->tenant;
+
+    abort_unless($tenant && $this->isTenantAdmin($user), 403);
+
+    $data = $request->validate([
+        'kpi_visibility' => ['nullable', 'array'],
+        'kpi_visibility.*' => ['string', Rule::in(TenantKpiVisibility::keys())],
+    ]);
+
+    $selectedKeys = array_fill_keys(TenantKpiVisibility::keys(), false);
+
+    foreach ($data['kpi_visibility'] ?? [] as $key) {
+        $selectedKeys[$key] = true;
+    }
+
+    $tenant->update([
+        'kpi_visibility' => TenantKpiVisibility::normalize($selectedKeys),
+    ]);
+
+    return redirect()
+        ->route('client.mi-configuracion.index', ['tab' => 'preferencias'])
+        ->with('success', 'Visibilidad de KPIs actualizada correctamente.');
 }
 
 public function updateBillingMode(Request $request)

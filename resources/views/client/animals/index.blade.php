@@ -5,6 +5,9 @@
 @section('contextual-tour', 'animals')
 
 @section('content')
+@php
+    $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::ANIMALS_INDEX);
+@endphp
 <div class="space-y-8" x-data="{ animalModal: false }">
     
     {{-- SISTEMA DE TOASTS FLOTANTES --}}
@@ -53,6 +56,7 @@
         </div>
     </div>
 
+    @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES CON HOVER Y OUTLINES PASTEL --}}
     {{-- CARDS / TRES KPIS SUPERIORES CON DEGRADADOS DINÁMICOS --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -106,6 +110,7 @@
         </div>
     </div>
 </div>
+    @endif
 
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="animals-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

@@ -3,6 +3,9 @@
 @section('title', 'Clubes')
 
 @section('content')
+@php
+    $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CLUBES_INDEX);
+@endphp
 <div class="space-y-8" x-data="{ clubModal: false, editClub: null, membersClub: null }">
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
         @if(session('success'))
@@ -38,6 +41,7 @@
     </div>
 
 {{-- CARDS / TRES KPIS SUPERIORES CON DEGRADADOS DINÁMICOS --}}
+@if($showKpiCards)
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
     {{-- KPI 1: CLUBES ACTIVOS (TURQUESA) --}}
@@ -85,6 +89,7 @@
             </div>
         </div>
 </div>
+@endif
 
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">

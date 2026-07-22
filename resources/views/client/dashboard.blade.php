@@ -4,6 +4,9 @@
 @section('contextual-tour', 'dashboard')
 
 @section('content')
+@php
+    $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::DASHBOARD);
+@endphp
 <div class="space-y-8">
     <div data-tour="dashboard-welcome" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
@@ -118,6 +121,7 @@
         @endif
     @endif
 
+    @if($showKpiCards)
     <div data-tour="dashboard-metrics" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         <a href="{{ route('client.customers.index') }}" class="relative overflow-hidden rounded-[24px] theme-surface-dark p-6 min-h-[190px] shadow-xl shadow-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl theme-focus-primary">
             <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full theme-bg-primary-soft"></div>
@@ -188,6 +192,8 @@
             </div>
         </div>
     </div>
+
+    @endif
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div data-tour="recent-sales" class="xl:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

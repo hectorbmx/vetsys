@@ -38,6 +38,7 @@ class Tenant extends Model
         'default_home_route',
         'visible_menu_modules',
         'billing_mode',
+        'kpi_visibility',
     ];
 
     protected $casts = [
@@ -48,6 +49,7 @@ class Tenant extends Model
         'onboarding_banner_dismissed_at' => 'datetime',
         'is_active' => 'boolean',
         'visible_menu_modules' => 'array',
+        'kpi_visibility' => 'array',
     ];
 
     public static function billingModeOptions(): array

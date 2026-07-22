@@ -318,6 +318,51 @@
                 @endif
             </div>
         </form>
+
+        <form action="{{ route('client.mi-configuracion.kpis.update') }}" method="POST" class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+            @csrf
+            @method('PATCH')
+
+            <div class="border-b border-slate-100 bg-slate-50/50 p-6">
+                <h3 class="text-sm font-black uppercase tracking-widest theme-text-heading">Cards de KPIs</h3>
+                <p class="mt-1 text-[11px] font-medium text-slate-400">Elige en que pantallas se muestran los cards superiores de resumen. Esto no cambia permisos ni calculos, solo su visibilidad.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
+                @foreach($kpiVisibilityOptions as $kpiKey => $option)
+                    @php
+                        $isKpiVisible = $visibleKpiCards[$kpiKey] ?? true;
+                    @endphp
+                    <label class="flex cursor-pointer gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:border-slate-300 {{ $isKpiVisible ? 'theme-border-primary ring-4 theme-ring-primary' : 'border-slate-200' }}">
+                        <input
+                            type="checkbox"
+                            name="kpi_visibility[]"
+                            value="{{ $kpiKey }}"
+                            @checked($isKpiVisible)
+                            @disabled(!$canManageTeam)
+                            class="mt-1 rounded border-slate-300 theme-text-primary focus:ring-0"
+                        >
+                        <span>
+                            <span class="block text-xs font-black uppercase tracking-widest theme-text-heading">{{ $option['label'] }}</span>
+                            <span class="mt-1 block text-[11px] font-semibold text-slate-400">{{ $option['description'] }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-[11px] font-semibold text-slate-400">
+                    Puedes ocultar los KPIs del listado de clientes sin afectar los KPIs del detalle de cliente.
+                </p>
+                @if($canManageTeam)
+                    <button type="submit" class="theme-button-primary rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-widest">
+                        Guardar visibilidad de KPIs
+                    </button>
+                @else
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Solo administradores</span>
+                @endif
+            </div>
+        </form>
     </div>
 
     {{-- TAB: APARIENCIA --}}

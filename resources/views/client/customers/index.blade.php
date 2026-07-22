@@ -5,6 +5,9 @@
 @section('contextual-tour', 'customers')
 
 @section('content')
+@php
+    $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CUSTOMERS_INDEX);
+@endphp
 <div class="space-y-8" x-data="customersIndex()">
     
     {{-- INCLUSIÓN DEL SISTEMA DE TOASTS FLOTANTES --}}
@@ -55,6 +58,7 @@
 
     @include('client.customers.partials.activation-invite')
 
+    @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES CON COLORES Y DEGRADADOS --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     
@@ -106,6 +110,7 @@
         </div>
     </div>
 </div>
+    @endif
 
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="customers-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

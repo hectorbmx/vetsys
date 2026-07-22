@@ -1,6 +1,9 @@
 @extends('layouts.client')
 
 @section('content')
+@php
+    $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::VENTAS_INDEX);
+@endphp
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 
     {{-- ENCABEZADO --}}
@@ -21,6 +24,7 @@
         </div>
     </div>
 
+    @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
@@ -93,6 +97,8 @@
             </div>
         </div>
     </div>
+
+    @endif
 
     {{-- TABLA HISTÓRICA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">

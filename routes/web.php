@@ -268,6 +268,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::patch('mi-configuracion/pantalla-inicio', [ClientConfiguracionController::class, 'updateHomeRoute'])->name('mi-configuracion.home-route.update');
         Route::patch('mi-configuracion/modo-cobranza', [ClientConfiguracionController::class, 'updateBillingMode'])->name('mi-configuracion.billing-mode.update');
         Route::patch('mi-configuracion/modulos-menu', [ClientConfiguracionController::class, 'updateMenuModules'])->name('mi-configuracion.menu-modules.update');
+        Route::patch('mi-configuracion/kpis', [ClientConfiguracionController::class, 'updateKpiVisibility'])->name('mi-configuracion.kpis.update');
         Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
         Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
         Route::put('mi-configuracion/users/{teamUser}/veterinarian-profile', [ClientConfiguracionController::class, 'updateVeterinarianProfile'])->name('mi-configuracion.veterinarian-profiles.update');

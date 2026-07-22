@@ -276,6 +276,56 @@
             </div>
         </header>
 
+        {{-- Accesos principales globales --}}
+        <div class="border-b border-slate-200 bg-slate-50/80 px-6 py-2">
+            <div class="mx-auto grid max-w-7xl grid-cols-1 gap-3 md:grid-cols-3">
+                <a href="{{ route('client.customers.index') }}"
+                   class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
+                    <div class="flex items-center justify-center gap-3 text-center">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11a4 4 0 10-8 0m8 0a4 4 0 11-8 0m8 0c2.5.4 4 1.8 4 4v2H4v-2c0-2.2 1.5-3.6 4-4m10-1.5a3 3 0 011.7 5.5M6 8.5A3 3 0 004.3 14" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Clientes</span>
+                            <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Base de propietarios</span>
+                        </span>
+                    </div>
+                </a>
+
+                <a href="{{ route('client.animals.index') }}"
+                   class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
+                    <div class="flex items-center justify-center gap-3 text-center">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 16.5V11l2.5-3.5h7L19 11v5.5M7.5 7.5l-1-3M15 7.5l1.5-3M8 16.5v3M17 16.5v3M9 11h.01M15 11h.01M10 14h4" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Caballos</span>
+                            <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Pacientes activos</span>
+                        </span>
+                    </div>
+                </a>
+
+                <a href="{{ route('client.servicios.index') }}"
+                   class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
+                    <div class="flex items-center justify-center gap-3 text-center">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h10M7 12h10M7 17h6M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Servicios</span>
+                            <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Catalogo de cobros</span>
+                        </span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
         {{-- Contenedor Principal de Vistas --}}
         <main class="p-8 flex-1">
             <div class="max-w-7xl mx-auto">

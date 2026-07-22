@@ -1,6 +1,9 @@
 ﻿@extends('layouts.client')
 
 @section('content')
+@php
+    $showCustomerKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CUSTOMER_SHOW);
+@endphp
 <div
     x-data="{
         tab: '{{ session('activeCustomerTab', request('tab', 'mascotas')) }}',
@@ -88,15 +91,17 @@
             >
                 <span x-text="hidePortalAccess ? '▣' : '▢'"></span>
             </button>
-            <button
-                type="button"
-                @click="toggleCustomerKpis()"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                :title="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
-                :aria-label="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
-            >
-                <span x-text="hideCustomerKpis ? '\u25A6' : '\u25A4'"></span>
-            </button>
+            @if($showCustomerKpiCards)
+                <button
+                    type="button"
+                    @click="toggleCustomerKpis()"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    :title="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
+                    :aria-label="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
+                >
+                    <span x-text="hideCustomerKpis ? '\u25A6' : '\u25A4'"></span>
+                </button>
+            @endif
         </div>
     </div>
 
@@ -126,6 +131,7 @@
         </form>
     </div>
 
+    @if($showCustomerKpiCards)
    {{-- KPIs dinamicos --}}
     <div x-show="!hideCustomerKpis" x-cloak>
         @if($usesMonthlyCutoffBilling)
@@ -257,6 +263,7 @@
             </div>
         @endif
     </div>
+    @endif
     
         {{-- ============================================================
              MODAL DE PAGO

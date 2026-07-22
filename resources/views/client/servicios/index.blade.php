@@ -5,6 +5,9 @@
 @section('contextual-tour', 'services')
 
 @section('content')
+@php
+    $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::SERVICIOS_INDEX);
+@endphp
 <div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="p-6 max-w-7xl mx-auto space-y-6">
 
 {{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
@@ -25,6 +28,7 @@
     </div>
 </div>
 
+@if($showKpiCards)
 {{-- CARDS / TRES KPIS SUPERIORES --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -92,6 +96,7 @@
         </div>
     </div>
 </div>
+@endif
 
     {{-- FORMULARIO DE ALTA --}}
     <div x-show="openForm" x-collapse class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
