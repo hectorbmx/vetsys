@@ -390,7 +390,7 @@ function salesPOS() {
                 this.paymentType = 'credito';
                 this.amountReceived = 0;
                 this.calculateTotals();
-                this.scheduleMonthlyCapturePrompt();
+                this.openMonthlyCapturePrompt();
                 return;
             }
 
@@ -409,14 +409,12 @@ function salesPOS() {
             }
         },
 
-        scheduleMonthlyCapturePrompt() {
+        openMonthlyCapturePrompt() {
             if (!this.shouldPromptMonthlyCapture) {
                 return;
             }
 
-            setTimeout(() => {
-                this.showMonthlyCapturePrompt = true;
-            }, 3200);
+            this.showMonthlyCapturePrompt = true;
         },
 
         continueMonthlyCapture() {
