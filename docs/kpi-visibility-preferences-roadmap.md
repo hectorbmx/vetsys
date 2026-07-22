@@ -1,7 +1,7 @@
 # Roadmap: visibilidad granular de cards KPI
 
 Fecha de creacion: 2026-07-21
-Estado: fase 4 completada; visibilidad aplicada en Blade, QA manual pendiente.
+Estado: completado y validado manualmente en navegador.
 Ruta de configuracion objetivo: `/client/mi-configuracion?tab=preferencias`
 
 ## Objetivo
@@ -110,12 +110,12 @@ Definicion de done:
 
 ### Checkpoint 6: verificacion
 
-- [ ] `php -l` en controlador, modelo, support class y migracion.
-- [ ] `php artisan route:list --path=client/mi-configuracion`.
-- [ ] `php artisan view:cache`.
-- [ ] `php artisan view:clear`.
-- [ ] QA manual en `/client/mi-configuracion?tab=preferencias`.
-- [ ] QA manual en `/client/customers` y `/client/customers/2015`.
+- [x] `php -l` en controlador, modelo, support class y migracion.
+- [x] `php artisan route:list --path=client/mi-configuracion`.
+- [x] `php artisan view:cache`.
+- [x] `php artisan view:clear`.
+- [x] QA manual en `/client/mi-configuracion?tab=preferencias`.
+- [x] QA manual en `/client/customers` y `/client/customers/2015`.
 
 Definicion de done:
 
@@ -158,3 +158,13 @@ Archivos a modificar:
 | 2026-07-21 | Fase 2 - guardado backend | Completado | Se agrego `PATCH /client/mi-configuracion/kpis`, metodo `updateKpiVisibility()` con validacion granular, restriccion a tenant admin y guardado normalizado donde los checkboxes no enviados quedan como `false`. Sin cambios de UI ni ocultamiento Blade aun. |
 | 2026-07-21 | Fase 3 - UI en Preferencias | Completado | Se agrego el card "Cards de KPIs" en la pestana Preferencias, con checkboxes por pantalla, nota de alcance y submit a `client.mi-configuracion.kpis.update`. Aun falta aplicar la visibilidad en las vistas KPI. |
 | 2026-07-21 | Fase 4 - aplicacion en vistas KPI | Completado | Se envolvieron los bloques KPI de dashboard, clientes, detalle de cliente, pacientes, ventas, servicios y clubes. En detalle de cliente, si `customer_show` esta apagado globalmente, no se renderiza el bloque ni el boton local de mostrar/ocultar KPIs. |
+| 2026-07-21 | Cierre QA | Completado | El usuario confirmo prueba manual exitosa en navegador: la preferencia guarda y la visibilidad granular de KPIs funciona correctamente. |
+
+## Resultado final
+
+- La preferencia granular vive en `tenants.kpi_visibility`.
+- El contrato central de keys, labels, defaults y normalizacion vive en `App\Support\TenantKpiVisibility`.
+- La UI de Preferencias permite activar/desactivar KPIs por pantalla.
+- Las vistas KPI consultan `TenantKpiVisibility::isVisible(...)` antes de renderizar sus cards superiores.
+- En detalle de cliente, `customer_show = false` bloquea globalmente los KPIs y oculta el toggle local; `customer_show = true` conserva el toggle local `hideCustomerKpis`.
+- Graphify debe refrescarse con `graphify update .` y `graphify-out/` permanece ignorado para no subir artefactos a produccion.

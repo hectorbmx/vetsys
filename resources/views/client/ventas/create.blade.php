@@ -4,7 +4,45 @@
 @section('contextual-tour', 'first-sale')
 
 @section('content')
+@php
+    $returnCustomerId = $prefilledCustomer['id'] ?? $editingNote?->customer_id;
+    $returnUrl = $returnCustomerId
+        ? route('client.customers.show', ['customer' => $returnCustomerId, 'tab' => 'notas'])
+        : route('client.ventas.index');
+@endphp
 <div x-data="salesPOS()" x-init="initPOS()" class="-mt-6 px-6 pb-6 max-w-7xl mx-auto space-y-6">
+    @if(session('monthly_capture_prompt'))
+        <div x-show="showMonthlyCapturePrompt"
+             x-cloak
+             x-transition.opacity
+             class="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm">
+            <div x-transition.scale.origin.center
+                 class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+                <div class="flex items-start gap-4">
+                    <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl theme-bg-primary-soft theme-text-primary-strong">
+                        <span class="text-lg font-black">+</span>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest theme-text-heading">Captura mensual</h2>
+                        <p class="mt-2 text-xs font-semibold leading-5 text-slate-500">La nota se guardo correctamente. Quieres capturar mas servicios para este cliente?</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button type="button"
+                            @click="continueMonthlyCapture()"
+                            class="theme-button-dark rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest shadow-md">
+                        Capturar mas
+                    </button>
+                    <a href="{{ session('monthly_capture_prompt.return_url') }}"
+                       class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-700 transition hover:bg-slate-50">
+                        Terminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div x-show="isSubmitting" x-cloak x-transition.opacity class="fixed inset-0 z-[140] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
         <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
             <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
@@ -38,8 +76,8 @@
             <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">{{ $editingNote ? 'Editar Nota de Venta' : 'Nueva Nota de Venta' }}</h1>
             <p class="text-xs text-slate-400 font-medium mt-0.5">Genera cargos a clientes, asigna conceptos a pacientes y procesa pagos al instante.</p>
         </div>
-        <a href="{{ route('client.ventas.index') }}" @click="confirmClose($event)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
-            ← Volver al Historial
+        <a href="{{ $returnUrl }}" @click="confirmClose($event)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
+            ← Volver
         </a>
     </div>
 
@@ -315,8 +353,11 @@ function salesPOS() {
         searchItemUrl: "{{ route('client.api.buscar-articulos') }}",
         prefilledCustomer: @js($prefilledCustomer),
         initialSaleState: @js($initialSaleState),
+        usesMonthlyCutoffBilling: @js($usesMonthlyCutoffBilling ?? false),
+        shouldPromptMonthlyCapture: @js((bool) session('monthly_capture_prompt')),
         isEditing: @js((bool) $editingNote),
         isSubmitting: false,
+        showMonthlyCapturePrompt: false,
         
         // Estados de búsqueda
         customerQuery: '',
@@ -344,11 +385,12 @@ function salesPOS() {
                 this.selectedCustomer = this.prefilledCustomer;
                 this.customerQuery = this.prefilledCustomer?.full_name ?? '';
                 this.selectedAnimalIds = (this.initialSaleState.selectedAnimalIds || []).map(id => String(id));
-                this.noteDate = this.initialSaleState.noteDate || this.noteDate;
+                this.noteDate = this.initialSaleState.resetDate ? '' : (this.initialSaleState.noteDate || this.noteDate);
                 this.basket = this.initialSaleState.basket || [];
                 this.paymentType = 'credito';
                 this.amountReceived = 0;
                 this.calculateTotals();
+                this.scheduleMonthlyCapturePrompt();
                 return;
             }
 
@@ -365,6 +407,23 @@ function salesPOS() {
             if (localStorage.getItem('vet_pos_backup')) {
                 this.showRecoveryAlert = true;
             }
+        },
+
+        scheduleMonthlyCapturePrompt() {
+            if (!this.shouldPromptMonthlyCapture) {
+                return;
+            }
+
+            setTimeout(() => {
+                this.showMonthlyCapturePrompt = true;
+            }, 3200);
+        },
+
+        continueMonthlyCapture() {
+            this.showMonthlyCapturePrompt = false;
+            this.$nextTick(() => {
+                document.querySelector('input[name="date_at"]')?.focus();
+            });
         },
 
         // Buscar clientes asíncronamente

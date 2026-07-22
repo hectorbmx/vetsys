@@ -144,7 +144,10 @@ class NoteController extends Controller
         $paymentMethods = $tenant->paymentMethods()->where('is_active', true)->get();
         $prefilledCustomer = null;
         $editingNote = null;
-        $initialSaleState = null;
+        $initialSaleState = $tenant->usesMonthlyCutoffBilling()
+            ? session('monthly_sale_state')
+            : null;
+        $usesMonthlyCutoffBilling = $tenant->usesMonthlyCutoffBilling();
 
         if ($request->filled('customer_id')) {
             $customer = $tenant->customers()
@@ -166,7 +169,7 @@ class NoteController extends Controller
             }
         }
 
-        return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer', 'editingNote', 'initialSaleState'));
+        return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer', 'editingNote', 'initialSaleState', 'usesMonthlyCutoffBilling'));
     }
 
     /**
@@ -375,6 +378,16 @@ class NoteController extends Controller
         app(TenantOnboardingService::class)->reconcileSafely($tenant);
         app(PortalNotificationService::class)->notePublished($note->fresh(['customer', 'details']));
 
+        if ($tenant->usesMonthlyCutoffBilling()) {
+            return redirect()
+                ->route('client.ventas.create', ['customer_id' => $note->customer_id])
+                ->with('monthly_sale_state', $this->initialSaleStateFromNote($note->fresh(['details.catalogItem.inventory'])))
+                ->with('monthly_capture_prompt', [
+                    'return_url' => route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'notas']),
+                ])
+                ->with('success', "Nota {$note->folio} generada correctamente.");
+        }
+
         $redirect = redirect()->route('client.ventas.show', $note);
 
         if ($generateStripeLink) {
@@ -401,6 +414,7 @@ public function edit(Note $note)
     $this->abortIfNoteHasPayments($note);
 
     $paymentMethods = $tenant->paymentMethods()->where('is_active', true)->get();
+    $usesMonthlyCutoffBilling = $tenant->usesMonthlyCutoffBilling();
     $animalIds = $note->details->pluck('animal_id')->filter()->unique()->values();
     $customerAnimals = $note->customer->animals()
         ->where(function ($query) use ($animalIds) {
@@ -442,7 +456,7 @@ public function edit(Note $note)
 
     $editingNote = $note;
 
-    return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer', 'editingNote', 'initialSaleState'));
+    return view('client.ventas.create', compact('paymentMethods', 'prefilledCustomer', 'editingNote', 'initialSaleState', 'usesMonthlyCutoffBilling'));
 }
 
 public function update(Request $request, Note $note)
@@ -751,6 +765,35 @@ private function cardPaymentMethodForTenant(int $tenantId): ?PaymentMethod
         ->where('is_active', true)
         ->get()
         ->first(fn (PaymentMethod $method) => $this->isCardPaymentMethod($method));
+}
+
+private function initialSaleStateFromNote(Note $note): array
+{
+    $animalIds = $note->details->pluck('animal_id')->filter()->unique()->values();
+
+    return [
+        'selectedAnimalIds' => $animalIds->map(fn ($id) => (string) $id)->values(),
+        'noteDate' => '',
+        'resetDate' => true,
+        'basket' => $note->details
+            ->groupBy('catalog_item_id')
+            ->map(function ($details) {
+                $first = $details->first();
+                $item = $first->catalogItem;
+
+                return [
+                    'id' => $first->catalog_item_id,
+                    'name' => $item?->name ?? 'Concepto eliminado',
+                    'quantity' => (float) $first->quantity,
+                    'price' => (float) $first->price_at_sale,
+                    'has_inventory' => (bool) ($item?->has_inventory ?? false),
+                    'stock_actual' => (float) ($item?->inventory?->stock_actual ?? 0),
+                    'stock_minimo' => (float) ($item?->inventory?->stock_minimo ?? 0),
+                    'allow_negative_stock' => (bool) ($item?->inventory?->allow_negative_stock ?? false),
+                ];
+            })
+            ->values(),
+    ];
 }
 
 private function validateSaleRequest(Request $request, $tenant, bool $requiresPaymentFields = true): void
