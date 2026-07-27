@@ -26,6 +26,11 @@ class CustomerController extends Controller
     $perPage = in_array($requestedPerPage, $allowedPerPage, true)
         ? $requestedPerPage
         : 15;
+    $sortableColumns = ['animals_count', 'general_debt'];
+    $sort = in_array($request->input('sort'), $sortableColumns, true)
+        ? $request->input('sort')
+        : null;
+    $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
 
     $customers = Customer::query()
         ->where('tenant_id', $tenantId)
@@ -47,7 +52,8 @@ class CustomerController extends Controller
         ->when($request->filled('status'), function ($query) use ($request) {
             $query->where('status', $request->status);
         })
-        ->latest()
+        ->when($sort, fn ($query) => $query->orderBy($sort, $direction))
+        ->when(! $sort, fn ($query) => $query->latest())
         ->paginate($perPage)
         ->withQueryString();
 

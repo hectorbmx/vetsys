@@ -125,6 +125,12 @@
                     @if(request()->filled('status'))
                         <input type="hidden" name="status" value="{{ request('status') }}">
                     @endif
+                    @if(request()->filled('sort'))
+                        <input type="hidden" name="sort" value="{{ request('sort') }}">
+                    @endif
+                    @if(request()->filled('direction'))
+                        <input type="hidden" name="direction" value="{{ request('direction') }}">
+                    @endif
                     <label for="customers-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
                     <select id="customers-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
                         @foreach([15, 30, 50, 100] as $option)
@@ -142,6 +148,12 @@
                     @if(request('status'))
                         <input type="hidden" name="status" value="{{ request('status') }}">
                     @endif
+                    @if(request()->filled('sort'))
+                        <input type="hidden" name="sort" value="{{ request('sort') }}">
+                    @endif
+                    @if(request()->filled('direction'))
+                        <input type="hidden" name="direction" value="{{ request('direction') }}">
+                    @endif
                     @if(request()->filled('q') || request()->filled('status'))
                         <a href="{{ route('client.customers.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                     @endif
@@ -153,14 +165,57 @@
         </div>
 
         {{-- TABLA CON RECORRIDO DINÁMICO --}}
+        @php
+            $sortColumn = request('sort');
+            $sortDirection = request('direction') === 'asc' ? 'asc' : 'desc';
+            $sortLink = function (string $column) use ($sortColumn, $sortDirection, $perPage) {
+                $nextDirection = $sortColumn === $column && $sortDirection === 'desc' ? 'asc' : 'desc';
+
+                return route('client.customers.index', array_filter([
+                    'q' => request('q'),
+                    'status' => request('status'),
+                    'per_page' => $perPage,
+                    'sort' => $column,
+                    'direction' => $nextDirection,
+                ], fn ($value) => filled($value)));
+            };
+            $sortIndicator = function (string $column) use ($sortColumn, $sortDirection) {
+                return [
+                    'up' => $sortColumn === $column && $sortDirection === 'asc',
+                    'down' => $sortColumn === $column && $sortDirection === 'desc',
+                ];
+            };
+        @endphp
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/20 text-center">
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Caballos</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Adeudo General</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
+                            @php($animalSort = $sortIndicator('animals_count'))
+                            <a href="{{ $sortLink('animals_count') }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-1 transition-colors {{ $sortColumn === 'animals_count' ? 'theme-text-primary bg-slate-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}"
+                               title="Ordenar por caballos">
+                                <span>Caballos</span>
+                                <span class="flex flex-col text-[8px] leading-[0.65rem]" aria-hidden="true">
+                                    <span class="{{ $animalSort['up'] ? 'theme-text-primary' : 'text-slate-300' }}">▲</span>
+                                    <span class="{{ $animalSort['down'] ? 'theme-text-primary' : 'text-slate-300' }}">▼</span>
+                                </span>
+                            </a>
+                        </th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
+                            @php($debtSort = $sortIndicator('general_debt'))
+                            <a href="{{ $sortLink('general_debt') }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-1 transition-colors {{ $sortColumn === 'general_debt' ? 'theme-text-primary bg-slate-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}"
+                               title="Ordenar por adeudo general">
+                                <span>Adeudo General</span>
+                                <span class="flex flex-col text-[8px] leading-[0.65rem]" aria-hidden="true">
+                                    <span class="{{ $debtSort['up'] ? 'theme-text-primary' : 'text-slate-300' }}">▲</span>
+                                    <span class="{{ $debtSort['down'] ? 'theme-text-primary' : 'text-slate-300' }}">▼</span>
+                                </span>
+                            </a>
+                        </th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">APP</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                         @if($usesMonthlyCutoffBilling)
