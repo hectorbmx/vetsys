@@ -148,70 +148,87 @@
 
         {{-- TABLA DE MASCOTAS --}}
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left">
                 <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/20">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Specie</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dueño</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Club</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Peso</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Alergias</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
+                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
+                        <th class="px-4 py-3 pb-4">Nombre</th>
+                        <th class="px-4 py-3 pb-4 text-center">Historial</th>
+                        <th class="px-4 py-3 pb-4 text-center">Vacunacion</th>
+                        <th class="px-4 py-3 pb-4">Cliente</th>
+                        <th class="px-4 py-3 pb-4">Club</th>
+                        <th class="px-4 py-3 pb-4">Peso</th>
+                        <th class="px-4 py-3 pb-4">Alergias</th>
+                        <th class="px-4 py-3 pb-4">Estatus</th>
+                        <th class="px-4 py-3 pb-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($animals as $animal)
-                        <tr class="hover:bg-slate-50/60 transition-colors">
+                        <tr class="bg-white hover:bg-slate-50/70 transition-colors">
                             {{-- Info Básica del Animal --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4 border-l-4 theme-border-primary">
                                 <div class="flex items-center gap-3">
-                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm transition-transform hover:scale-105" title="Ver ficha de {{ $animal->name }}">
+                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="w-11 h-11 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm shadow-sm ring-1 ring-white transition-all hover:scale-105 hover:opacity-90" title="Ver ficha de {{ $animal->name }}">
                                         {{ substr($animal->name, 0, 1) }}
                                     </a>
-                                    <div>
-                                        <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors">{{ $animal->name }}</a>
-                                        <p class="text-[10px] font-medium text-slate-400 mt-0.5">
-                                            Edad: {{ $animal->birthdate ? $animal->birthdate->age . ' años' : 'No registrada' }}
-                                        </p>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="block text-sm font-black theme-text-heading leading-tight theme-hover-text-primary transition-colors hover:underline decoration-2">{{ $animal->name }}</a>
+                                        <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                            Paciente
+                                        </span>
                                     </div>
                                 </div>
                             </td>
 
-                            {{-- Especie y Raza --}}
-                            <td class="px-6 py-4">
-                                <span class="text-xs font-bold theme-text-heading block">{{ $animal->animalType->name ?? 'Sin especie' }}</span>
-                                <span class="text-[10px] text-slate-400 font-semibold block mt-0.5">{{ $animal->color ?? 'Color no registrado' }}</span>
+                            <td class="px-4 py-4 text-center">
+                                <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}"
+                                   title="Ver historial de servicios"
+                                   aria-label="Ver historial de servicios de {{ $animal->name }}"
+                                   class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-base text-slate-500 shadow-sm transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700">
+                                    &#128203;
+                                </a>
+                            </td>
+
+                            <td class="px-4 py-4 text-center">
+                                <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'vacunacion']) }}"
+                                   title="Ver cartas de vacunacion"
+                                   aria-label="Ver cartas de vacunacion de {{ $animal->name }}"
+                                   class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-base text-slate-500 shadow-sm transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700">
+                                    &#128137;
+                                </a>
                             </td>
 
                             {{-- Relación con el Dueño usando el Accessor full_name --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4">
                                 @if($animal->customer)
-                                    <div class="text-xs font-bold theme-text-heading">{{ $animal->customer->full_name }}</div>
-                                    <div class="text-[10px] text-slate-400 mt-0.5">{{ $animal->customer->phone }}</div>
+                                    <a href="{{ route('client.customers.show', ['customer' => $animal->customer, 'tab' => 'mascotas']) }}" class="group inline-flex flex-col">
+                                        <span class="text-xs font-black theme-text-heading transition-colors group-hover:text-[var(--theme-primary)] group-hover:underline decoration-2">{{ $animal->customer->full_name }}</span>
+                                        <span class="text-[10px] text-slate-400 mt-0.5">{{ $animal->customer->phone ?: 'Sin telefono' }}</span>
+                                    </a>
                                 @else
-                                    <span class="text-xs text-red-500 italic font-medium">Sin dueño asignado</span>
+                                    <span class="text-xs text-red-500 italic font-medium">Sin dueno asignado</span>
                                 @endif
                             </td>
 
                             {{-- Peso --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4">
                                 @if($animal->club)
-                                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest theme-text-primary theme-bg-primary-soft px-2.5 py-1 rounded-full">
+                                    <a href="{{ route('client.clubes.edit', ['clube' => $animal->club, 'tab' => 'miembros']) }}"
+                                       title="Ver miembros del club"
+                                       class="inline-flex text-[9px] font-black uppercase tracking-widest theme-text-primary bg-teal-50 px-2.5 py-1 rounded-full transition-all hover:bg-teal-100 hover:shadow-sm">
                                         {{ $animal->club->name }}
-                                    </span>
+                                    </a>
                                 @else
-                                    <span class="text-xs text-slate-400 font-semibold">Sin club</span>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase">Sin club</span>
                                 @endif
                             </td>
 
                             {{-- Peso --}}
-                            <td class="px-6 py-4 text-xs font-bold theme-text-heading">
+                            <td class="px-4 py-4 text-xs font-medium text-slate-600">
                                 {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4">
                                 @if(filled($animal->allergies))
                                     <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700" title="{{ $animal->allergies }}">
                                         <span class="text-sm leading-none">&#9888;&#65039;</span>
@@ -223,40 +240,37 @@
                             </td>
 
                             {{-- Status Toggle Dinámico --}}
-                   <td class="px-6 py-4">
-    <form action="{{ route('client.animals.toggle', $animal->id) }}" method="POST">
-        @csrf
-        @method('PATCH')
-        <button type="submit" 
-                class="flex items-center gap-2 group focus:outline-none"
-                title="{{ $animal->status === 'active' ? 'Click para Inactivar' : 'Click para Activar' }}">
-            
-            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $animal->status === 'active' ? 'theme-bg-primary' : 'bg-slate-300' }}">
-                <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $animal->status === 'active' ? 'translate-x-4' : 'translate-x-0' }}"></div>
-            </div>
-            
-            <span class="text-[10px] font-bold uppercase tracking-wider min-w-[50px] {{ $animal->status === 'active' ? 'theme-text-primary-strong' : 'text-slate-400' }}">
-                {{ ucfirst($animal->status ?? 'inactive') }}
-            </span>
-        </button>
-    </form>
-</td>
+                            <td class="px-4 py-4">
+                                <form action="{{ route('client.animals.toggle', $animal->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="flex items-center gap-2 group focus:outline-none"
+                                            title="{{ $animal->status === 'active' ? 'Click para inactivar' : 'Click para activar' }}">
+                                        <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $animal->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                                            <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $animal->status === 'active' ? 'translate-x-3' : 'translate-x-0' }}"></div>
+                                        </div>
+                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $animal->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                            {{ $animal->status === 'active' ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </button>
+                                </form>
+                            </td>
 
                             {{-- Acciones --}}
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-4 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    
-                                    <!-- <a href="{{ route('client.animals.edit', $animal) }}" class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all" title="Editar">&#128269;</a> -->
-                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" 
-                                        class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
-                                        title="Ver ficha">&#128269;</a>
+                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}"
+                                       class="inline-flex items-center justify-center theme-button-dark px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                                        Detalles
+                                    </a>
                                 </div>
                             </td>
                              
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center">
+                            <td colspan="9" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-slate-400">No hay pacientes registrados para los criterios de búsqueda.</p>
                             </td>
                         </tr>
