@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/patients', [CustomerPortalController::class, 'patients']);
                 Route::get('/notes/{note}', [CustomerPortalController::class, 'note']);
                 Route::get('/statements', [CustomerPortalController::class, 'statements']);
+                Route::get('/statements/{statement}', [CustomerPortalController::class, 'statement']);
                 Route::get('/statements/{statement}/pdf', [CustomerPortalController::class, 'statementPdf'])->name('statements.pdf');
                 Route::get('/notifications', [CustomerPortalController::class, 'notifications']);
                 Route::patch('/notifications/read-all', [CustomerPortalController::class, 'markAllNotificationsRead']);

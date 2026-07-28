@@ -11,9 +11,12 @@ use App\Models\CustomerPortalAccess;
 use App\Models\FinalUserPatientAssignment;
 use App\Models\Note;
 use App\Models\NoteDetail;
+use App\Models\Payment;
 use App\Models\PortalNotification;
 use App\Models\RadiologyImage;
 use App\Models\RadiologyStudy;
+use App\Models\Tenant;
+use App\Services\CustomerStatementGenerator;
 use App\Models\VaccinationLetter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -32,7 +35,9 @@ class CustomerPortalController extends Controller
 
         $since = isset($data['since']) ? Carbon::parse($data['since']) : null;
         $access = $this->portalAccess($request);
+        $access->loadMissing(['tenant', 'customer']);
         $user = $request->user()->loadMissing('tenant');
+        $accountMode = $this->accountMode($access);
 
         $assignments = $this->activeAssignments($access)
             ->with(['animal.animalType', 'animal.club'])
@@ -62,6 +67,7 @@ class CustomerPortalController extends Controller
                     'business_name' => $user->tenant?->business_name,
                     'email' => $user->tenant?->email,
                     'phone' => $user->tenant?->phone,
+                    'billing_mode' => $accountMode,
                 ],
                 'customer' => [
                     'id' => $access->customer->id,
@@ -75,6 +81,7 @@ class CustomerPortalController extends Controller
                 'portal_access' => [
                     'status' => $access->status,
                     'billing_mode' => $access->billing_mode,
+                    'account_mode' => $accountMode,
                     'access_starts_at' => $access->access_starts_at?->toISOString(),
                     'access_ends_at' => $access->access_ends_at?->toISOString(),
                 ],
@@ -86,7 +93,9 @@ class CustomerPortalController extends Controller
                     ))
                     ->values(),
                 'note_summaries' => $this->noteSummaries($access, $patientIds, $visibilityByAnimal, $since),
+                'service_summaries' => $this->serviceSummaries($access, $patientIds, $visibilityByAnimal, $since),
                 'statement_summaries' => $this->statementSummaries($access, $since),
+                'payment_summaries' => $this->paymentSummaries($access, $since),
                 'notifications' => $this->notificationSummaries($access, $since),
             ],
         ]);
@@ -95,7 +104,9 @@ class CustomerPortalController extends Controller
     public function me(Request $request)
     {
         $access = $this->portalAccess($request);
+        $access->loadMissing('tenant');
         $user = $request->user();
+        $accountMode = $this->accountMode($access);
 
         return response()->json([
             'data' => [
@@ -111,6 +122,7 @@ class CustomerPortalController extends Controller
                     'business_name' => $user->tenant?->business_name,
                     'email' => $user->tenant?->email,
                     'phone' => $user->tenant?->phone,
+                    'billing_mode' => $accountMode,
                 ],
                 'customer' => [
                     'id' => $access->customer->id,
@@ -123,6 +135,7 @@ class CustomerPortalController extends Controller
                 'portal_access' => [
                     'status' => $access->status,
                     'billing_mode' => $access->billing_mode,
+                    'account_mode' => $accountMode,
                     'access_starts_at' => $access->access_starts_at?->toISOString(),
                     'access_ends_at' => $access->access_ends_at?->toISOString(),
                 ],
@@ -409,6 +422,53 @@ class CustomerPortalController extends Controller
         ]);
     }
 
+    public function statement(Request $request, CustomerStatement $statement, CustomerStatementGenerator $generator)
+    {
+        $access = $this->portalAccess($request);
+        abort_unless($this->hasAnyVisibleSection($access, 'show_statement'), 404);
+        abort_unless($statement->tenant_id === $access->tenant_id, 404);
+        abort_unless($statement->customer_id === $access->customer_id, 404);
+
+        $statementData = $generator->dataForRange(
+            $access->customer,
+            $statement->period_start->copy()->startOfDay(),
+            $statement->period_end->copy()->endOfDay()
+        );
+
+        return response()->json([
+            'data' => array_merge($this->serializeStatement($statement), [
+                'services_by_month' => $statementData['serviceDetailsByMonth']
+                    ->map(fn ($details, string $month) => [
+                        'month' => $month,
+                        'items' => $details->map(fn (NoteDetail $detail) => [
+                            'id' => $detail->id,
+                            'note_id' => $detail->note_id,
+                            'note_folio' => $detail->note?->folio,
+                            'animal_id' => $detail->animal_id,
+                            'animal_name' => $detail->animal?->name,
+                            'name' => $detail->catalogItem?->name ?? 'Servicio eliminado',
+                            'type' => $detail->catalogItem?->type,
+                            'quantity' => (float) $detail->quantity,
+                            'price_at_sale' => (float) $detail->price_at_sale,
+                            'subtotal' => (float) $detail->subtotal,
+                            'date_at' => $detail->note?->date_at?->toDateString(),
+                        ])->values(),
+                    ])
+                    ->values(),
+                'payments' => $statementData['payments']
+                    ->map(fn (Payment $payment) => [
+                        'id' => $payment->id,
+                        'amount' => (float) $payment->amount,
+                        'payment_method_name' => $payment->paymentMethod?->name,
+                        'reference' => $payment->reference,
+                        'status' => $payment->status,
+                        'created_at' => $payment->created_at?->toISOString(),
+                    ])
+                    ->values(),
+            ]),
+        ]);
+    }
+
     public function statementPdf(Request $request, CustomerStatement $statement)
     {
         $access = $this->portalAccess($request);
@@ -590,6 +650,73 @@ class CustomerPortalController extends Controller
             });
     }
 
+    private function serviceSummaries(CustomerPortalAccess $access, array $patientIds, $visibilityByAnimal, ?Carbon $since)
+    {
+        $visiblePatientIds = collect($patientIds)
+            ->filter(function ($patientId) use ($visibilityByAnimal) {
+                $visibility = $visibilityByAnimal[$patientId] ?? null;
+
+                return $visibility && ($visibility->show_history || $visibility->show_notes);
+            })
+            ->values()
+            ->all();
+
+        if (empty($visiblePatientIds)) {
+            return collect();
+        }
+
+        $statements = CustomerStatement::where('tenant_id', $access->tenant_id)
+            ->where('customer_id', $access->customer_id)
+            ->get(['id', 'period_start', 'period_end']);
+
+        return NoteDetail::query()
+            ->with(['catalogItem', 'animal', 'note'])
+            ->where('note_details.tenant_id', $access->tenant_id)
+            ->whereIn('note_details.animal_id', $visiblePatientIds)
+            ->whereHas('note', function (Builder $query) use ($access, $since) {
+                $query
+                    ->where('tenant_id', $access->tenant_id)
+                    ->where('customer_id', $access->customer_id)
+                    ->where('status', '!=', 'CANCELADA')
+                    ->when($since, function (Builder $query) use ($since) {
+                        $query->where(function (Builder $query) use ($since) {
+                            $query->where('updated_at', '>=', $since)
+                                ->orWhere('published_at', '>=', $since)
+                                ->orWhere('date_at', '>=', $since);
+                        });
+                    });
+            })
+            ->join('notes', 'notes.id', '=', 'note_details.note_id')
+            ->orderByDesc('notes.date_at')
+            ->orderByDesc('note_details.id')
+            ->select('note_details.*')
+            ->limit(100)
+            ->get()
+            ->map(function (NoteDetail $detail) use ($statements) {
+                $note = $detail->note;
+                $statement = $this->statementForServiceDate($statements, $note?->date_at);
+
+                return [
+                    'id' => $detail->id,
+                    'note_id' => $detail->note_id,
+                    'animal_id' => $detail->animal_id,
+                    'animal_name' => $detail->animal?->name,
+                    'name' => $detail->catalogItem?->name,
+                    'type' => $detail->catalogItem?->type,
+                    'quantity' => (float) $detail->quantity,
+                    'subtotal' => (float) $detail->subtotal,
+                    'date_at' => $note?->date_at?->toDateString(),
+                    'status' => $note?->status,
+                    'statement_id' => $statement?->id,
+                    'statement_period' => $statement ? [
+                        'start' => $statement->period_start?->toDateString(),
+                        'end' => $statement->period_end?->toDateString(),
+                    ] : null,
+                    'updated_at' => $detail->updated_at?->toISOString(),
+                ];
+            });
+    }
+
     private function statementSummaries(CustomerPortalAccess $access, ?Carbon $since)
     {
         return CustomerStatement::where('tenant_id', $access->tenant_id)
@@ -620,8 +747,47 @@ class CustomerPortalController extends Controller
             ]);
     }
 
+    private function statementForServiceDate($statements, ?Carbon $date): ?CustomerStatement
+    {
+        if (! $date) {
+            return null;
+        }
+
+        return $statements->first(fn (CustomerStatement $statement) => $date->betweenIncluded(
+            $statement->period_start->copy()->startOfDay(),
+            $statement->period_end->copy()->endOfDay()
+        ));
+    }
+
+    private function paymentSummaries(CustomerPortalAccess $access, ?Carbon $since)
+    {
+        return Payment::with('paymentMethod')
+            ->where('tenant_id', $access->tenant_id)
+            ->where('customer_id', $access->customer_id)
+            ->when($since, function (Builder $query) use ($since) {
+                $query->where('updated_at', '>=', $since)
+                    ->orWhere('created_at', '>=', $since);
+            })
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(fn (Payment $payment) => [
+                'id' => $payment->id,
+                'amount' => (float) $payment->amount,
+                'payment_method_name' => $payment->paymentMethod?->name,
+                'reference' => $payment->reference,
+                'status' => $payment->status,
+                'created_at' => $payment->created_at?->toISOString(),
+                'updated_at' => $payment->updated_at?->toISOString(),
+            ]);
+    }
+
     private function accountSummary(CustomerPortalAccess $access): array
     {
+        if ($this->accountMode($access) === Tenant::BILLING_MODE_MONTHLY_CUTOFF) {
+            return $this->monthlyCutoffAccountSummary($access);
+        }
+
         $notes = Note::where('tenant_id', $access->tenant_id)
             ->where('customer_id', $access->customer_id)
             ->get();
@@ -633,9 +799,60 @@ class CustomerPortalController extends Controller
             'pending_notes' => $pendingNotes->count(),
             'total_charges' => (float) $notes->sum('total'),
             'amount_paid' => (float) $notes->sum(fn (Note $note) => $note->amount_paid),
+            'total_payments' => (float) $notes->sum(fn (Note $note) => $note->amount_paid),
+            'total_services' => (int) NoteDetail::where('tenant_id', $access->tenant_id)
+                ->whereHas('note', fn (Builder $query) => $query
+                    ->where('tenant_id', $access->tenant_id)
+                    ->where('customer_id', $access->customer_id)
+                    ->where('status', '!=', 'CANCELADA'))
+                ->count(),
+            'total_statements' => (int) CustomerStatement::where('tenant_id', $access->tenant_id)
+                ->where('customer_id', $access->customer_id)
+                ->count(),
             'outstanding_balance' => (float) $pendingNotes->sum(fn (Note $note) => max($note->balance, 0)),
             'credit_balance' => (float) $access->customer->credit_balance,
+            'billing_mode' => $this->accountMode($access),
         ];
+    }
+
+    private function monthlyCutoffAccountSummary(CustomerPortalAccess $access): array
+    {
+        $notes = Note::where('tenant_id', $access->tenant_id)
+            ->where('customer_id', $access->customer_id)
+            ->get();
+        $activeNotes = $notes->where('status', '!=', 'CANCELADA');
+        $totalCharges = (float) $activeNotes->sum('total');
+        $totalPayments = (float) Payment::where('tenant_id', $access->tenant_id)
+            ->where('customer_id', $access->customer_id)
+            ->sum('amount');
+
+        return [
+            'total_notes' => $notes->count(),
+            'pending_notes' => $activeNotes->count(),
+            'total_charges' => $totalCharges,
+            'amount_paid' => $totalPayments,
+            'total_payments' => $totalPayments,
+            'total_services' => (int) NoteDetail::where('tenant_id', $access->tenant_id)
+                ->whereHas('note', fn (Builder $query) => $query
+                    ->where('tenant_id', $access->tenant_id)
+                    ->where('customer_id', $access->customer_id)
+                    ->where('status', '!=', 'CANCELADA'))
+                ->count(),
+            'total_statements' => (int) CustomerStatement::where('tenant_id', $access->tenant_id)
+                ->where('customer_id', $access->customer_id)
+                ->count(),
+            'outstanding_balance' => max($totalCharges - $totalPayments, 0),
+            'credit_balance' => max($totalPayments - $totalCharges, 0),
+            'billing_mode' => Tenant::BILLING_MODE_MONTHLY_CUTOFF,
+        ];
+    }
+
+    private function accountMode(CustomerPortalAccess $access): string
+    {
+        $access->loadMissing('tenant');
+
+        return $access->tenant?->normalizedBillingMode()
+            ?? Tenant::BILLING_MODE_NOTE_BASED;
     }
 
     private function notificationSummaries(CustomerPortalAccess $access, ?Carbon $since)

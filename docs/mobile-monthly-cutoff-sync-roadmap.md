@@ -10,6 +10,7 @@ Repos involucrados:
 Roadmap relacionado:
 
 - `vetsys/docs/road_map_ajustes_notas.md`
+- `vetsys/docs/customer-portal-monthly-cutoff-roadmap.md`
 
 ## Objetivo
 
@@ -567,3 +568,9 @@ Checkpoint 7:
 | 2026-07-28 | Home mobile - cards informativos navegables | Completado parcial | Los cards de conteo en Home ahora abren sus secciones: Clientes, Caballos/Pacientes segun modo y Servicios. Falta QA visual en dispositivo/emulador. |
 | 2026-07-28 | Detalle cliente monthly - ocultar cargos recientes tipo nota | Completado parcial | En `/tabs/clientes/:id`, el bloque de notas/cargos recientes queda oculto en `monthly_cutoff` y se conserva sin cambios para `note_based`. Falta QA visual en tenant monthly. |
 | 2026-07-28 | Detalle cliente monthly - crear corte manual | Completado parcial | En `/tabs/clientes/:id`, modo `monthly_cutoff` agrega boton `Corte`, modal con rango de fechas, preview de servicios libres y aviso de servicios ya incluidos en otros cortes; backend mobile reutiliza `CustomerStatementGenerator`. Falta QA real generando corte desde app. |
+| 2026-07-28 | Portal cliente monthly - contrato backend de cuenta | Completado parcial | `portal/bootstrap` ahora expone modo operacional normalizado (`tenant.billing_mode`, `portal_access.account_mode`), `account_summary` por modo y `payment_summaries` para abonos. Falta QA con request autenticado real y adaptar UI del portal. |
+| 2026-07-28 | Portal cliente monthly - contrato backend de servicios | Completado parcial | `portal/bootstrap` ahora expone `service_summaries` derivados de `note_details`, filtrados por visibilidad del cliente final y con referencia a corte cuando aplica. Falta QA con request autenticado real y adaptar `/portal/historial`. |
+| 2026-07-28 | Portal cliente monthly - `/portal/historial` por modo | Completado parcial | La pantalla conserva notas en `note_based`; en `monthly_cutoff` muestra balance general, servicios, cortes y abonos desde bootstrap. Build Angular aprobado; falta QA visual/autenticado real y link directo a PDF de corte. |
+| 2026-07-28 | Portal cliente monthly - detalle de corte | Completado parcial | Los cortes del historial abren `/portal/cortes/:id`; backend agrega `GET /portal/statements/{statement}` con totales, servicios incluidos y abonos del periodo. No se agrega boton PDF al cliente en esta fase. |
+| 2026-07-28 | Portal cliente monthly - Home por modo | Completado parcial | En `/portal`, `monthly_cutoff` cambia Mascotas a Caballos, Notas a Cortes, Pendiente/Pagar Ahora a Balance/Ver Historial; actividad reciente usa cortes, servicios y abonos. Build Angular aprobado; falta QA visual real. |
+| 2026-07-28 | Portal cliente monthly - `/portal/pagos` por modo | Completado parcial | En `monthly_cutoff`, `/portal/pagos` muestra Balance, Cortes y Abonos realizados; oculta Notas pendientes y reemplaza Pagar Ahora por Ver Historial. Build Angular aprobado; falta QA visual real. |
