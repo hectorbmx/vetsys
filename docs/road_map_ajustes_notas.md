@@ -1479,6 +1479,13 @@ Resultado esperado:
 
 Cuando haya diferencias, se puede encontrar exactamente que cargo o pago las causa.
 
+Nota QA 2026-07-28:
+
+- [x] En el modal de `Crear cuenta por rango` / `Generar corte`, el preview ahora distingue entre servicios disponibles y servicios del rango que ya estan cubiertos por otro u otros cortes.
+- [x] Si el rango consultado no tiene servicios disponibles pero si tiene servicios ya incluidos en cortes existentes, el modal muestra un aviso con cantidad de servicios bloqueados y total ya cubierto.
+- [x] El aviso lista los cortes que contienen esos servicios y agrega boton `PDF` para revisar cada corte afectado.
+- [ ] Validar manualmente en `client/customers` con el rango `01/07/2026 - 28/07/2026` que el aviso aparece cuando los servicios del detalle de caballos ya pertenecen a cortes existentes.
+
 ### Hallazgo bajo 6 - Limpieza visual/encoding
 
 Estado:

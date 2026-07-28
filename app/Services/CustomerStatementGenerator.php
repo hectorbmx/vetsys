@@ -15,7 +15,12 @@ class CustomerStatementGenerator
 {
     public function previewRange(Customer $customer, Carbon $from, Carbon $to): array
     {
-        $chargesByAnimal = $this->unstatementedServiceDetailsForRange($customer, $from, $to)
+        $rangeDetails = $this->serviceDetailsForRange($customer, $from, $to);
+        $coveredRanges = $this->coveredStatementRangesForRange($customer, $from, $to);
+        $blockedDetails = $this->detailsCoveredByStatements($rangeDetails, $coveredRanges);
+        $availableDetails = $this->detailsNotCoveredByStatements($rangeDetails, $coveredRanges);
+
+        $chargesByAnimal = $availableDetails
             ->groupBy(fn (NoteDetail $detail) => $detail->animal?->name ?? 'Sin paciente')
             ->map(fn ($details, string $animalName) => [
                 'animal' => $animalName,
@@ -31,6 +36,10 @@ class CustomerStatementGenerator
             'services_count' => (int) $chargesByAnimal->sum('services_count'),
             'total' => round((float) $chargesByAnimal->sum('total'), 2),
             'rows' => $chargesByAnimal,
+            'blocked_services_count' => (int) $blockedDetails->count(),
+            'blocked_total' => round((float) $blockedDetails->sum('subtotal'), 2),
+            'blocked_statements_count' => (int) $coveredRanges->count(),
+            'blocked_statements' => $this->blockedStatementsSummary($customer, $blockedDetails, $coveredRanges),
         ];
     }
 
@@ -256,7 +265,15 @@ class CustomerStatementGenerator
 
     private function unstatementedServiceDetailsForRange(Customer $customer, Carbon $from, Carbon $to)
     {
-        $coveredRanges = CustomerStatement::query()
+        $coveredRanges = $this->coveredStatementRangesForRange($customer, $from, $to);
+        $rangeDetails = $this->serviceDetailsForRange($customer, $from, $to);
+
+        return $this->detailsNotCoveredByStatements($rangeDetails, $coveredRanges);
+    }
+
+    private function coveredStatementRangesForRange(Customer $customer, Carbon $from, Carbon $to)
+    {
+        return CustomerStatement::query()
             ->where('tenant_id', $customer->tenant_id)
             ->where('customer_id', $customer->id)
             ->where(function ($query) use ($from, $to) {
@@ -274,8 +291,11 @@ class CustomerStatementGenerator
                     ->whereDate('period_start', '!=', $from->toDateString())
                     ->orWhereDate('period_end', '!=', $to->toDateString());
             })
-            ->get(['period_start', 'period_end']);
+            ->get(['id', 'period_start', 'period_end']);
+    }
 
+    private function serviceDetailsForRange(Customer $customer, Carbon $from, Carbon $to)
+    {
         return NoteDetail::query()
             ->with(['note', 'animal', 'catalogItem'])
             ->where('note_details.tenant_id', $customer->tenant_id)
@@ -289,6 +309,55 @@ class CustomerStatementGenerator
             ->orderBy('notes.date_at', 'asc')
             ->orderBy('note_details.id', 'asc')
             ->get()
+            ->values();
+    }
+
+    private function detailsCoveredByStatements($details, $coveredRanges)
+    {
+        return $details
+            ->filter(function (NoteDetail $detail) use ($coveredRanges) {
+                $date = $detail->note?->date_at;
+
+                if (!$date) {
+                    return false;
+                }
+
+                return $coveredRanges->contains(fn (CustomerStatement $statement) => $date->betweenIncluded(
+                    $statement->period_start->copy()->startOfDay(),
+                    $statement->period_end->copy()->endOfDay()
+                ));
+            })
+            ->values();
+    }
+
+    private function blockedStatementsSummary(Customer $customer, $blockedDetails, $coveredRanges)
+    {
+        return $coveredRanges
+            ->map(function (CustomerStatement $statement) use ($customer, $blockedDetails) {
+                $statementDetails = $blockedDetails->filter(function (NoteDetail $detail) use ($statement) {
+                    $date = $detail->note?->date_at;
+
+                    return $date && $date->betweenIncluded(
+                        $statement->period_start->copy()->startOfDay(),
+                        $statement->period_end->copy()->endOfDay()
+                    );
+                });
+
+                return [
+                    'id' => $statement->id,
+                    'period' => $statement->period_start->format('d/m/Y') . ' - ' . $statement->period_end->format('d/m/Y'),
+                    'services_count' => (int) $statementDetails->count(),
+                    'total' => round((float) $statementDetails->sum('subtotal'), 2),
+                    'pdf_url' => route('client.customers.statements.pdf', [$customer, $statement]),
+                ];
+            })
+            ->filter(fn (array $statement) => $statement['services_count'] > 0)
+            ->values();
+    }
+
+    private function detailsNotCoveredByStatements($details, $coveredRanges)
+    {
+        return $details
             ->reject(function (NoteDetail $detail) use ($coveredRanges) {
                 $date = $detail->note?->date_at;
 

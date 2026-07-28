@@ -57,6 +57,39 @@
                                     </div>
                                 </div>
 
+                                <template x-if="statementPreview.blocked_services_count > 0">
+                                    <div class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
+                                        <p>
+                                            <span x-text="statementPreview.blocked_services_count"></span>
+                                            <span x-text="statementPreview.blocked_services_count === 1 ? ' servicio del rango ya esta incluido en otro corte' : ' servicios del rango ya estan incluidos en otro u otros cortes'"></span>
+                                            <span> y no puede agregarse de nuevo.</span>
+                                        </p>
+                                        <p class="mt-1 text-[11px] font-semibold text-amber-700">
+                                            Total ya cubierto: $<span x-text="fmt(statementPreview.blocked_total)"></span>
+                                        </p>
+                                        <div class="mt-3 space-y-2" x-show="statementPreview.blocked_statements && statementPreview.blocked_statements.length">
+                                            <template x-for="statement in statementPreview.blocked_statements" :key="statement.id">
+                                                <div class="flex flex-col gap-2 rounded-xl bg-white/70 px-3 py-2 text-[11px] text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div>
+                                                        <p class="font-black" x-text="statement.period"></p>
+                                                        <p class="font-semibold text-amber-700">
+                                                            <span x-text="statement.services_count"></span>
+                                                            <span x-text="statement.services_count === 1 ? ' servicio contenido' : ' servicios contenidos'"></span>
+                                                            <span> · $</span><span x-text="fmt(statement.total)"></span>
+                                                        </p>
+                                                    </div>
+                                                    <a :href="statement.pdf_url"
+                                                       target="_blank"
+                                                       rel="noopener"
+                                                       class="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-800 transition hover:bg-amber-100">
+                                                        PDF
+                                                    </a>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <table class="w-full text-left">
                                     <thead>
                                         <tr class="border-b border-slate-100 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
