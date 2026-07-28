@@ -215,7 +215,7 @@
 
                                         {{-- Cantidad Editable --}}
                                         <td class="px-4 py-3">
-                                            <input type="number" step="0.01" min="0.01" :name="'items['+index+'][quantity]'" x-model.number="row.quantity" @input="calculateTotals()" class="w-full text-xs font-bold text-center theme-text-heading bg-slate-50 border border-slate-200 rounded-lg py-1 px-1.5 theme-input">
+                                            <input type="number" step="1" min="1" :name="'items['+index+'][quantity]'" :value="normalizeQuantity(row.quantity)" @input="syncQuantityInput(row, $event.target); calculateTotals()" @change="syncQuantityInput(row, $event.target); calculateTotals()" class="w-full text-xs font-bold text-center theme-text-heading bg-slate-50 border border-slate-200 rounded-lg py-1 px-1.5 theme-input">
                                         </td>
 
                                         {{-- Precio Editable --}}
@@ -386,7 +386,7 @@ function salesPOS() {
                 this.customerQuery = this.prefilledCustomer?.full_name ?? '';
                 this.selectedAnimalIds = (this.initialSaleState.selectedAnimalIds || []).map(id => String(id));
                 this.noteDate = this.initialSaleState.resetDate ? '' : (this.initialSaleState.noteDate || this.noteDate);
-                this.basket = this.initialSaleState.basket || [];
+                this.basket = this.normalizeBasket(this.initialSaleState.basket || []);
                 this.paymentType = 'credito';
                 this.amountReceived = 0;
                 this.calculateTotals();
@@ -483,7 +483,7 @@ function salesPOS() {
             // Evaluamos si el artículo ya se encuentra en la tabla para solo sumarle uno
             let existing = this.basket.find(row => row.id === item.id);
             if (existing) {
-                existing.quantity += 1;
+                existing.quantity = this.normalizeQuantity(existing.quantity) + 1;
             } else {
                     this.basket.push({
                         id: item.id,
@@ -511,11 +511,28 @@ function salesPOS() {
         calculateTotals() {
             let runningTotal = 0;
             this.basket.forEach(row => {
+                row.quantity = this.normalizeQuantity(row.quantity);
                 runningTotal += (row.quantity * row.price);
             });
             this.basketSubtotal = runningTotal;
             this.noteTotal = runningTotal * this.selectedAnimalIds.length;
             this.saveToLocalStorage();
+        },
+
+        normalizeQuantity(value) {
+            return Math.max(1, Math.trunc(Number(value) || 1));
+        },
+
+        syncQuantityInput(row, input) {
+            row.quantity = this.normalizeQuantity(input.value);
+            input.value = row.quantity;
+        },
+
+        normalizeBasket(rows) {
+            return rows.map(row => ({
+                ...row,
+                quantity: this.normalizeQuantity(row.quantity),
+            }));
         },
 
         requiredQuantity(row) {
@@ -586,7 +603,7 @@ function salesPOS() {
                 this.selectedCustomer = backup.customer;
                 this.customerQuery = backup.customer ? backup.customer.full_name : '';
                 this.selectedAnimalIds = (backup.selectedAnimalIds || []).map(id => String(id));
-                this.basket = backup.basket;
+                this.basket = this.normalizeBasket(backup.basket || []);
                 this.noteDate = backup.noteDate;
                 this.calculateTotals();
             }

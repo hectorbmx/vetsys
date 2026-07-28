@@ -217,7 +217,7 @@
                             </a>
                         </th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">APP</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estatus</th>
                         @if($usesMonthlyCutoffBilling)
                             <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Corte</th>
                         @endif
@@ -292,18 +292,19 @@
                             {{-- Status Toggle Dinámico --}}
                             <td class="px-6 py-4">
                                 @php($portalAccessActive = $customer->portalAccesses->firstWhere('status', 'active'))
-                                <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST">
+                                <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST"
+                                      @submit="showPortalAccessLoading(@js($portalAccessActive ? 'Suspendiendo acceso...' : 'Activando acceso...'))">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
                                             class="inline-flex items-center gap-2 group focus:outline-none"
                                             title="{{ $portalAccessActive ? 'Suspender acceso app/web' : 'Activar acceso app/web' }}">
-                                        <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $portalAccessActive ? 'bg-indigo-500' : 'bg-slate-300' }}">
-                                            <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $portalAccessActive ? 'translate-x-4' : 'translate-x-0' }}"></div>
+                                        <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $portalAccessActive ? 'bg-indigo-500' : 'bg-slate-300' }}">
+                                            <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $portalAccessActive ? 'translate-x-3' : 'translate-x-0' }}"></div>
                                         </div>
 
-                                        <span class="text-[10px] font-bold uppercase tracking-wider min-w-[34px] {{ $portalAccessActive ? 'text-indigo-600' : 'text-slate-400' }}">
-                                            {{ $portalAccessActive ? 'ON' : 'OFF' }}
+                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $portalAccessActive ? 'text-indigo-600' : 'text-slate-400' }}">
+                                            {{ $portalAccessActive ? 'Activo' : 'Suspendido' }}
                                         </span>
                                     </button>
                                 </form>
@@ -315,14 +316,14 @@
                         @method('PATCH')
                         <button type="submit" 
                                 class="flex items-center gap-2 group focus:outline-none"
-                                title="{{ $customer->status === 'active' ? 'Click para Inactivar' : 'Click para Activar' }}">
+                                title="{{ $customer->status === 'active' ? 'Click para inactivar' : 'Click para activar' }}">
                             
-                            <div class="w-10 h-6 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'theme-bg-primary' : 'bg-slate-300' }}">
-                                <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-4' : 'translate-x-0' }}"></div>
+                            <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                                <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-3' : 'translate-x-0' }}"></div>
                             </div>
                             
-                            <span class="text-[10px] font-bold uppercase tracking-wider min-w-[50px] {{ $customer->status === 'active' ? 'theme-text-primary-strong' : 'text-slate-400' }}">
-                                {{ $customer->status === 'active' ? 'Active' : 'Inactive' }}
+                            <span class="text-[9px] font-black uppercase tracking-widest {{ $customer->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                {{ $customer->status === 'active' ? 'Activo' : 'Inactivo' }}
                             </span>
                         </button>
                     </form>
@@ -435,6 +436,22 @@
         </div>
     </div>
 
+    <div x-show="portalAccessLoading"
+         x-transition.opacity
+         class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm"
+         style="display: none;">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50">
+                <svg class="h-6 w-6 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+            </div>
+            <h3 class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading" x-text="portalAccessLoadingText"></h3>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Estamos actualizando el acceso del cliente a la app.</p>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -444,7 +461,13 @@
     window.customersIndex = function () {
         return {
             customerModal: false,
+            portalAccessLoading: false,
+            portalAccessLoadingText: 'Actualizando acceso...',
             ...statementModalState(),
+            showPortalAccessLoading(message) {
+                this.portalAccessLoadingText = message || 'Actualizando acceso...';
+                this.portalAccessLoading = true;
+            },
         };
     };
 </script>

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ClubController;
 use App\Http\Controllers\Api\V1\CustomerAppointmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerPortalController;
+use App\Http\Controllers\Api\V1\CustomerStatementController;
 use App\Http\Controllers\Api\V1\MobileBootstrapController;
 use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -137,6 +138,8 @@ Route::prefix('v1')->group(function () {
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::get('/customers/{customer}/payments/preview', [PaymentController::class, 'preview']);
         Route::post('/customers/{customer}/payment-links', [PaymentController::class, 'createPaymentLink']);
+        Route::get('/customers/{customer}/statements/preview', [CustomerStatementController::class, 'preview']);
+        Route::post('/customers/{customer}/statements/manual', [CustomerStatementController::class, 'storeManual']);
         Route::apiResource('payments', PaymentController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/sync/push', [SyncController::class, 'push']);

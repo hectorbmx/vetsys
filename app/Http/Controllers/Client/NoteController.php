@@ -275,7 +275,7 @@ class NoteController extends Controller
                     ->where('tenant_id', $tenant->id)
                     ->where('is_active', true)),
             ],
-            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
             'amount_received' => 'nullable|numeric|min:0',
             'operation_type' => ['required', Rule::in(['credito', 'contado'])],
@@ -823,7 +823,7 @@ private function validateSaleRequest(Request $request, $tenant, bool $requiresPa
                 ->where('tenant_id', $tenant->id)
                 ->where('is_active', true)),
         ],
-        'items.*.quantity' => 'required|numeric|min:0.01',
+        'items.*.quantity' => 'required|integer|min:1',
         'items.*.price' => 'required|numeric|min:0',
     ];
 
