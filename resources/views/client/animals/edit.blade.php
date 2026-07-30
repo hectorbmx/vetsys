@@ -1,6 +1,6 @@
 @extends('layouts.client')
 
-@section('title', 'Expediente del Paciente')
+@section('title', 'Expediente del Caballo')
 @section('contextual-tour', 'patient-record')
 
 @section('content')
@@ -165,7 +165,7 @@
 
         <a href="{{ $animal->customer ? route('client.customers.show', ['customer' => $animal->customer, 'tab' => 'mascotas']) : route('client.animals.index') }}" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all">
             <span class="text-base leading-none">&larr;</span>
-            <span>Volver a Pacientes</span>
+            <span>Volver a Caballo</span>
         </a>
     </div>
 
@@ -173,7 +173,7 @@
         <div class="border-b border-slate-100 px-6 py-4">
             <nav class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
                 <button data-tour="patient-tab-details" type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
-                    Datos del Paciente
+                    Datos del Caballo
                 </button>
                 <button data-tour="patient-tab-history" type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
                     Historial de Servicios
@@ -519,7 +519,7 @@
                                 <tr>
                                     <td colspan="5" class="px-4 py-12 text-center">
                                         <p class="text-sm font-black theme-text-heading">Sin cartas de vacunacion</p>
-                                        <p class="text-xs font-semibold text-slate-400 mt-2">Sube la primera imagen para este paciente.</p>
+                                        <p class="text-xs font-semibold text-slate-400 mt-2">Sube la primera imagen para este caballo.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -640,7 +640,7 @@
                         @empty
                             <div class="md:col-span-2 border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
                                 <p class="text-sm font-black theme-text-heading">Sin cartas de vacunacion</p>
-                                <p class="text-xs font-semibold text-slate-400 mt-2">Sube la primera imagen para este paciente.</p>
+                                <p class="text-xs font-semibold text-slate-400 mt-2">Sube la primera imagen para este caballo.</p>
                             </div>
                         @endforelse
                     </div>
@@ -718,7 +718,7 @@
                                 <tr>
                                     <td colspan="5" class="px-4 py-12 text-center">
                                         <p class="text-sm font-black theme-text-heading">Sin videos registrados</p>
-                                        <p class="text-xs font-semibold text-slate-400 mt-2">Sube el primer video clinico de este paciente.</p>
+                                        <p class="text-xs font-semibold text-slate-400 mt-2">Sube el primer video clinico de este caballo.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -983,7 +983,7 @@
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm font-black theme-text-heading">Reportes clinicos</p>
-                    <p class="mt-1 text-[11px] font-semibold text-slate-400">Partes medicos, hallazgos e imagenes del paciente.</p>
+                    <p class="mt-1 text-[11px] font-semibold text-slate-400">Partes medicos, hallazgos e imagenes del caballo.</p>
                 </div>
                 <button type="button" @click="reportFormOpen = true" class="rounded-xl theme-button-primary px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em]">
                     Nuevo reporte
@@ -1030,7 +1030,7 @@
                 @empty
                     <div class="rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
                         <p class="text-sm font-black theme-text-heading">Sin reportes clinicos</p>
-                        <p class="mt-2 text-xs font-semibold text-slate-400">Crea el primer parte medico de este paciente.</p>
+                        <p class="mt-2 text-xs font-semibold text-slate-400">Crea el primer parte medico de este caballo.</p>
                     </div>
                 @endforelse
             </div>
