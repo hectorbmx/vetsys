@@ -135,7 +135,7 @@
                 <form method="GET" action="{{ route('client.animals.index') }}" class="relative w-full sm:max-w-md">
                     <input type="hidden" name="per_page" value="{{ $perPage }}">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar paciente, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar caballo, especie o dueño..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
                     @if(request()->filled('q'))
                         <a href="{{ route('client.animals.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
                     @endif
@@ -174,7 +174,7 @@
                                     <div class="min-w-0">
                                         <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="block text-sm font-black theme-text-heading leading-tight theme-hover-text-primary transition-colors hover:underline decoration-2">{{ $animal->name }}</a>
                                         <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500">
-                                            Paciente
+                                            Caballo
                                         </span>
                                     </div>
                                 </div>
@@ -271,7 +271,7 @@
                     @empty
                         <tr>
                             <td colspan="9" class="px-6 py-12 text-center">
-                                <p class="text-sm font-bold text-slate-400">No hay pacientes registrados para los criterios de búsqueda.</p>
+                                <p class="text-sm font-bold text-slate-400">No hay caballos registrados para los criterios de búsqueda.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -336,7 +336,7 @@
             {{-- SPINNER DE CARGA --}}
             <div x-show="loading" class="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4" style="display: none;">
                 <div class="w-10 h-10 border-4 border-slate-200 theme-spinner-primary rounded-full animate-spin"></div>
-                <p class="text-[10px] font-black theme-text-heading uppercase tracking-[0.2em] animate-pulse">Guardando Paciente...</p>
+                <p class="text-[10px] font-black theme-text-heading uppercase tracking-[0.2em] animate-pulse">Guardando Caballo...</p>
             </div>
 
             {{-- Formulario --}}
@@ -344,7 +344,7 @@
                 @csrf
                 
                 <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 class="text-lg font-black theme-text-heading tracking-tighter">Registrar Nueva Mascota (Paciente)</h3>
+                    <h3 class="text-lg font-black theme-text-heading tracking-tighter">Registrar Nueva Caballo</h3>
                     <button type="button" @click="animalModal = false" :disabled="loading" class="text-slate-400 hover:text-red-500 transition-colors">✕</button>
                 </div>
 
@@ -396,7 +396,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Nombre Mascota --}}
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Nombre del Paciente *</label>
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Nombre del Caballo *</label>
                             <input type="text" name="name" required placeholder="Ej. Rocko" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
                         </div>
 
@@ -468,7 +468,7 @@
 
                 <div class="px-8 py-6 bg-slate-50 flex items-center justify-end gap-3 border-t border-slate-100">
                     <button type="button" @click="animalModal = false" :disabled="loading" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-                    <button type="submit" :disabled="loading" class="theme-surface-dark px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">Guardar Paciente</button>
+                    <button type="submit" :disabled="loading" class="theme-surface-dark px-6 py-3.5 rounded-xl text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg">Guardar Caballo</button>
                 </div>
             </form>
         </div>
