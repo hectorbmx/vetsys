@@ -44,14 +44,14 @@
     {{-- HEADER DE LA VISTA --}}
     <div data-tour="animals-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Pacientes</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra los pacientes de tu clínica y sus historiales.</p>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Caballos</h1>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra los caballos de tu clínica y sus historiales.</p>
         </div>
         
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <button data-tour="add-animal" @click="animalModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
                 <span class="text-sm transition-transform group-hover:scale-125">+</span>
-                Nuevo Paciente
+                Nuevo Caballo
             </button>
         </div>
     </div>
@@ -117,7 +117,7 @@
         
         <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Database de Pacientes</h3>
+                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Lista de Caballos</h3>
                 <form method="GET" action="{{ route('client.animals.index') }}" class="flex items-center gap-2">
                     @if(request()->filled('q'))
                         <input type="hidden" name="q" value="{{ request('q') }}">
