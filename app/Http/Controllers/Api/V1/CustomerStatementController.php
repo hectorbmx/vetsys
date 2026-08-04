@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\CustomerStatement;
+use App\Models\NoteDetail;
+use App\Models\Payment;
 use App\Services\CustomerStatementGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,6 +23,15 @@ class CustomerStatementController extends Controller
             ->with('customer:id,name,last_name')
             ->where('tenant_id', auth()->user()->tenant_id)
             ->when($request->filled('customer_id'), fn ($query) => $query->where('customer_id', $request->integer('customer_id')))
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $term = trim((string) $request->input('q'));
+                $query->whereHas('customer', function ($customerQuery) use ($term) {
+                    $customerQuery->where('name', 'like', "%{$term}%")
+                        ->orWhere('last_name', 'like', "%{$term}%")
+                        ->orWhere('email', 'like', "%{$term}%")
+                        ->orWhere('phone', 'like', "%{$term}%");
+                });
+            })
             ->orderByDesc('period_end')
             ->orderByDesc('id')
             ->paginate($perPage);
@@ -45,6 +56,51 @@ class CustomerStatementController extends Controller
                 'per_page' => $statements->perPage(),
                 'total' => $statements->total(),
             ],
+        ]);
+    }
+
+    public function show(Request $request, Customer $customer, CustomerStatement $statement, CustomerStatementGenerator $generator)
+    {
+        $this->authorizeCustomer($customer);
+        abort_unless($statement->tenant_id === auth()->user()->tenant_id && $statement->customer_id === $customer->id, 404);
+
+        $statementData = $generator->dataForRange(
+            $customer,
+            $statement->period_start->copy()->startOfDay(),
+            $statement->period_end->copy()->endOfDay()
+        );
+
+        return response()->json([
+            'data' => array_merge($this->serializeStatement($statement), [
+                'services_by_month' => $statementData['serviceDetailsByMonth']
+                    ->map(fn ($details, string $month) => [
+                        'month' => $month,
+                        'items' => $details->map(fn (NoteDetail $detail) => [
+                            'id' => $detail->id,
+                            'note_id' => $detail->note_id,
+                            'note_folio' => $detail->note?->folio,
+                            'animal_id' => $detail->animal_id,
+                            'animal_name' => $detail->animal?->name,
+                            'name' => $detail->catalogItem?->name ?? 'Servicio eliminado',
+                            'type' => $detail->catalogItem?->type,
+                            'quantity' => (float) $detail->quantity,
+                            'price_at_sale' => (float) $detail->price_at_sale,
+                            'subtotal' => (float) $detail->subtotal,
+                            'date_at' => $detail->note?->date_at?->toDateString(),
+                        ])->values(),
+                    ])
+                    ->values(),
+                'payments' => $statementData['payments']
+                    ->map(fn (Payment $payment) => [
+                        'id' => $payment->id,
+                        'amount' => (float) $payment->amount,
+                        'payment_method_name' => $payment->paymentMethod?->name,
+                        'reference' => $payment->reference,
+                        'status' => $payment->status,
+                        'created_at' => $payment->created_at?->toISOString(),
+                    ])
+                    ->values(),
+            ]),
         ]);
     }
 
@@ -107,6 +163,24 @@ class CustomerStatementController extends Controller
         return [
             Carbon::parse($request->date_from)->startOfDay(),
             Carbon::parse($request->date_to)->endOfDay(),
+        ];
+    }
+
+    private function serializeStatement(CustomerStatement $statement): array
+    {
+        return [
+            'id' => $statement->id,
+            'period_start' => $statement->period_start?->toDateString(),
+            'period_end' => $statement->period_end?->toDateString(),
+            'cutoff_day' => $statement->cutoff_day,
+            'previous_balance' => (float) $statement->previous_balance,
+            'period_charges' => (float) $statement->period_charges,
+            'period_payments' => (float) $statement->period_payments,
+            'ending_balance' => (float) $statement->ending_balance,
+            'status' => $statement->status,
+            'pdf_available' => (bool) $statement->pdf_path,
+            'generated_at' => $statement->generated_at?->toISOString(),
+            'published_at' => $statement->published_at?->toISOString(),
         ];
     }
 }

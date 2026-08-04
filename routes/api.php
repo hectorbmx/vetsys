@@ -142,6 +142,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/customers/{customer}/payment-links', [PaymentController::class, 'createPaymentLink']);
         Route::get('/customers/{customer}/statements/preview', [CustomerStatementController::class, 'preview']);
         Route::post('/customers/{customer}/statements/manual', [CustomerStatementController::class, 'storeManual']);
+        Route::get('/customers/{customer}/statements/{statement}', [CustomerStatementController::class, 'show']);
         Route::apiResource('payments', PaymentController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/sync/push', [SyncController::class, 'push']);
