@@ -109,6 +109,7 @@ Route::prefix('v1')->group(function () {
             });
 
         Route::get('/mobile/bootstrap', MobileBootstrapController::class);
+        Route::get('/customers/statements', [CustomerStatementController::class, 'index']);
         Route::apiResource('customers', CustomerController::class)
             ->except(['destroy']);
         Route::apiResource('animals', AnimalController::class)

@@ -492,19 +492,21 @@ Objetivo:
 
 Definir el alcance minimo para no mezclar conceptos en la app movil.
 
-Decision propuesta para v1:
+Decision actualizada para v1:
 
-- [ ] No generar cortes desde mobile.
+- [x] Generar cortes manuales desde el detalle de cliente cuando existan servicios disponibles.
 - [ ] No recalcular cortes desde mobile.
 - [ ] No pagar cortes directamente desde mobile.
 - [ ] Mostrar balance y abonos desde cliente.
-- [ ] Mantener cortes como operacion web por ahora.
+- [x] Mostrar una lista simple de cortes generados en el tab inferior `Cortes` cuando el tenant usa `monthly_cutoff`.
+- [x] En `monthly_cutoff`, reemplazar el tab `Agenda` por `Cortes`; `note_based` conserva `Agenda`.
+- [x] Capturar servicios desde el cliente con lenguaje de servicios/cargos sueltos; la nota tecnica se guarda pero no se navega ni se muestra como documento principal.
 
 Opcional fase 2:
 
-- [ ] Crear endpoint tenant-mobile para listar cortes por customer.
+- [x] Crear endpoint tenant-mobile para listar cortes del tenant.
 - [ ] Mostrar ultimo corte y PDF disponible en detalle de cliente.
-- [ ] Agregar pantalla simple de historial de cortes.
+- [x] Agregar pantalla simple de historial de cortes.
 - [ ] Mantener acciones administrativas de generar/recalcular solo en web.
 
 Checkpoint 6:
@@ -574,3 +576,4 @@ Checkpoint 7:
 | 2026-07-28 | Portal cliente monthly - detalle de corte | Completado parcial | Los cortes del historial abren `/portal/cortes/:id`; backend agrega `GET /portal/statements/{statement}` con totales, servicios incluidos y abonos del periodo. No se agrega boton PDF al cliente en esta fase. |
 | 2026-07-28 | Portal cliente monthly - Home por modo | Completado parcial | En `/portal`, `monthly_cutoff` cambia Mascotas a Caballos, Notas a Cortes, Pendiente/Pagar Ahora a Balance/Ver Historial; actividad reciente usa cortes, servicios y abonos. Build Angular aprobado; falta QA visual real. |
 | 2026-07-28 | Portal cliente monthly - `/portal/pagos` por modo | Completado parcial | En `monthly_cutoff`, `/portal/pagos` muestra Balance, Cortes y Abonos realizados; oculta Notas pendientes y reemplaza Pagar Ahora por Ver Historial. Build Angular aprobado; falta QA visual real. |
+| 2026-08-03 | Tenant mobile monthly - tab Cortes y captura de servicios | Completado parcial | En `monthly_cutoff`, el tab inferior `Agenda` se presenta como `Cortes` y lista cortes generados desde `GET /customers/statements`; el detalle de cliente reemplaza el aviso mensual por `Agregar servicios`, que abre la captura prellenada del cliente con copy de servicios/cargos y regresa al cliente al guardar. La nota tecnica sigue guardandose en `/notes` pero no se muestra como documento principal. Build Angular y `php -l` aprobados; falta QA en tenant real. |

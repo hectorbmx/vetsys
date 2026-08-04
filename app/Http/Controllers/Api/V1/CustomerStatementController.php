@@ -4,12 +4,50 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\CustomerStatement;
 use App\Services\CustomerStatementGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CustomerStatementController extends Controller
 {
+    public function index(Request $request)
+    {
+        abort_unless(auth()->user()->tenant?->usesMonthlyCutoffBilling(), 404);
+
+        $perPage = min(max((int) $request->integer('per_page', 20), 1), 100);
+
+        $statements = CustomerStatement::query()
+            ->with('customer:id,full_name')
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->when($request->filled('customer_id'), fn ($query) => $query->where('customer_id', $request->integer('customer_id')))
+            ->orderByDesc('period_end')
+            ->orderByDesc('id')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => $statements->getCollection()->map(fn (CustomerStatement $statement) => [
+                'id' => $statement->id,
+                'customer_id' => $statement->customer_id,
+                'customer_name' => $statement->customer?->full_name,
+                'period_start' => $statement->period_start?->toDateString(),
+                'period_end' => $statement->period_end?->toDateString(),
+                'period_charges' => (float) $statement->period_charges,
+                'period_payments' => (float) $statement->period_payments,
+                'ending_balance' => (float) $statement->ending_balance,
+                'status' => $statement->status,
+                'generated_at' => $statement->generated_at?->toISOString(),
+                'published_at' => $statement->published_at?->toISOString(),
+            ]),
+            'meta' => [
+                'current_page' => $statements->currentPage(),
+                'last_page' => $statements->lastPage(),
+                'per_page' => $statements->perPage(),
+                'total' => $statements->total(),
+            ],
+        ]);
+    }
+
     public function preview(Request $request, Customer $customer, CustomerStatementGenerator $generator)
     {
         $this->authorizeCustomer($customer);
