@@ -21,6 +21,8 @@ class PaymentController extends Controller
         $data = $request->validate([
             'since' => ['nullable', 'date'],
             'customer_id' => ['nullable', 'integer'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
             'per_page' => ['nullable', 'integer', 'between:1,100'],
         ]);
 
@@ -30,6 +32,8 @@ class PaymentController extends Controller
             ->where('tenant_id', $tenantId)
             ->when(isset($data['since']), fn (Builder $query) => $query->where('updated_at', '>=', $data['since']))
             ->when(isset($data['customer_id']), fn (Builder $query) => $query->where('customer_id', $data['customer_id']))
+            ->when(isset($data['year']), fn (Builder $query) => $query->whereYear('created_at', $data['year']))
+            ->when(isset($data['month']), fn (Builder $query) => $query->whereMonth('created_at', $data['month']))
             ->latest('id')
             ->paginate($data['per_page'] ?? 50);
 
