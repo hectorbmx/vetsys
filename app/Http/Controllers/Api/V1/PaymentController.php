@@ -35,7 +35,8 @@ class PaymentController extends Controller
             ->when(isset($data['customer_id']), fn (Builder $query) => $query->where('customer_id', $data['customer_id']))
             ->when(isset($data['year']), fn (Builder $query) => $query->whereYear('created_at', $data['year']))
             ->when(isset($data['month']), fn (Builder $query) => $query->whereMonth('created_at', $data['month']))
-            ->latest('id')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($data['per_page'] ?? 50);
 
         return response()->json([
