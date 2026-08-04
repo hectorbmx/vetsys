@@ -9,6 +9,7 @@ use App\Models\PaymentMethod;
 use App\Services\CustomerPaymentService;
 use App\Services\StripeCustomerPaymentService;
 use App\Services\TenantOnboardingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -75,6 +76,8 @@ class PaymentController extends Controller
                 'reference' => $data['reference'] ?? null,
                 'provider' => 'manual',
                 'status' => 'paid',
+                'created_at' => isset($data['paid_at']) ? Carbon::parse($data['paid_at'])->startOfDay() : now(),
+                'updated_at' => now(),
             ]
         ));
 
@@ -101,6 +104,7 @@ class PaymentController extends Controller
     {
         return $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
+            'paid_at' => ['nullable', 'date'],
             'payment_method_id' => [
                 'required',
                 Rule::exists('payment_methods', 'id')->where(fn ($query) => $query

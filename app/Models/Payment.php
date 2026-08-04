@@ -18,6 +18,8 @@ class Payment extends Model
         'status',
         'amount',
         'reference',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [

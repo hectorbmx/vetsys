@@ -319,6 +319,20 @@
                             </div>
                         </div>
 
+                        {{-- Fecha del abono --}}
+                        <div>
+                            <label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5">
+                                {{ $usesMonthlyCutoffBilling ? 'Fecha del abono' : 'Fecha del pago' }}
+                            </label>
+                            <input
+                                type="date"
+                                name="paid_at"
+                                value="{{ now()->toDateString() }}"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none theme-input focus:ring-2 theme-ring-primary transition-all"
+                                required
+                            />
+                        </div>
+
                         {{-- Metodo de pago --}}
                         <div>
                             <label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5">

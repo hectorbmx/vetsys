@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Services\CustomerPaymentService;
 use App\Services\StripeCustomerPaymentService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,7 @@ class PaymentController extends Controller
                     ->where('is_active', true)),
             ],
             'amount' => ['required', 'numeric', 'min:0.01'],
+            'paid_at' => ['nullable', 'date'],
             'reference' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -94,6 +96,8 @@ class PaymentController extends Controller
                 'reference' => $data['reference'] ?? null,
                 'provider' => 'manual',
                 'status' => 'paid',
+                'created_at' => isset($data['paid_at']) ? Carbon::parse($data['paid_at'])->startOfDay() : now(),
+                'updated_at' => now(),
             ],
         ));
 
