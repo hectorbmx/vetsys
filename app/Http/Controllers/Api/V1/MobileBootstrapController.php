@@ -10,6 +10,7 @@ use App\Models\AnimalTypeField;
 use App\Models\CatalogItem;
 use App\Models\Club;
 use App\Models\Customer;
+use App\Models\CustomerStatement;
 use App\Models\Note;
 use App\Models\NoteDetail;
 use App\Models\PaymentMethod;
@@ -45,6 +46,7 @@ class MobileBootstrapController extends Controller
             'animal_field_values' => $this->animalFieldValues($tenant->id, $since),
             'notes' => $this->notes($tenant->id, $since),
             'note_details' => $this->noteDetails($tenant->id, $since),
+            'customer_statements' => $this->customerStatements($tenant->id, $since),
         ]);
     }
 
@@ -275,6 +277,30 @@ class MobileBootstrapController extends Controller
                 'subtotal' => $detail->subtotal,
                 'created_at' => $detail->created_at?->toISOString(),
                 'updated_at' => $detail->updated_at?->toISOString(),
+            ]);
+    }
+
+    private function customerStatements(int $tenantId, ?Carbon $since)
+    {
+        return CustomerStatement::with(['customer:id,name,last_name'])
+            ->where('tenant_id', $tenantId)
+            ->when($since, fn (Builder $query) => $this->changedSince($query, $since))
+            ->orderByDesc('period_end')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (CustomerStatement $statement) => [
+                'id' => $statement->id,
+                'customer_id' => $statement->customer_id,
+                'customer_name' => $statement->customer?->full_name,
+                'period_start' => $statement->period_start?->toDateString(),
+                'period_end' => $statement->period_end?->toDateString(),
+                'period_charges' => (float) $statement->period_charges,
+                'period_payments' => (float) $statement->period_payments,
+                'ending_balance' => (float) $statement->ending_balance,
+                'status' => $statement->status,
+                'generated_at' => $statement->generated_at?->toISOString(),
+                'published_at' => $statement->published_at?->toISOString(),
+                'updated_at' => $statement->updated_at?->toISOString(),
             ]);
     }
 

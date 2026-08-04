@@ -18,7 +18,7 @@ class CustomerStatementController extends Controller
         $perPage = min(max((int) $request->integer('per_page', 20), 1), 100);
 
         $statements = CustomerStatement::query()
-            ->with('customer:id,full_name')
+            ->with('customer:id,name,last_name')
             ->where('tenant_id', auth()->user()->tenant_id)
             ->when($request->filled('customer_id'), fn ($query) => $query->where('customer_id', $request->integer('customer_id')))
             ->orderByDesc('period_end')
