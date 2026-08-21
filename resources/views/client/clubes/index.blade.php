@@ -6,7 +6,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CLUBES_INDEX);
 @endphp
-<div class="space-y-8" x-data="{ clubModal: false, editClub: null, membersClub: null }">
+<div class="-mt-4 space-y-6" x-data="{ clubModal: false, editClub: null, membersClub: null }">
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
         @if(session('success'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition class="bg-white border-l-4 border-emerald-500 rounded-xl shadow-xl p-4 flex items-center justify-between border border-slate-100">
@@ -24,20 +24,6 @@
                 <p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ session('error') ?? 'Hay campos pendientes o repetidos.' }}</p>
             </div>
         @endif
-    </div>
-
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Clubes</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Organiza mascotas por clubes y administra sus miembros.</p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <button @click="clubModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all">
-                <span class="text-sm">+</span>
-                Nuevo club
-            </button>
-        </div>
     </div>
 
 {{-- CARDS / TRES KPIS SUPERIORES CON DEGRADADOS DINÁMICOS --}}
@@ -92,10 +78,13 @@
 @endif
 
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+        <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Clubes registrados</h3>
-                <div class="flex flex-wrap items-center justify-end gap-3">
+                <div>
+                    <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Clubes</h1>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Organiza mascotas por clubes y administra sus miembros.</p>
+                </div>
+                <div class="flex flex-col items-start gap-3 sm:items-end">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ $clubs->count() }} registro(s)</span>
                     <form method="GET" action="{{ route('client.clubes.index') }}" class="flex items-center gap-2">
                         @if(request()->filled('q'))
@@ -109,6 +98,13 @@
                         </select>
                         <span class="text-[10px] font-bold text-slate-400">filas</span>
                     </form>
+                    <div class="dynamic-pagination max-w-full">
+                        {{ $clubs->links() }}
+                    </div>
+                    <button @click="clubModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg theme-shadow-primary hover:shadow-xl hover:-translate-y-0.5 theme-hover-bg-primary transition-all duration-300 group whitespace-nowrap">
+                        <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black transition-transform group-hover:scale-125 group-hover:rotate-90 duration-300">+</span>
+                        Nuevo club
+                    </button>
                 </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -129,12 +125,12 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/20">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Club</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripcion</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Miembros</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                    <tr class="border-b border-slate-100 theme-surface-dark ">
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Club</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Descripcion</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Miembros</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Estado</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -200,9 +196,6 @@
             </table>
         </div>
 
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $clubs->links() }}
-        </div>
     </div>
 
     <div x-show="clubModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
@@ -235,3 +228,4 @@
     </div>
 </div>
 @endsection
+

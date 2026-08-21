@@ -401,13 +401,13 @@
             <div class="overflow-hidden border border-slate-100 rounded-2xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                            {{-- <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota</th> --}}
-                            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio / Producto</th>
-                            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cant.</th>
-                            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Subtotal</th>
-                            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                        <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                            <th class="px-6 py-4 font-black">Fecha</th>
+                            {{-- <th class="px-6 py-4 font-black">Nota</th> --}}
+                            <th class="px-6 py-4 font-black">Servicio / Producto</th>
+                            <th class="px-6 py-4 font-black text-right">Cant.</th>
+                            <th class="px-6 py-4 font-black text-right">Subtotal</th>
+                            <th class="px-6 py-4 font-black text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -474,12 +474,12 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="w-20 px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Ver</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Carta</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vacuna</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                            <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                                <th class="w-20 px-6 py-4 font-black text-center">Ver</th>
+                                <th class="px-6 py-4 font-black">Carta</th>
+                                <th class="px-6 py-4 font-black">Fecha</th>
+                                <th class="px-6 py-4 font-black">Vacuna</th>
+                                <th class="px-6 py-4 font-black text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -666,12 +666,12 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="w-16 px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Ver</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripcion</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Archivo</th>
-                                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Accion</th>
+                            <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                                <th class="w-16 px-6 py-4 font-black text-center">Ver</th>
+                                <th class="px-6 py-4 font-black">Fecha</th>
+                                <th class="px-6 py-4 font-black">Descripcion</th>
+                                <th class="px-6 py-4 font-black">Archivo</th>
+                                <th class="px-6 py-4 font-black text-right">Accion</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -1117,12 +1117,12 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100">
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tenant destino</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ultimo acceso</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Link</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Accion</th>
+                                <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                                    <th class="px-6 py-4 font-black">Tenant destino</th>
+                                    <th class="px-6 py-4 font-black">Estado</th>
+                                    <th class="px-6 py-4 font-black">Ultimo acceso</th>
+                                    <th class="px-6 py-4 font-black">Link</th>
+                                    <th class="px-6 py-4 font-black text-right">Accion</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">

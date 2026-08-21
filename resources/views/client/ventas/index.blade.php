@@ -4,25 +4,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::VENTAS_INDEX);
 @endphp
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-
-    {{-- ENCABEZADO --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">
-                {{ $usesMonthlyCutoffBilling ? 'Historial de Servicios' : 'Historial de Ventas' }}
-            </h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                {{ $usesMonthlyCutoffBilling ? 'Consulta los servicios realizados que alimentan las cuentas mensuales.' : 'Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.' }}
-            </p>
-        </div>
-        
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <a href="{{ route('client.ventas.create') }}" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all whitespace-nowrap">
-                + Nueva Nota de Venta
-            </a>
-        </div>
-    </div>
+<div class="-mt-4 space-y-6">
 
     @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES --}}
@@ -102,21 +84,37 @@
 
     {{-- TABLA HISTÓRICA --}}
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+        <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">{{ $usesMonthlyCutoffBilling ? 'Servicios realizados' : 'Notas registradas' }}</h3>
-                <form method="GET" action="{{ route('client.ventas.index') }}" class="flex items-center gap-2">
-                    @if(request()->filled('q'))
-                        <input type="hidden" name="q" value="{{ request('q') }}">
-                    @endif
-                    <label for="sales-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
-                    <select id="sales-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
-                        @foreach([15, 30, 50, 100] as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                    <span class="text-[10px] font-bold text-slate-400">filas</span>
-                </form>
+                <div>
+                    <h1 class="text-3xl font-black theme-text-heading tracking-tighter">
+                        {{ $usesMonthlyCutoffBilling ? 'Historial de Servicios' : 'Historial de Ventas' }}
+                    </h1>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                        {{ $usesMonthlyCutoffBilling ? 'Consulta los servicios realizados que alimentan las cuentas mensuales.' : 'Monitorea los folios emitidos, estados de cuenta de clientes y cuentas por cobrar.' }}
+                    </p>
+                </div>
+                <div class="flex flex-col items-start gap-3 sm:items-end">
+                    <form method="GET" action="{{ route('client.ventas.index') }}" class="flex items-center gap-2">
+                        @if(request()->filled('q'))
+                            <input type="hidden" name="q" value="{{ request('q') }}">
+                        @endif
+                        <label for="sales-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                        <select id="sales-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
+                            @foreach([15, 30, 50, 100] as $option)
+                                <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        <span class="text-[10px] font-bold text-slate-400">filas</span>
+                    </form>
+                    <div class="dynamic-pagination max-w-full">
+                        {{ $usesMonthlyCutoffBilling ? $serviceDetails->links() : $notes->links() }}
+                    </div>
+                    <a href="{{ route('client.ventas.create') }}" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg theme-shadow-primary hover:shadow-xl hover:-translate-y-0.5 theme-hover-bg-primary transition-all duration-300 whitespace-nowrap">
+                        <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black">+</span>
+                        Nueva Nota de Venta
+                    </a>
+                </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <form method="GET" action="{{ route('client.ventas.index') }}" class="relative w-full sm:max-w-md">
@@ -136,15 +134,15 @@
             <table class="w-full text-left border-collapse">
                 @if($usesMonthlyCutoffBilling)
                     <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/50">
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Paciente</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio / Producto</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cantidad</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Precio</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Subtotal</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Referencia</th>
+                        <tr class="border-b border-slate-100 theme-surface-dark">
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Fecha</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Paciente</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Servicio / Producto</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Cantidad</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Precio</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Subtotal</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Referencia</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -202,14 +200,14 @@
                     </tbody>
                 @else
                 <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/50">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Folio</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente / Propietario</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Total</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Pendiente</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                    <tr class="border-b border-slate-100 theme-surface-dark">
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Folio</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Fecha</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente / Propietario</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Monto Total</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Saldo Pendiente</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Estado</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -306,10 +304,8 @@
             </table>
         </div>
 
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $usesMonthlyCutoffBilling ? $serviceDetails->links() : $notes->links() }}
-        </div>
     </div>
 
 </div>
 @endsection
+

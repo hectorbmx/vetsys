@@ -8,7 +8,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CUSTOMERS_INDEX);
 @endphp
-<div class="space-y-8" x-data="customersIndex()">
+<div class="-mt-4 space-y-6" x-data="customersIndex()">
     
     {{-- INCLUSIÓN DEL SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -41,21 +41,6 @@
         @endif
     </div>
     
-    {{-- HEADER DE LA VISTA --}}
-    <div data-tour="customers-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Clientes</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus pacientes.</p>
-        </div>
-        
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <button data-tour="add-customer" @click="customerModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
-                <span class="text-sm transition-transform group-hover:scale-125">+</span>
-                Nuevo Cliente
-            </button>
-        </div>
-    </div>
-
     @include('client.customers.partials.activation-invite')
 
     @if($showKpiCards)
@@ -115,30 +100,45 @@
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="customers-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+        <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Listado de Clientes</h3>
-                <form method="GET" action="{{ route('client.customers.index') }}" class="flex items-center gap-2">
-                    @if(request()->filled('q'))
-                        <input type="hidden" name="q" value="{{ request('q') }}">
-                    @endif
-                    @if(request()->filled('status'))
-                        <input type="hidden" name="status" value="{{ request('status') }}">
-                    @endif
-                    @if(request()->filled('sort'))
-                        <input type="hidden" name="sort" value="{{ request('sort') }}">
-                    @endif
-                    @if(request()->filled('direction'))
-                        <input type="hidden" name="direction" value="{{ request('direction') }}">
-                    @endif
-                    <label for="customers-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
-                    <select id="customers-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
-                        @foreach([15, 30, 50, 100] as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                    <span class="text-[10px] font-bold text-slate-400">filas</span>
-                </form>
+                <div>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Clientes</h1>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus pacientes.</p>
+        </div>
+                
+                <div class="flex flex-col items-start gap-3 sm:items-end">
+                    <form method="GET" action="{{ route('client.customers.index') }}" class="flex items-center gap-2">
+                        @if(request()->filled('q'))
+                            <input type="hidden" name="q" value="{{ request('q') }}">
+                        @endif
+                        @if(request()->filled('status'))
+                            <input type="hidden" name="status" value="{{ request('status') }}">
+                        @endif
+                        @if(request()->filled('sort'))
+                            <input type="hidden" name="sort" value="{{ request('sort') }}">
+                        @endif
+                        @if(request()->filled('direction'))
+                            <input type="hidden" name="direction" value="{{ request('direction') }}">
+                        @endif
+                        <label for="customers-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                        <select id="customers-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
+                            @foreach([15, 30, 50, 100] as $option)
+                                <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        <span class="text-[10px] font-bold text-slate-400">filas</span>
+                    </form>
+
+                    <button data-tour="add-customer" @click="customerModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg theme-shadow-primary hover:shadow-xl hover:-translate-y-0.5 theme-hover-bg-primary transition-all duration-300 group whitespace-nowrap">
+                        <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black transition-transform group-hover:scale-125 group-hover:rotate-90 duration-300">+</span>
+                        Nuevo Cliente
+                    </button>
+
+                    <div class="dynamic-pagination max-w-full">
+                        {{ $customers->links() }}
+                    </div>
+                </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <form method="GET" action="{{ route('client.customers.index') }}" class="relative w-full sm:max-w-md">
@@ -188,42 +188,43 @@
         @endphp
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/20 text-center">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
-                            @php($animalSort = $sortIndicator('animals_count'))
-                            <a href="{{ $sortLink('animals_count') }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-1 transition-colors {{ $sortColumn === 'animals_count' ? 'theme-text-primary bg-slate-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}"
-                               title="Ordenar por caballos">
-                                <span>Caballos</span>
-                                <span class="flex flex-col text-[8px] leading-[0.65rem]" aria-hidden="true">
-                                    <span class="{{ $animalSort['up'] ? 'theme-text-primary' : 'text-slate-300' }}">▲</span>
-                                    <span class="{{ $animalSort['down'] ? 'theme-text-primary' : 'text-slate-300' }}">▼</span>
-                                </span>
-                            </a>
-                        </th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
-                            @php($debtSort = $sortIndicator('general_debt'))
-                            <a href="{{ $sortLink('general_debt') }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-1 transition-colors {{ $sortColumn === 'general_debt' ? 'theme-text-primary bg-slate-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' }}"
-                               title="Ordenar por adeudo general">
-                                <span>Adeudo General</span>
-                                <span class="flex flex-col text-[8px] leading-[0.65rem]" aria-hidden="true">
-                                    <span class="{{ $debtSort['up'] ? 'theme-text-primary' : 'text-slate-300' }}">▲</span>
-                                    <span class="{{ $debtSort['down'] ? 'theme-text-primary' : 'text-slate-300' }}">▼</span>
-                                </span>
-                            </a>
-                        </th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">APP</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estatus</th>
-                        @if($usesMonthlyCutoffBilling)
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Corte</th>
-                        @endif
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Detalles</th>
-                    </tr>
-                </thead>
+       <thead>
+<tr class="theme-surface-dark text-center">
+        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+        {{-- <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Contacto</th> --}}
+        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
+            @php($animalSort = $sortIndicator('animals_count'))
+            <a href="{{ $sortLink('animals_count') }}"
+               class="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-1 transition-colors {{ $sortColumn === 'animals_count' ? 'text-white bg-white/15' : 'text-white hover:bg-white/10' }}"
+               title="Ordenar por caballos">
+                <span>Caballos</span>
+                <span class="flex flex-col text-[8px] leading-[0.65rem]" aria-hidden="true">
+                    <span class="{{ $animalSort['up'] ? 'text-white' : 'text-white/30' }}">▲</span>
+                    <span class="{{ $animalSort['down'] ? 'text-white' : 'text-white/30' }}">▼</span>
+                </span>
+            </a>
+        </th>
+        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
+            @php($debtSort = $sortIndicator('general_debt'))
+            <a href="{{ $sortLink('general_debt') }}"
+               class="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-1 transition-colors {{ $sortColumn === 'general_debt' ? 'text-white bg-white/15' : 'text-white hover:bg-white/10' }}"
+               title="Ordenar por adeudo general">
+                <span>Adeudo General</span>
+                <span class="flex flex-col text-[8px] leading-[0.65rem]" aria-hidden="true">
+                    <span class="{{ $debtSort['up'] ? 'text-white' : 'text-white/30' }}">▲</span>
+                    <span class="{{ $debtSort['down'] ? 'text-white' : 'text-white/30' }}">▼</span>
+                </span>
+            </a>
+        </th>
+        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">APP</th>
+        
+        @if($usesMonthlyCutoffBilling)
+            <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Corte</th>
+        @endif
+        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Detalles</th>
+        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Estatus</th>
+    </tr>
+</thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($customers as $customer)
                         <tr class="hover:bg-slate-50/60 transition-colors text-center">
@@ -241,16 +242,16 @@
                                            title="Ver ficha de {{ $customer->full_name }}">
                                             {{ $customer->full_name }}
                                         </a>
-                                        <p class="text-[10px] font-medium text-slate-400 mt-0.5">ID: #{{ $customer->id }}</p>
+                                        {{-- <p class="text-[10px] font-medium text-slate-400 mt-0.5">ID: #{{ $customer->id }}</p> --}}
                                     </div>
                                 </div>
                             </td>
 
                             {{-- Información de Contacto --}}
-                            <td class="px-6 py-4">
+                            {{-- <td class="px-6 py-4">
                                 <div class="text-xs font-semibold theme-text-heading">{{ $customer->email ?? 'Sin Correo' }}</div>
                                 <div class="text-[10px] text-slate-400 mt-0.5">{{ $customer->phone ?? 'Sin Teléfono' }}</div>
-                            </td>
+                            </td> --}}
 
                             {{-- Mascotas (Relación belongsTo/hasMany dinámico) --}}
                             {{-- Cantidad de Mascotas --}}
@@ -280,35 +281,17 @@
                                 <a href="{{ route('client.customers.show', ['customer' => $customer->id, 'tab' => 'notas']) }}"
                                    class="inline-block rounded-lg transition hover:bg-slate-50 focus:outline-none theme-focus-primary"
                                    title="Ver cobranza de {{ $customer->full_name }}">
-                                    <div class="text-xs font-black {{ $generalDebt > 0 ? 'text-rose-600' : 'text-slate-400' }}">
-                                        ${{ number_format($generalDebt, 2) }}
+                                    <div class="text-xs font-black {{ $generalDebt > 0 ? 'text-rose-600' : ($generalDebt < 0 ? 'text-emerald-600' : 'text-slate-400') }}">
+                                        ${{ number_format(abs($generalDebt), 2) }}
                                     </div>
-                                    <div class="text-[9px] font-medium {{ $generalDebt > 0 ? 'text-rose-400' : 'text-emerald-500' }} mt-0.5">
-                                        {{ $generalDebt > 0 ? 'Pendiente' : 'Sin adeudo' }}
+                                    <div class="text-[9px] font-medium {{ $generalDebt > 0 ? 'text-rose-400' : ($generalDebt < 0 ? 'text-emerald-500' : 'text-slate-400') }} mt-0.5">
+                                        {{ $generalDebt > 0 ? 'Pendiente' : ($generalDebt < 0 ? 'Saldo a favor' : 'Sin adeudo') }}
                                     </div>
                                 </a>
                             </td>
 
                             {{-- Status Toggle Dinámico --}}
-                            <td class="px-6 py-4">
-                                @php($portalAccessActive = $customer->portalAccesses->firstWhere('status', 'active'))
-                                <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST"
-                                      @submit="showPortalAccessLoading(@js($portalAccessActive ? 'Suspendiendo acceso...' : 'Activando acceso...'))">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit"
-                                            class="inline-flex items-center gap-2 group focus:outline-none"
-                                            title="{{ $portalAccessActive ? 'Suspender acceso app/web' : 'Activar acceso app/web' }}">
-                                        <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $portalAccessActive ? 'bg-indigo-500' : 'bg-slate-300' }}">
-                                            <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $portalAccessActive ? 'translate-x-3' : 'translate-x-0' }}"></div>
-                                        </div>
-
-                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $portalAccessActive ? 'text-indigo-600' : 'text-slate-400' }}">
-                                            {{ $portalAccessActive ? 'Activo' : 'Suspendido' }}
-                                        </span>
-                                    </button>
-                                </form>
-                            </td>
+                         
 
                   <td class="px-6 py-4">
                     <form action="{{ route('client.customers.toggle', $customer->id) }}" method="POST">
@@ -328,6 +311,7 @@
                         </button>
                     </form>
                 </td>
+                
 
                             @if($usesMonthlyCutoffBilling)
                                 <td class="px-6 py-4">
@@ -354,6 +338,25 @@
                                     <!-- <button class="p-1.5 text-slate-400 theme-hover-text-heading transition-colors" title="Editar">✏️</button> -->
                                 </div>
                             </td>
+                               <td class="px-6 py-4">
+                                @php($portalAccessActive = $customer->portalAccesses->firstWhere('status', 'active'))
+                                <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST"
+                                      @submit="showPortalAccessLoading(@js($portalAccessActive ? 'Suspendiendo acceso...' : 'Activando acceso...'))">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-2 group focus:outline-none"
+                                            title="{{ $portalAccessActive ? 'Suspender acceso app/web' : 'Activar acceso app/web' }}">
+                                        <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $portalAccessActive ? 'bg-indigo-500' : 'bg-slate-300' }}">
+                                            <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $portalAccessActive ? 'translate-x-3' : 'translate-x-0' }}"></div>
+                                        </div>
+
+                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $portalAccessActive ? 'text-indigo-600' : 'text-slate-400' }}">
+                                            {{ $portalAccessActive ? 'Activo' : 'Suspendido' }}
+                                        </span>
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         {{-- Estado vacío si la consulta no devuelve nada --}}
@@ -367,10 +370,6 @@
             </table>
         </div>
 
-        {{-- PAGINACIÓN NATIVA DE LARAVEL CON ESTILOS TAILWIND --}}
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30 dynamic-pagination">
-            {{ $customers->links() }}
-        </div>
     </div>
 
     @include('client.customers.partials.statement-modal')
@@ -472,3 +471,5 @@
     };
 </script>
 @endpush
+
+

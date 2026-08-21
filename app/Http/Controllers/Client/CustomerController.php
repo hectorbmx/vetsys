@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Note;
 use App\Models\CustomerPaymentLink;
+use App\Models\NoteDetail;
+use App\Models\Payment;
 use App\Rules\GloballyUniqueEmail;
 use App\Services\CustomerStripePaymentProcessor;
 use App\Services\CustomerPortalAccessService;
@@ -31,14 +33,37 @@ class CustomerController extends Controller
         ? $request->input('sort')
         : null;
     $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
+    $usesMonthlyCutoffBilling = auth()->user()->tenant?->usesMonthlyCutoffBilling() ?? false;
 
     $customers = Customer::query()
         ->where('tenant_id', $tenantId)
         ->with('portalAccesses')
         ->withCount('animals')
-        ->withSum([
-            'saleNotes as general_debt' => fn ($query) => $query->where('status', 'PENDIENTE'),
-        ], 'total')
+        ->when($usesMonthlyCutoffBilling, function ($query) use ($tenantId) {
+            $chargesTotal = NoteDetail::query()
+                ->join('notes', 'notes.id', '=', 'note_details.note_id')
+                ->whereColumn('notes.customer_id', 'customers.id')
+                ->where('note_details.tenant_id', $tenantId)
+                ->where('notes.tenant_id', $tenantId)
+                ->selectRaw('COALESCE(SUM(note_details.subtotal), 0)');
+
+            $paymentsTotal = Payment::query()
+                ->whereColumn('payments.customer_id', 'customers.id')
+                ->where('payments.tenant_id', $tenantId)
+                ->selectRaw('COALESCE(SUM(payments.amount), 0)');
+
+            $query->select('customers.*')
+                ->selectSub($chargesTotal, 'billing_charges_total')
+                ->selectSub($paymentsTotal, 'billing_payments_total')
+                ->selectRaw(
+                    '(' . $chargesTotal->toSql() . ') - (' . $paymentsTotal->toSql() . ') as general_debt',
+                    array_merge($chargesTotal->getBindings(), $paymentsTotal->getBindings())
+                );
+        }, function ($query) {
+            $query->withSum([
+                'saleNotes as general_debt' => fn ($query) => $query->where('status', 'PENDIENTE'),
+            ], 'total');
+        })
         ->when($request->filled('q'), function ($query) use ($request) {
             $search = $request->q;
 
@@ -56,8 +81,6 @@ class CustomerController extends Controller
         ->when(! $sort, fn ($query) => $query->latest())
         ->paginate($perPage)
         ->withQueryString();
-
-    $usesMonthlyCutoffBilling = auth()->user()->tenant?->usesMonthlyCutoffBilling() ?? false;
 
     return view('client.customers.index', compact('customers', 'perPage', 'usesMonthlyCutoffBilling'));
 }

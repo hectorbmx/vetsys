@@ -8,7 +8,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::ANIMALS_INDEX);
 @endphp
-<div class="space-y-8" x-data="{ animalModal: false }">
+<div class="-mt-4 space-y-6" x-data="{ animalModal: false }">
     
     {{-- SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -41,21 +41,6 @@
         @endif
     </div>
     
-    {{-- HEADER DE LA VISTA --}}
-    <div data-tour="animals-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Caballos</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra los caballos de tu clínica y sus historiales.</p>
-        </div>
-        
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <button data-tour="add-animal" @click="animalModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all group whitespace-nowrap">
-                <span class="text-sm transition-transform group-hover:scale-125">+</span>
-                Nuevo Caballo
-            </button>
-        </div>
-    </div>
-
     @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES CON HOVER Y OUTLINES PASTEL --}}
     {{-- CARDS / TRES KPIS SUPERIORES CON DEGRADADOS DINÁMICOS --}}
@@ -115,21 +100,35 @@
     {{-- CONTENEDOR DE BASE DE DATOS --}}
     <div data-tour="animals-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+        <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Lista de Caballos</h3>
-                <form method="GET" action="{{ route('client.animals.index') }}" class="flex items-center gap-2">
-                    @if(request()->filled('q'))
-                        <input type="hidden" name="q" value="{{ request('q') }}">
-                    @endif
-                    <label for="animals-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
-                    <select id="animals-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
-                        @foreach([15, 30, 50, 100] as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                    <span class="text-[10px] font-bold text-slate-400">filas</span>
-                </form>
+                <div>
+                    <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Caballos</h1>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra los caballos de tu clínica y sus historiales.</p>
+                </div>
+                <div class="flex flex-col items-start gap-3 sm:items-end">
+                    <form method="GET" action="{{ route('client.animals.index') }}" class="flex items-center gap-2">
+                        @if(request()->filled('q'))
+                            <input type="hidden" name="q" value="{{ request('q') }}">
+                        @endif
+                        <label for="animals-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                        <select id="animals-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
+                            @foreach([15, 30, 50, 100] as $option)
+                                <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        <span class="text-[10px] font-bold text-slate-400">filas</span>
+                    </form>
+
+                    <div class="dynamic-pagination max-w-full">
+                        {{ $animals->links() }}
+                    </div>
+
+                    <button data-tour="add-animal" @click="animalModal = true" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg theme-shadow-primary hover:shadow-xl hover:-translate-y-0.5 theme-hover-bg-primary transition-all duration-300 group whitespace-nowrap">
+                        <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black transition-transform group-hover:scale-125 group-hover:rotate-90 duration-300">+</span>
+                        Nuevo Caballo
+                    </button>
+                </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <form method="GET" action="{{ route('client.animals.index') }}" class="relative w-full sm:max-w-md">
@@ -150,16 +149,16 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
-                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
-                        <th class="px-4 py-3 pb-4">Nombre</th>
-                        <th class="px-4 py-3 pb-4 text-center">Historial</th>
-                        <th class="px-4 py-3 pb-4 text-center">Vacunacion</th>
-                        <th class="px-4 py-3 pb-4">Cliente</th>
-                        <th class="px-4 py-3 pb-4">Club</th>
-                        <th class="px-4 py-3 pb-4">Peso</th>
-                        <th class="px-4 py-3 pb-4">Alergias</th>
-                        <th class="px-4 py-3 pb-4">Estatus</th>
-                        <th class="px-4 py-3 pb-4 text-right">Acciones</th>
+                    <tr class="theme-surface-dark">
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest">Nombre</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Historial</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Vacunacion</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest">Club</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest">Peso</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest">Alergias</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest">Estatus</th>
+                        <th class="px-4 py-3 pb-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -279,10 +278,6 @@
             </table>
         </div>
 
-        {{-- PAGINACIÓN LARAVEL --}}
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $animals->links() }}
-        </div>
     </div>
 
     {{-- MODAL: NUEVA MASCOTA --}}
@@ -403,10 +398,13 @@
                         {{-- Tipo de Animal / Especie --}}
                         <div class="space-y-2">
                             <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Especie / Tipo de Animal *</label>
+                            @php
+                                $defaultAnimalTypeId = old('animal_type_id', optional($animalTypes->first())->id);
+                            @endphp
                             <select name="animal_type_id" required class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner cursor-pointer">
-                                <option value="" disabled selected>Selecciona una especie...</option>
+                                <option value="" disabled {{ blank($defaultAnimalTypeId) ? 'selected' : '' }}>Selecciona una especie...</option>
                                 @foreach($animalTypes as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    <option value="{{ $type->id }}" {{ (string) $defaultAnimalTypeId === (string) $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                                 @endforeach
                             </select>
                             
@@ -477,3 +475,4 @@
 
 </div>
 @endsection
+

@@ -8,25 +8,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::SERVICIOS_INDEX);
 @endphp
-<div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="p-6 max-w-7xl mx-auto space-y-6">
-
-{{-- ENCABEZADO PRINCIPAL DEL MÓDULO --}}
-<div data-tour="services-header" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-    <div>
-        <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
-        <p class="text-xs text-slate-400 font-medium mt-0.5">Administra los servicios clínicos, estéticos y productos comerciales de tu veterinaria.</p>
-    </div>
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-
-        <a href="{{ route('client.servicios.inventory') }}" class="theme-bg-primary-soft theme-text-primary-strong border theme-border-primary-soft theme-hover-border-primary-soft px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
-            Inventario
-        </a>
-
-        <button data-tour="add-service" @click="openForm = !openForm" class="theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
-            <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
-        </button>
-    </div>
-</div>
+<div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="-mt-4 space-y-6">
 
 @if($showKpiCards)
 {{-- CARDS / TRES KPIS SUPERIORES --}}
@@ -191,21 +173,38 @@
 
     {{-- LISTADO EN TABLA --}}
     <div data-tour="services-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+        <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Catálogo registrado</h3>
-                <form method="GET" action="{{ route('client.servicios.index') }}" class="flex items-center gap-2">
-                    @if($search !== '')
-                        <input type="hidden" name="q" value="{{ $search }}">
-                    @endif
-                    <label for="services-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
-                    <select id="services-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
-                        @foreach([15, 30, 50, 100] as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                    <span class="text-[10px] font-bold text-slate-400">filas</span>
-                </form>
+                <div>
+                    <h1 class="text-xl font-black theme-text-heading uppercase tracking-widest">Catálogo de Servicios y Productos</h1>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5">Administra los servicios clínicos, estéticos y productos comerciales de tu veterinaria.</p>
+                </div>
+                <div class="flex flex-col items-start gap-3 sm:items-end">
+                    <form method="GET" action="{{ route('client.servicios.index') }}" class="flex items-center gap-2">
+                        @if($search !== '')
+                            <input type="hidden" name="q" value="{{ $search }}">
+                        @endif
+                        <label for="services-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                        <select id="services-per-page" name="per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold theme-text-heading outline-none theme-input">
+                            @foreach([15, 30, 50, 100] as $option)
+                                <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        <span class="text-[10px] font-bold text-slate-400">filas</span>
+                    </form>
+                    <div class="dynamic-pagination max-w-full">
+                        {{ $items->links() }}
+                    </div>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                        <a href="{{ route('client.servicios.inventory') }}" class="inline-flex items-center justify-center gap-2 theme-bg-primary-soft theme-text-primary-strong border theme-border-primary-soft theme-hover-border-primary-soft px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all whitespace-nowrap">
+                            Inventario
+                        </a>
+
+                        <button data-tour="add-service" @click="openForm = !openForm" class="inline-flex items-center justify-center gap-2 theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all whitespace-nowrap">
+                            <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <form method="GET" action="{{ route('client.servicios.index') }}" class="relative w-full sm:max-w-md">
@@ -224,15 +223,15 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/10">
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Artículo / Concepto</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">SKU</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Precio Vigente</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Existencias</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Venta sin Stock</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                    <tr class="border-b border-slate-100 theme-surface-dark " >
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Artículo / Concepto</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">SKU</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Precio Vigente</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Existencias</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Venta sin Stock</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Estado</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -344,10 +343,8 @@
             </table>
         </div>
 
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $items->links() }}
-        </div>
     </div>
 
 </div>
 @endsection
+

@@ -304,7 +304,7 @@
                         </span>
                         <span>
                             <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Caballos</span>
-                            <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Pacientes activos</span>
+                            <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Caballos activos</span>
                         </span>
                     </div>
                 </a>

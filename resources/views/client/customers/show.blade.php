@@ -7,18 +7,13 @@
 <div
     x-data="{
         tab: '{{ session('activeCustomerTab', request('tab', 'mascotas')) }}',
-        hidePortalAccess: false,
         hideCustomerKpis: false,
+        animalModalOpen: false,
         init() {
-            this.hidePortalAccess = localStorage.getItem('customerProfile.hidePortalAccess') === '1';
             this.hideCustomerKpis = localStorage.getItem('customerProfile.hideCustomerKpis') === '1';
             if (@js($usesMonthlyCutoffBilling) && this.tab === 'configuracion') {
                 this.tab = 'notas';
             }
-        },
-        togglePortalAccess() {
-            this.hidePortalAccess = !this.hidePortalAccess;
-            localStorage.setItem('customerProfile.hidePortalAccess', this.hidePortalAccess ? '1' : '0');
         },
         toggleCustomerKpis() {
             this.hideCustomerKpis = !this.hideCustomerKpis;
@@ -27,29 +22,32 @@
         ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }}),
         ...statementModalState()
     }"
-    class="p-6 max-w-7xl mx-auto space-y-6"
+    class="-mt-4 p-6 max-w-7xl mx-auto space-y-6"
 >
 
     {{-- CABECERA --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
-            </p>
+    <div class="bg-white border border-slate-200 rounded-[24px] overflow-hidden">
+        <div class="p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                    {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                @unless($usesMonthlyCutoffBilling)
+                    <button @click="open = true" class="theme-button-primary px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                        + Registrar Pago
+                    </button>
+                @endunless
+                {{-- <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">&larr; Volver</a> --}}
+            <a href="{{ route('client.customers.index') }}"
+       class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">
+        &larr; Volver
+    </a>
+            </div>
         </div>
-        <div class="flex items-center gap-3">
-            @unless($usesMonthlyCutoffBilling)
-                <button @click="open = true" class="theme-button-primary px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
-                    + Registrar Pago
-                </button>
-            @endunless
-            {{-- <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">&larr; Volver</a> --}}
-        <a href="{{ route('client.customers.index') }}"
-   class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">
-    &larr; Volver
-</a>
-        </div>
+
     </div>
 
     {{-- FLASH --}}
@@ -80,56 +78,21 @@
         $portalUser = $latestPortalAccess?->user ?? $customer->portalUserLinks->first()?->user;
         $assignedPatientsCount = $customer->finalUserPatientAssignments->whereNull('revoked_at')->count();
     @endphp
+    @if($showCustomerKpiCards)
     <div class="flex justify-end">
         <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/80 p-1 shadow-sm">
             <button
                 type="button"
-                @click="togglePortalAccess()"
+                @click="toggleCustomerKpis()"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                :title="hidePortalAccess ? 'Mostrar acceso app' : 'Ocultar acceso app'"
-                :aria-label="hidePortalAccess ? 'Mostrar acceso app' : 'Ocultar acceso app'"
+                :title="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
+                :aria-label="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
             >
-                <span x-text="hidePortalAccess ? '▣' : '▢'"></span>
+                <span x-text="hideCustomerKpis ? '\u25A6' : '\u25A4'"></span>
             </button>
-            @if($showCustomerKpiCards)
-                <button
-                    type="button"
-                    @click="toggleCustomerKpis()"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                    :title="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
-                    :aria-label="hideCustomerKpis ? 'Mostrar KPIs' : 'Ocultar KPIs'"
-                >
-                    <span x-text="hideCustomerKpis ? '\u25A6' : '\u25A4'"></span>
-                </button>
-            @endif
         </div>
     </div>
-
-    <div x-show="!hidePortalAccess" x-cloak class="bg-white border border-slate-200 rounded-[24px] p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-3">
-                <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl {{ $activePortalAccess ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400' }} text-xs font-black">APP</span>
-                <div>
-                    <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Acceso app/web del customer</h2>
-                    <p class="text-[11px] font-semibold text-slate-400 mt-1">
-                        {{ $activePortalAccess ? 'Activo para login del cliente final.' : 'Suspendido o no activado.' }}
-                        {{ $portalUser ? ' Usuario: '.$portalUser->email.'.' : ' Sin usuario vinculado.' }}
-                    </p>
-                </div>
-            </div>
-            <p class="text-[11px] font-semibold text-slate-400 mt-3">
-                {{ $assignedPatientsCount }} paciente(s) preparado(s) para configuracion granular.
-            </p>
-        </div>
-
-        <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST">
-            @csrf
-            @method('PATCH')
-            <button type="submit" class="inline-flex items-center justify-center px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all {{ $activePortalAccess ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-indigo-600 text-white hover:bg-indigo-700' }}">
-                {{ $activePortalAccess ? 'Suspender acceso' : 'Activar acceso' }}
-            </button>
-        </form>
-    </div>
+    @endif
 
     @if($showCustomerKpiCards)
    {{-- KPIs dinamicos --}}
@@ -254,9 +217,9 @@
 
                 <div class="group bg-gradient-to-br from-indigo-600 to-violet-700 border-indigo-700 border rounded-[24px] p-6 shadow-xl flex items-center justify-between text-white">
                     <div class="space-y-1">
-                        <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Pacientes Registrados</p>
+                        <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Caballos Registrados</p>
                         <span class="block text-3xl font-black tracking-tight">{{ $customer->animals->count() }}</span>
-                        <p class="text-[10px] text-indigo-100 font-medium">paciente(s)</p>
+                        <p class="text-[10px] text-indigo-100 font-medium">caballo(s)</p>
                     </div>
                     <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-xl">&#9679;</div>
                 </div>
@@ -438,28 +401,35 @@
             </div>
             </div>
 
-            {{-- NAVEGACION DE TABS --}}
-    <div class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-        <button @click="tab = 'mascotas'" :class="tab === 'mascotas' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="relative rounded-xl border px-4 pr-8 py-3 text-xs font-black uppercase tracking-widest transition-all">
-            Caballos
-            <span class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->animals->count() }}</span>
-        </button>
-        <button @click="tab = 'notas'" :class="tab === 'notas' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="relative rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
-            {{ $usesMonthlyCutoffBilling ? 'Cuentas' : 'Notas' }}
-            {{-- <span class="absolute -    right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full {{ $usesMonthlyCutoffBilling && $billingBalance > 0 ? 'bg-rose-50 text-rose-600 ring-rose-100' : 'bg-slate-100 text-slate-500 ring-slate-200' }} px-1.5 text-[10px] font-black leading-none shadow-sm ring-1">{{ $usesMonthlyCutoffBilling ? '$'.number_format($billingBalance, 0) : $customer->saleNotes->count() }}</span> --}}
-        </button>
-        <button @click="tab = 'pagos'" :class="tab === 'pagos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="relative rounded-xl border px-4 pr-8 py-3 text-xs font-black uppercase tracking-widest transition-all">
-            Historial de Pagos
-            <span class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200">{{ $customer->payments->count() }}</span>
-        </button>
-        <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Datos</button>
-        @unless($usesMonthlyCutoffBilling)
-            <button @click="tab = 'configuracion'" :class="tab === 'configuracion' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Configuracion</button>
-        @endunless
-    </div>
-
     {{-- CONTENIDO DE TABS --}}
     <div class="bg-white border border-slate-200 rounded-[24px] overflow-hidden">
+        <div class="border-b border-slate-100 bg-white p-4">
+            <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div class="flex flex-wrap gap-2">
+                    @include('client.customers.partials.tabs-nav')
+                </div>
+                <div x-show="tab === 'mascotas'" x-cloak class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
+                       class="inline-flex items-center justify-center theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
+                        Agregar servicios
+                    </a>
+                    <button
+                        @click="animalModalOpen = true"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-button-primary text-xs font-black rounded-xl transition-colors"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Agregar Caballo
+                    </button>
+                </div>
+                <div x-show="tab === 'notas' || tab === 'pagos'" x-cloak class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                    <button type="button" @click="open = true" class="theme-button-primary rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
+                        {{ $usesMonthlyCutoffBilling ? 'Registrar abono' : 'Registrar pago' }}
+                    </button>
+                </div>
+            </div>
+        </div>
 
         {{-- TAB: NOTAS / CUENTAS --}}
         <div x-show="tab === 'notas'" class="p-6">
@@ -491,13 +461,13 @@
 
             <table class="w-full text-left">
                 <thead>
-                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
-                        <th class="pb-4">Periodo</th>
-                        <th class="pb-4 text-right">Consumo</th>
-                        <th class="pb-4 text-right">Pagos</th>
-                        <th class="pb-4 text-right">Saldo final</th>
-                        <th class="pb-4 text-center">Estado</th>
-                        <th class="pb-4 text-right">Acciones</th>
+                    <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black">Periodo</th>
+                        <th class="px-6 py-4 font-black text-right">Consumo</th>
+                        <th class="px-6 py-4 font-black text-right">Pagos</th>
+                        <th class="px-6 py-4 font-black text-right">Saldo final</th>
+                        <th class="px-6 py-4 font-black text-center">Estado</th>
+                        <th class="px-6 py-4 font-black text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -555,13 +525,13 @@
 
             <table class="w-full text-left">
                 <thead>
-                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
-                        <th class="pb-4">Folio</th>
-                        <th class="pb-4">Fecha</th>
-                        <th class="pb-4">Total</th>
-                        <th class="pb-4">Saldo</th>
-                        <th class="pb-4">Estatus</th>
-                        <th class="pb-4 text-right">Acciones</th>
+                    <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black">Folio</th>
+                        <th class="px-6 py-4 font-black">Fecha</th>
+                        <th class="px-6 py-4 font-black">Total</th>
+                        <th class="px-6 py-4 font-black">Saldo</th>
+                        <th class="px-6 py-4 font-black">Estatus</th>
+                        <th class="px-6 py-4 font-black text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -654,22 +624,22 @@
 
         {{-- TAB: MASCOTAS --}}
 <div x-show="tab === 'mascotas'" class="p-6">
-  <div x-data="{ open: false }">
+  <div>
     {{-- MODAL: AGREGAR MASCOTA --}}
     <div 
-        x-show="open"
+        x-show="animalModalOpen"
         x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-        @keydown.escape.window="open = false"
+        @keydown.escape.window="animalModalOpen = false"
     >
         <div
             class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
-            @click.outside="open = false"
+            @click.outside="animalModalOpen = false"
         >
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h3 class="text-sm font-black theme-text-heading">Nuevo Paciente</h3>
-                <button @click="open = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <h3 class="text-sm font-black theme-text-heading">Nuevo Caballo</h3>
+                <button @click="animalModalOpen = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -696,14 +666,17 @@
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Especie *</label>
+                        @php
+                            $defaultAnimalTypeId = old('animal_type_id', optional($animalTypes->first())->id);
+                        @endphp
                         <select
                             name="animal_type_id"
                             required
                             class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
-                            <option value="">Seleccionar...</option>
+                            <option value="" {{ blank($defaultAnimalTypeId) ? 'selected' : '' }}>Seleccionar...</option>
                             @foreach($animalTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                <option value="{{ $type->id }}" {{ (string) $defaultAnimalTypeId === (string) $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -797,7 +770,7 @@
                 <div class="flex justify-end gap-3 pt-2">
                     <button
                         type="button"
-                        @click="open = false"
+                        @click="animalModalOpen = false"
                         class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
                     >
                         Cancelar
@@ -816,36 +789,19 @@
     {{-- CONTENIDO DEL TAB --}}
     <div >
 
-        {{-- Acciones del tab --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
-            <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
-               class="inline-flex items-center justify-center theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
-                Agregar servicios
-            </a>
-            <button
-                @click="open = true"
-                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-button-primary text-xs font-black rounded-xl transition-colors"
-            >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Agregar Paciente
-            </button>
-        </div>
-
         {{-- Tabla de mascotas --}}
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
-                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest">
-                        <th class="px-4 py-3 pb-4">Nombre</th>
-                        <th class="px-4 py-3 pb-4 text-center">Historial</th>
-                        <th class="px-4 py-3 pb-4 text-center">Vacunacion</th>
-                        <th class="px-4 py-3 pb-4">Sexo</th>
-                        <th class="px-4 py-3 pb-4">Edad</th>
-                        <th class="px-4 py-3 pb-4">Club</th>
-                        <th class="px-4 py-3 pb-4">Estatus</th>
-                        <th class="px-4 py-3 pb-4 text-right">Acciones</th>
+                    <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black">Nombre</th>
+                        <th class="px-6 py-4 font-black text-center">Historial</th>
+                        <th class="px-6 py-4 font-black text-center">Vacunacion</th>
+                        <th class="px-6 py-4 font-black">Sexo</th>
+                        <th class="px-6 py-4 font-black">Edad</th>
+                        <th class="px-6 py-4 font-black">Club</th>
+                        <th class="px-6 py-4 font-black">Estatus</th>
+                        <th class="px-6 py-4 font-black text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100" x-data="{ openShare: null }">
@@ -891,7 +847,7 @@
                                             {{ $animal->name }}
                                         </span>
                                         <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500 transition-colors group-hover:bg-slate-200">
-                                            Paciente
+                                            Caballo
                                         </span>
                                     </div>
                                     
@@ -1013,24 +969,15 @@
 </div>
         {{-- TAB: PAGOS --}}
         <div x-show="tab === 'pagos'" class="p-6">
-            <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4">
-                <button type="button" @click="open = true" class="theme-button-primary rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
-                    {{ $usesMonthlyCutoffBilling ? 'Registrar abono' : 'Registrar pago' }}
-                </button>
-                <span class="text-[11px] font-semibold text-slate-400">
-                    {{ $usesMonthlyCutoffBilling ? 'Registra abonos globales contra el saldo del cliente.' : 'Registra pagos para las notas pendientes del cliente.' }}
-                </span>
-            </div>
-
             <table class="w-full text-left">
                 <thead>
-                    <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                        <th class="pb-4">Fecha</th>
-                        <th class="pb-4">Referencia</th>
-                        <th class="pb-4">Metodo</th>
-                        <th class="pb-4 text-right">Aplicado</th>
-                        <th class="pb-4 text-right">Saldo a favor</th>
-                        <th class="pb-4 text-right">Monto</th>
+                    <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black">Fecha</th>
+                        <th class="px-6 py-4 font-black">Referencia</th>
+                        <th class="px-6 py-4 font-black">Metodo</th>
+                        <th class="px-6 py-4 font-black text-right">Aplicado</th>
+                        <th class="px-6 py-4 font-black text-right">Saldo a favor</th>
+                        <th class="px-6 py-4 font-black text-right">Monto</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -1123,11 +1070,38 @@
                     </div>
                 </div>
 
+                <div class="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl {{ $activePortalAccess ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400' }} text-xs font-black">APP</span>
+                            <div>
+                                <p class="text-xs font-black theme-text-heading uppercase tracking-widest">Acceso App/Web del Cliente</p>
+                                <p class="text-[11px] font-semibold text-slate-400 mt-0.5">
+                                    {{ $activePortalAccess ? 'Activo para login del cliente final.' : 'Suspendido o no activado.' }}
+                                    {{ $portalUser ? ' Usuario: '.$portalUser->email.'.' : ' Sin usuario vinculado.' }}
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] font-semibold text-slate-400 mt-3">
+                            {{ $assignedPatientsCount }} paciente(s) preparado(s) para configuracion granular.
+                        </p>
+                    </div>
+
+                    <button type="submit" form="customer-portal-access-form" class="inline-flex items-center justify-center px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all {{ $activePortalAccess ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-indigo-600 text-white hover:bg-indigo-700' }}">
+                        {{ $activePortalAccess ? 'Suspender acceso' : 'Activar acceso' }}
+                    </button>
+                </div>
+
                 <div class="flex justify-end">
                     <button type="submit" class="theme-button-primary px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
                         Actualizar Datos
                     </button>
                 </div>
+            </form>
+
+            <form id="customer-portal-access-form" action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST" class="hidden">
+                @csrf
+                @method('PATCH')
             </form>
         </div>
 
