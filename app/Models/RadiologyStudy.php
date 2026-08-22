@@ -12,6 +12,7 @@ class RadiologyStudy extends Model
     protected $fillable = [
         'tenant_id',
         'animal_id',
+        'modality',
         'name',
         'study_date',
         'notes',
@@ -25,6 +26,22 @@ class RadiologyStudy extends Model
         'visible_to_customer' => 'boolean',
         'published_at' => 'datetime',
     ];
+
+    public const MODALITY_RADIOLOGY = 'radiology';
+    public const MODALITY_ULTRASOUND = 'ultrasound';
+
+    public static function modalities(): array
+    {
+        return [
+            self::MODALITY_RADIOLOGY,
+            self::MODALITY_ULTRASOUND,
+        ];
+    }
+
+    public function isUltrasound(): bool
+    {
+        return $this->modality === self::MODALITY_ULTRASOUND;
+    }
 
     public function tenant()
     {

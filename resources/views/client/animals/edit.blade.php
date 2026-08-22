@@ -4,10 +4,15 @@
 @section('contextual-tour', 'patient-record')
 
 @section('content')
-<div class="space-y-6" x-data="{
+<div class="space-y-6"
+     @keydown.escape.window="if (mediaCarouselOpen) closeMediaCarousel()"
+     @keydown.arrow-right.window="nextMediaImage()"
+     @keydown.arrow-left.window="previousMediaImage()"
+     x-data="{
     tab: @js(request('tab', session('animalTab', old('intent') ? 'reportes' : 'datos'))),
     loading: false,
     microchipUploading: false,
+    microchipImageOpen: false,
     vaccinationFormOpen: @js($errors->has('date') || $errors->has('vaccine_name') || $errors->has('image')),
     vaccinationSaving: false,
     reportFormOpen: @js((bool) old('intent')),
@@ -25,8 +30,47 @@
     radiologyFormOpen: false,
     radiologyImageFormOpen: false,
     radiologyUploading: false,
-    radiologyImageUrl: '',
-    radiologyImageTitle: '',
+    ultrasoundStudyOpen: null,
+    ultrasoundStudyTitle: '',
+    ultrasoundStudyDate: '',
+    ultrasoundStudyNotes: '',
+    ultrasoundFormOpen: false,
+    ultrasoundImageFormOpen: false,
+    ultrasoundUploading: false,
+    mediaCarouselOpen: false,
+    mediaCarouselImages: [],
+    mediaCarouselIndex: 0,
+    openMediaCarousel(images, index) {
+        if (!images.length) {
+            return;
+        }
+
+        this.mediaCarouselImages = images;
+        this.mediaCarouselIndex = index;
+        this.mediaCarouselOpen = true;
+    },
+    closeMediaCarousel() {
+        this.mediaCarouselOpen = false;
+        this.mediaCarouselImages = [];
+        this.mediaCarouselIndex = 0;
+    },
+    nextMediaImage() {
+        if (!this.mediaCarouselOpen || this.mediaCarouselImages.length < 2) {
+            return;
+        }
+
+        this.mediaCarouselIndex = (this.mediaCarouselIndex + 1) % this.mediaCarouselImages.length;
+    },
+    previousMediaImage() {
+        if (!this.mediaCarouselOpen || this.mediaCarouselImages.length < 2) {
+            return;
+        }
+
+        this.mediaCarouselIndex = (this.mediaCarouselIndex - 1 + this.mediaCarouselImages.length) % this.mediaCarouselImages.length;
+    },
+    currentMediaImage() {
+        return this.mediaCarouselImages[this.mediaCarouselIndex] ?? { url: '', title: '' };
+    },
     validateVideoFile(event) {
         const file = event.target.files[0] ?? null;
 
@@ -131,6 +175,16 @@
         </div>
     </div>
 
+    <div x-show="ultrasoundUploading" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full theme-bg-primary-soft">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 theme-border-primary-soft theme-spinner-primary"></div>
+            </div>
+            <p class="mt-4 text-sm font-black uppercase tracking-widest theme-text-heading">Guardando ultrasonido</p>
+            <p class="mt-2 text-xs font-semibold text-slate-500">Subiendo archivos de ultrasonido al expediente.</p>
+        </div>
+    </div>
+
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
         @if(session('success'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition class="bg-white border-l-4 border-emerald-500 rounded-xl shadow-xl p-4 flex items-center justify-between border border-slate-100">
@@ -171,26 +225,32 @@
 
     <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         <div class="border-b border-slate-100 px-6 py-4">
-            <nav class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-                <button data-tour="patient-tab-details" type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+            <nav class="flex flex-wrap gap-2 md:flex-nowrap">
+                <button data-tour="patient-tab-details" type="button" @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Datos del Caballo
                 </button>
-                <button data-tour="patient-tab-history" type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+                <button data-tour="patient-tab-history" type="button" @click="tab = 'historial'" :class="tab === 'historial' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Historial de Servicios
                 </button>
-                <button data-tour="patient-tab-vaccination" type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+                <button data-tour="patient-tab-vaccination" type="button" @click="tab = 'vacunacion'" :class="tab === 'vacunacion' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Cartas de Vacunacion
                 </button>
-                <button data-tour="patient-tab-videos" type="button" @click="tab = 'videos'" :class="tab === 'videos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+                <button type="button" @click="tab = 'microchip'" :class="tab === 'microchip' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
+                    Carta de Microchip
+                </button>
+                <button data-tour="patient-tab-videos" type="button" @click="tab = 'videos'" :class="tab === 'videos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Videos
                 </button>
-                <button data-tour="patient-tab-radiology" type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+                <button data-tour="patient-tab-radiology" type="button" @click="tab = 'radiologia'" :class="tab === 'radiologia' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Radiologia
                 </button>
-                <button type="button" @click="tab = 'reportes'" :class="tab === 'reportes' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+                <button type="button" @click="tab = 'ultrasonido'" :class="tab === 'ultrasonido' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
+                    Ultrasonido
+                </button>
+                <button type="button" @click="tab = 'reportes'" :class="tab === 'reportes' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Reportes
                 </button>
-                <button data-tour="patient-tab-telemedicine" type="button" @click="tab = 'telemedicina'" :class="tab === 'telemedicina' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">
+                <button data-tour="patient-tab-telemedicine" type="button" @click="tab = 'telemedicina'" :class="tab === 'telemedicina' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-3 py-2.5 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap">
                     Telemedicina
                 </button>
             </nav>
@@ -293,9 +353,12 @@
                         <div class="flex flex-col gap-2 sm:flex-row">
                             <input type="text" name="microchip" value="{{ old('microchip', $animal->microchip) }}" inputmode="numeric" pattern="[0-9]{15}" maxlength="15" title="Debe contener exactamente 15 digitos numericos" class="min-w-0 flex-1 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
                             @if($animal->microchip_image_path)
-                                <a href="{{ route('public.microchip-letters.print', $animal->microchip_print_token) }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-                                    Imprimir chip
-                                </a>
+                                <button type="button" @click="microchipImageOpen = true" class="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition hover:bg-slate-50">
+                                    <span class="h-10 w-10 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200">
+                                        <img src="{{ route('client.animals.microchip-image.show', $animal) }}" alt="Foto de microchip" class="h-full w-full object-cover">
+                                    </span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest theme-text-heading">Ver foto</span>
+                                </button>
                                 <button type="submit" form="delete-microchip-image-form" onclick="return confirm('¿Eliminar la foto del microchip?')" class="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-100">
                                     Eliminar
                                 </button>
@@ -348,6 +411,18 @@
                     @csrf
                     @method('DELETE')
                 </form>
+
+                <div x-show="microchipImageOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[120] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
+                    <div @click.outside="microchipImageOpen = false" class="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                        <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                            <p class="truncate text-sm font-black theme-text-heading">Foto de microchip</p>
+                            <button type="button" @click="microchipImageOpen = false" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                        </div>
+                        <div class="overflow-auto bg-slate-950 p-4">
+                            <img src="{{ route('client.animals.microchip-image.show', $animal) }}" alt="Foto de microchip" class="mx-auto max-h-[72vh] max-w-full object-contain">
+                        </div>
+                    </div>
+                </div>
             @endif
         </div>
 
@@ -650,6 +725,72 @@
 
         --}}
 
+        <div x-show="tab === 'microchip'" class="p-6 space-y-6" x-cloak>
+            <div class="overflow-hidden border border-slate-200 rounded-2xl bg-white">
+                <div class="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm font-black theme-text-heading">Carta de microchip</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-1">La carta se genera con la foto de microchip guardada en Datos del Caballo.</p>
+                    </div>
+
+                    @if($animal->microchip_image_path)
+                        <a href="{{ route('client.animals.microchip-letter', $animal) }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-widest">
+                            Imprimir carta
+                        </a>
+                    @endif
+                </div>
+
+                @if($animal->microchip_image_path)
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
+                                    <th class="w-24 px-6 py-4 font-black text-center">Carta</th>
+                                    <th class="px-6 py-4 font-black">Microchip</th>
+                                    <th class="px-6 py-4 font-black">Paciente</th>
+                                    <th class="px-6 py-4 font-black">Fecha</th>
+                                    <th class="px-6 py-4 font-black text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50/70 transition-colors">
+                                    <td class="px-4 py-3 text-center">
+                                        <a href="{{ route('client.animals.microchip-letter', $animal) }}" target="_blank" rel="noopener" class="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 transition-all hover:ring-slate-300" title="Ver carta">
+                                            <span class="text-lg font-black theme-text-primary">ID</span>
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <p class="text-xs font-black theme-text-heading">{{ $animal->microchip ?: 'Sin numero registrado' }}</p>
+                                        <p class="text-[11px] font-semibold text-slate-400 mt-0.5">Foto registrada en expediente</p>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <p class="text-xs font-black theme-text-heading">{{ $animal->name }}</p>
+                                        <p class="text-[11px] font-semibold text-slate-400 mt-0.5">{{ $animal->customer?->full_name ?? 'Sin propietario' }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <p class="text-xs font-black theme-text-heading">{{ $animal->microchip_finalized_at?->format('d/m/Y H:i') ?? 'Pendiente de generar' }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <a href="{{ route('client.animals.microchip-letter', $animal) }}" target="_blank" rel="noopener" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-200">
+                                            Imprimir
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="px-6 py-12 text-center">
+                        <p class="text-sm font-black theme-text-heading">Sin carta de microchip</p>
+                        <p class="text-xs font-semibold text-slate-400 mt-2">Sube la foto del microchip desde Datos del Caballo para poder imprimir la carta.</p>
+                        <button type="button" @click="tab = 'datos'" class="mt-5 rounded-xl theme-button-primary px-5 py-3 text-[10px] font-black uppercase tracking-widest">
+                            Ir a Datos del Caballo
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+
         <div x-show="tab === 'videos'" class="p-6 space-y-6" x-cloak>
             <div class="overflow-hidden border border-slate-200 rounded-2xl bg-white">
                 <div class="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -865,8 +1006,14 @@
             </div>
 
             @foreach($animal->radiologyStudies as $study)
+                @php
+                    $radiologyCarouselImages = $study->images->values()->map(fn ($image) => [
+                        'url' => route('client.radiology-images.show', $image),
+                        'title' => $image->label ?: $image->original_name ?: 'RX',
+                    ])->all();
+                @endphp
                 <div x-show="radiologyStudyOpen === {{ $study->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
-                    <div @click.outside="radiologyStudyOpen = null; radiologyImageUrl = ''" class="relative flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <div @click.outside="radiologyStudyOpen = null" class="relative flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
                         <div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-black theme-text-heading">{{ $study->name }}</p>
@@ -881,7 +1028,7 @@
                                     @method('DELETE')
                                     <button type="submit" class="rounded-xl bg-rose-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100">Eliminar</button>
                                 </form>
-                                <button type="button" @click="radiologyStudyOpen = null; radiologyImageUrl = ''" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200">Cerrar</button>
+                                <button type="button" @click="radiologyStudyOpen = null" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200">Cerrar</button>
                             </div>
                         </div>
 
@@ -896,7 +1043,7 @@
                             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                                 @forelse($study->images as $image)
                                     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                                        <button type="button" @click="radiologyImageUrl = @js(route('client.radiology-images.show', $image)); radiologyImageTitle = @js($image->label ?: $image->original_name ?: 'RX')" class="block aspect-square w-full bg-slate-100">
+                                        <button type="button" @click="openMediaCarousel(@js($radiologyCarouselImages), {{ $loop->index }})" class="block aspect-square w-full bg-slate-100">
                                             <img src="{{ route('client.radiology-images.show', $image) }}" alt="{{ $image->label ?? $image->original_name ?? 'RX' }}" class="h-full w-full object-cover">
                                         </button>
                                         <div class="space-y-2 p-3">
@@ -928,8 +1075,8 @@
                             </div>
                         </div>
 
-                        <div x-show="radiologyImageFormOpen" x-cloak x-transition.opacity class="absolute inset-0 z-[111] flex items-start justify-center overflow-y-auto theme-overlay px-4 py-6 backdrop-blur-sm">
-                            <div @click.outside="radiologyImageFormOpen = false" class="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
+                        <div x-show="radiologyImageFormOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[130] flex items-center justify-center overflow-y-auto theme-overlay px-4 py-6 backdrop-blur-sm">
+                            <div @click.outside="radiologyImageFormOpen = false" class="w-full max-w-xl max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
                                 <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                                     <div>
                                         <p class="text-sm font-black theme-text-heading">Agregar RX</p>
@@ -938,7 +1085,7 @@
                                     <button type="button" @click="radiologyImageFormOpen = false" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
                                 </div>
 
-                                <form action="{{ route('client.radiology-studies.images.store', $study) }}" method="POST" enctype="multipart/form-data" @submit="radiologyUploading = true; radiologyImageFormOpen = false; radiologyStudyOpen = null" class="max-h-[72vh] space-y-4 overflow-y-auto p-5">
+                                <form action="{{ route('client.radiology-studies.images.store', $study) }}" method="POST" enctype="multipart/form-data" @submit="radiologyUploading = true; radiologyImageFormOpen = false; radiologyStudyOpen = null" class="max-h-[calc(100vh-9rem)] space-y-4 overflow-y-auto p-5">
                                     @csrf
                                     <div class="space-y-2">
                                         <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Etiqueta</label>
@@ -963,21 +1110,232 @@
                             </div>
                         </div>
 
-                        <div x-show="radiologyImageUrl" x-cloak x-transition.opacity class="absolute inset-0 z-[112] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
-                            <div @click.outside="radiologyImageUrl = ''" class="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-                                <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
-                                    <p class="truncate text-sm font-black theme-text-heading" x-text="radiologyImageTitle"></p>
-                                    <button type="button" @click="radiologyImageUrl = ''" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
-                                </div>
-                                <div class="overflow-auto bg-slate-950 p-4">
-                                    <img :src="radiologyImageUrl" alt="RX" class="mx-auto max-h-[72vh] max-w-full object-contain">
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             @endforeach
         </div>
+
+        <div x-show="tab === 'ultrasonido'" class="p-6 space-y-6" x-cloak>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm font-black theme-text-heading">Carpetas de ultrasonido</p>
+                    <p class="text-[11px] text-slate-400 font-semibold mt-1">Cada carpeta agrupa imagenes de ultrasonido de un estudio o visita.</p>
+                </div>
+                <button type="button" @click="ultrasoundFormOpen = true" class="inline-flex items-center justify-center rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                    Nueva carpeta
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @forelse($animal->ultrasoundStudies as $study)
+                    <button type="button"
+                            @click="ultrasoundStudyOpen = {{ $study->id }}; ultrasoundStudyTitle = @js($study->name); ultrasoundStudyDate = @js($study->study_date->format('d/m/Y')); ultrasoundStudyNotes = @js($study->notes ?? '')"
+                            class="group relative min-h-[140px] overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md">
+                        <div class="absolute left-5 top-0 h-6 w-28 rounded-b-xl bg-amber-200/80"></div>
+                        <div class="pt-5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-black theme-text-heading">{{ $study->name }}</p>
+                                    <p class="mt-1 text-[11px] font-bold uppercase tracking-widest text-amber-700">{{ $study->study_date->format('d/m/Y') }}</p>
+                                </div>
+                                <span class="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-amber-700 ring-1 ring-amber-200">
+                                    {{ $study->images->count() }} imagen(es)
+                                </span>
+                            </div>
+                            <p class="mt-4 line-clamp-2 text-xs font-semibold text-slate-500">
+                                {{ \Illuminate\Support\Str::limit($study->notes ?: 'Sin notas registradas.', 100) }}
+                            </p>
+                        </div>
+                    </button>
+                @empty
+                    <div class="sm:col-span-2 xl:col-span-3 border border-dashed border-slate-200 rounded-2xl px-6 py-12 text-center">
+                        <p class="text-sm font-black theme-text-heading">Sin carpetas de ultrasonido</p>
+                        <p class="text-xs font-semibold text-slate-400 mt-2">Crea la primera carpeta para agrupar imagenes de ultrasonido.</p>
+                    </div>
+                @endforelse
+            </div>
+
+            <div x-show="ultrasoundFormOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
+                <div @click.outside="ultrasoundFormOpen = false" class="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                        <div>
+                            <p class="text-sm font-black theme-text-heading">Nueva carpeta de ultrasonido</p>
+                            <p class="text-[11px] text-slate-400 font-semibold mt-1">Crea la cabecera del estudio de ultrasonido.</p>
+                        </div>
+                        <button type="button" @click="ultrasoundFormOpen = false" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                    </div>
+
+                    <form action="{{ route('client.animals.radiology-studies.store', $animal) }}" method="POST" class="space-y-4 p-5">
+                        @csrf
+                        <input type="hidden" name="modality" value="ultrasound">
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Nombre *</label>
+                            <input type="text" name="name" value="{{ old('name') }}" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none" placeholder="Ej. Ultrasonido abdominal">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Fecha *</label>
+                            <input type="date" name="study_date" value="{{ old('study_date', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas</label>
+                            <textarea name="notes" rows="4" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none" placeholder="Notas generales del estudio...">{{ old('notes') }}</textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" @click="ultrasoundFormOpen = false" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-200">Cancelar</button>
+                            <button type="submit" class="theme-button-primary px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">Crear carpeta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @foreach($animal->ultrasoundStudies as $study)
+                @php
+                    $ultrasoundCarouselImages = $study->images->values()->map(fn ($image) => [
+                        'url' => route('client.radiology-images.show', $image),
+                        'title' => $image->label ?: $image->original_name ?: 'Ultrasonido',
+                    ])->all();
+                @endphp
+                <div x-show="ultrasoundStudyOpen === {{ $study->id }}" x-cloak x-transition.opacity class="fixed inset-0 z-[110] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
+                    <div @click.outside="ultrasoundStudyOpen = null" class="relative flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                        <div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-black theme-text-heading">{{ $study->name }}</p>
+                                <p class="mt-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">{{ $study->study_date->format('d/m/Y') }} &middot; {{ $study->images->count() }} imagen(es)</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" @click="ultrasoundImageFormOpen = true" class="rounded-xl theme-button-primary px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em]">
+                                    Agregar Ultrasonido
+                                </button>
+                                <form action="{{ route('client.radiology-studies.destroy', $study) }}" method="POST" onsubmit="return confirm('Eliminar esta carpeta y todas sus imagenes de ultrasonido?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="rounded-xl bg-rose-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100">Eliminar</button>
+                                </form>
+                                <button type="button" @click="ultrasoundStudyOpen = null" class="rounded-xl bg-slate-100 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200">Cerrar</button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-y-auto p-5">
+                            @if($study->notes)
+                                <div class="mb-5 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Notas</p>
+                                    <p class="mt-2 whitespace-pre-line text-sm font-semibold text-slate-600">{{ $study->notes }}</p>
+                                </div>
+                            @endif
+
+                            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                                @forelse($study->images as $image)
+                                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                        <button type="button" @click="openMediaCarousel(@js($ultrasoundCarouselImages), {{ $loop->index }})" class="block aspect-square w-full bg-slate-100">
+                                            <img src="{{ route('client.radiology-images.show', $image) }}" alt="{{ $image->label ?? $image->original_name ?? 'Ultrasonido' }}" class="h-full w-full object-cover">
+                                        </button>
+                                        <div class="space-y-2 p-3">
+                                            <div>
+                                                <p class="truncate text-xs font-black theme-text-heading">{{ $image->label ?: 'Ultrasonido' }}</p>
+                                                <p class="mt-1 text-[11px] font-semibold text-slate-400">
+                                                    {{ \Illuminate\Support\Str::limit($image->original_name ?? 'Imagen', 24) }}
+                                                    @if($image->size)
+                                                        &middot; {{ number_format($image->size / 1048576, 1) }} MB
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            @if($image->notes)
+                                                <p class="line-clamp-2 text-[11px] font-semibold text-slate-500">{{ $image->notes }}</p>
+                                            @endif
+                                            <form action="{{ route('client.radiology-images.destroy', $image) }}" method="POST" onsubmit="return confirm('Eliminar esta imagen de ultrasonido?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="rounded-lg bg-rose-50 px-2.5 py-2 text-[9px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100">Eliminar imagen</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-span-full rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center">
+                                        <p class="text-sm font-black theme-text-heading">Carpeta sin imagenes</p>
+                                        <p class="mt-2 text-xs font-semibold text-slate-400">Agrega imagenes de ultrasonido a este estudio.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div x-show="ultrasoundImageFormOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[130] flex items-center justify-center overflow-y-auto theme-overlay px-4 py-6 backdrop-blur-sm">
+                            <div @click.outside="ultrasoundImageFormOpen = false" class="w-full max-w-xl max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
+                                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                                    <div>
+                                        <p class="text-sm font-black theme-text-heading">Agregar Ultrasonido</p>
+                                        <p class="text-[11px] text-slate-400 font-semibold mt-1">{{ $study->name }}</p>
+                                    </div>
+                                    <button type="button" @click="ultrasoundImageFormOpen = false" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                                </div>
+
+                                <form action="{{ route('client.radiology-studies.images.store', $study) }}" method="POST" enctype="multipart/form-data" @submit="ultrasoundUploading = true; ultrasoundImageFormOpen = false; ultrasoundStudyOpen = null" class="max-h-[calc(100vh-9rem)] space-y-4 overflow-y-auto p-5">
+                                    @csrf
+                                    <div class="space-y-2">
+                                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Etiqueta</label>
+                                        <input type="text" name="label" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none" placeholder="Ej. Lateral izquierda">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Notas</label>
+                                        <textarea name="notes" rows="3" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none resize-none" placeholder="Notas de estas imagenes..."></textarea>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Imagenes de ultrasonido *</label>
+                                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <input type="file" name="images[]" accept="image/png,image/jpeg,image/webp" multiple required class="block min-w-0 flex-1 text-xs font-bold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-xs file:font-black file:uppercase file:tracking-widest file:text-white">
+                                            <button type="submit" class="shrink-0 theme-button-primary px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">Guardar imagenes</button>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 font-semibold">Formatos: JPG, PNG o WEBP. Maximo 20 MB por imagen.</p>
+                                    </div>
+                                    <div class="flex justify-end gap-3 pt-2">
+                                        <button type="button" @click="ultrasoundImageFormOpen = false" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-200">Cancelar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div x-show="mediaCarouselOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[140] flex items-center justify-center theme-overlay px-4 py-6 backdrop-blur-sm">
+            <div @click.outside="closeMediaCarousel()" class="flex max-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-black theme-text-heading" x-text="currentMediaImage().title"></p>
+                        <p class="mt-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                            <span x-text="mediaCarouselIndex + 1"></span> / <span x-text="mediaCarouselImages.length"></span>
+                        </p>
+                    </div>
+                    <button type="button" @click="closeMediaCarousel()" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
+                </div>
+
+                <div class="relative flex min-h-[55vh] items-center justify-center bg-slate-950 p-4">
+                    <button type="button"
+                            x-show="mediaCarouselImages.length > 1"
+                            @click.stop="previousMediaImage()"
+                            class="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl font-black text-slate-900 shadow-lg hover:bg-white">
+                        &lsaquo;
+                    </button>
+
+                    <template x-if="mediaCarouselOpen">
+                        <img :src="currentMediaImage().url" :alt="currentMediaImage().title" class="max-h-[72vh] max-w-full object-contain">
+                    </template>
+
+                    <button type="button"
+                            x-show="mediaCarouselImages.length > 1"
+                            @click.stop="nextMediaImage()"
+                            class="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl font-black text-slate-900 shadow-lg hover:bg-white">
+                        &rsaquo;
+                    </button>
+                </div>
+            </div>
+        </div>
+
 
         <div x-show="tab === 'reportes'" class="p-6 space-y-5" x-cloak>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1172,3 +1530,5 @@
     </div>
 </div>
 @endsection
+
+

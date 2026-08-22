@@ -311,6 +311,7 @@ class CustomerPortalController extends Controller
         $studies = RadiologyStudy::with(['images' => fn ($query) => $query->orderBy('id')])
             ->where('tenant_id', $access->tenant_id)
             ->where('animal_id', $patient->id)
+            ->where('modality', RadiologyStudy::MODALITY_RADIOLOGY)
             ->latest('study_date')
             ->get();
 

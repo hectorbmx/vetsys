@@ -40,6 +40,22 @@
             color: #0f172a;
             margin-bottom: 2px;
         }
+        .tenant-logo {
+            display: inline-block;
+            width: 42px;
+            max-height: 42px;
+            margin-right: 10px;
+            vertical-align: top;
+        }
+        .tenant-logo img {
+            width: 42px;
+            max-height: 42px;
+            object-fit: contain;
+        }
+        .tenant-meta {
+            display: inline-block;
+            vertical-align: top;
+        }
         .vet-meta {
             font-size: 8px;
             color: #64748b;
@@ -364,15 +380,20 @@
 <body>
 
     {{-- SECCION --}}
-         CABECERA
-    {{-- SECCION --}}
     <div class="header">
         <div class="header-inner">
             <div class="header-left">
-                <div class="vet-name">{{ $tenant->business_name ?? $tenant->name }}</div>
-                <div class="vet-meta">
-                    @if($tenant->email) {{ $tenant->email }}<br>@endif
-                    @if($tenant->phone) Tel. {{ $tenant->phone }}@endif
+                @if(! empty($tenantLogoSrc))
+                    <div class="tenant-logo">
+                        <img src="{{ $tenantLogoSrc }}" alt="Logo {{ $tenant->business_name ?? $tenant->name }}">
+                    </div>
+                @endif
+                <div class="tenant-meta">
+                    <div class="vet-name">{{ $tenant->business_name ?? $tenant->name }}</div>
+                    <div class="vet-meta">
+                        @if($tenant->email) {{ $tenant->email }}<br>@endif
+                        @if($tenant->phone) Tel. {{ $tenant->phone }}@endif
+                    </div>
                 </div>
             </div>
             <div class="header-right">
@@ -558,38 +579,6 @@
     @endforelse
     @endif
 
-    {{-- PAGOS DEL PERIODO --}}
-    <div class="payments-section">
-        <div class="section-title">Pagos Registrados</div>
-
-        @if($payments->isNotEmpty())
-            <table class="payments-table">
-                <thead>
-                    <tr>
-                        <th style="width:25%">Fecha</th>
-                        <th style="width:45%">Referencia</th>
-                        <th style="width:30%">Método</th>
-                        <th class="right" style="width:20%">Monto</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($payments as $payment)
-                        <tr>
-                            <td>{{ $payment->created_at->format('d/m/Y') }}</td>
-                            <td>{{ $payment->reference ?? 'Pago aplicado' }}</td>
-                            <td>{{ $payment->paymentMethod->name ?? 'N/A' }}</td>
-                            <td class="right">+${{ number_format($payment->amount, 2) }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <div style="padding: 12px; text-align:center; color:#94a3b8; font-size:9px; border:1px dashed #e2e8f0; border-radius:4px;">
-                Sin pagos en este perí­odo.
-            </div>
-        @endif
-    </div>
-
     {{-- SECCION --}}
          {{-- RESUMEN FINAL --}}
     {{-- SECCION --}}
@@ -606,12 +595,12 @@
                 <span class="summary-value">${{ number_format($totalInvoiced, 2) }}</span>
             </div>
             <div class="summary-row">
-                <span class="summary-label">Total Pagado (período)</span>
+                <span class="summary-label">Total Abonado (período)</span>
                 <span class="summary-value paid">${{ number_format($totalPaid, 2) }}</span>
             </div>
             <div class="summary-row summary-highlight">
                 <span class="summary-label" style="color:#0f172a; font-size:9px;">Saldo Pendiente</span>
-                <span class="summary-value {{ $totalDebt > 0 ? 'debt' : 'paid' }}">${{ number_format($totalDebt, 2) }}</span>
+                <span class="summary-value {{ ($globalBalance ?? $totalDebt) > 0 ? 'debt' : 'paid' }}">${{ number_format((float) ($globalBalance ?? $totalDebt), 2) }}</span>
             </div>
         </div>
     </div>

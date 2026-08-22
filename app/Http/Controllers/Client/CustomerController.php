@@ -163,7 +163,7 @@ public function show($id)
         'portalAccesses.user',
         'finalUserPatientAssignments.animal',
         'animalPortalVisibilitySettings',
-        'statements' => fn ($query) => $query->latest(),
+        'statements' => fn ($query) => $query->orderByDesc('created_at'),
     ])->findOrFail($id);
     $this->authorizeTenant($customer);
 
@@ -216,11 +216,17 @@ public function show($id)
         $statementGenerator = app(CustomerStatementGenerator::class);
 
         $customer->statements->each(function ($statement) use ($customer, $statementGenerator) {
-            $currentTotals = $statementGenerator->calculateRangeTotals(
+            $statementData = $statementGenerator->dataForRange(
                 $customer,
                 $statement->period_start->copy()->startOfDay(),
                 $statement->period_end->copy()->endOfDay()
             );
+            $currentTotals = [
+                'period_charges' => round((float) $statementData['period_charges'], 2),
+                'period_payments' => round((float) $statementData['period_payments'], 2),
+                'ending_balance' => round((float) $statementData['ending_balance'], 2),
+            ];
+            $servicesCount = $statementData['serviceDetailsByMonth']->flatten(1)->count();
 
             $needsRecalculation =
                 round((float) $statement->period_charges, 2) !== $currentTotals['period_charges']
@@ -231,6 +237,7 @@ public function show($id)
             $statement->setAttribute('current_period_charges', $currentTotals['period_charges']);
             $statement->setAttribute('current_period_payments', $currentTotals['period_payments']);
             $statement->setAttribute('current_ending_balance', $currentTotals['ending_balance']);
+            $statement->setAttribute('services_count', $servicesCount);
         });
     }
 

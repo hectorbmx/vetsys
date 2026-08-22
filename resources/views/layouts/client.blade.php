@@ -283,8 +283,8 @@
                    class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
                     <div class="flex items-center justify-center gap-3 text-center">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11a4 4 0 10-8 0m8 0a4 4 0 11-8 0m8 0c2.5.4 4 1.8 4 4v2H4v-2c0-2.2 1.5-3.6 4-4m10-1.5a3 3 0 011.7 5.5M6 8.5A3 3 0 004.3 14" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                             </svg>
                         </span>
                         <span>
@@ -297,10 +297,8 @@
                 <a href="{{ route('client.animals.index') }}"
                    class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
                     <div class="flex items-center justify-center gap-3 text-center">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 16.5V11l2.5-3.5h7L19 11v5.5M7.5 7.5l-1-3M15 7.5l1.5-3M8 16.5v3M17 16.5v3M9 11h.01M15 11h.01M10 14h4" />
-                            </svg>
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-lg text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
+                            🐎
                         </span>
                         <span>
                             <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Caballos</span>
@@ -312,10 +310,8 @@
                 <a href="{{ route('client.servicios.index') }}"
                    class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
                     <div class="flex items-center justify-center gap-3 text-center">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h10M7 12h10M7 17h6M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
-                            </svg>
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-lg text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
+                            &#128137;
                         </span>
                         <span>
                             <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Servicios</span>

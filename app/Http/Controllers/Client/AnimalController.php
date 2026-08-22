@@ -223,6 +223,11 @@ class AnimalController extends Controller
                 ->with(['images' => fn ($imageQuery) => $imageQuery->latest('id')])
                 ->latest('study_date')
                 ->latest('id'),
+            'ultrasoundStudies' => fn ($query) => $query
+                ->where('tenant_id', $tenantId)
+                ->with(['images' => fn ($imageQuery) => $imageQuery->latest('id')])
+                ->latest('study_date')
+                ->latest('id'),
             'reports' => fn ($query) => $query
                 ->where('tenant_id', $tenantId)
                 ->with(['author', 'images'])
@@ -518,12 +523,31 @@ class AnimalController extends Controller
             ->with('animalTab', 'datos');
     }
 
+    public function showMicrochipImage(Animal $animal)
+    {
+        abort_unless($animal->tenant_id === auth()->user()->tenant_id, 404);
+        abort_unless($animal->microchip_image_path, 404);
+        abort_unless(Storage::disk('r2')->exists($animal->microchip_image_path), 404);
+
+        return redirect()->away(
+            Storage::disk('r2')->temporaryUrl($animal->microchip_image_path, now()->addMinutes(30))
+        );
+    }
+
     public function publicMicrochipLetter(string $token, MicrochipLetterPdfService $pdfService)
     {
         $animal = Animal::query()
             ->where('microchip_print_token', $token)
             ->whereNotNull('microchip_image_path')
             ->firstOrFail();
+
+        return redirect()->away($pdfService->temporaryUrl($animal));
+    }
+
+    public function microchipLetter(Animal $animal, MicrochipLetterPdfService $pdfService)
+    {
+        abort_unless($animal->tenant_id === auth()->user()->tenant_id, 404);
+        abort_unless($animal->microchip_image_path, 404);
 
         return redirect()->away($pdfService->temporaryUrl($animal));
     }

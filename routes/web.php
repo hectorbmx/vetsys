@@ -209,6 +209,8 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::get('telemedicina/expedientes/{token}/videos/{animalVideo}', [TelemedicineController::class, 'video'])->name('telemedicine.animal-videos.show');
         Route::get('telemedicina/expedientes/{token}/radiologia/{radiologyImage}', [TelemedicineController::class, 'radiologyImage'])->name('telemedicine.radiology-images.show');
         Route::delete('animals/{animal}/service-details/{detail}', [AnimalController::class, 'destroyServiceDetail'])->name('animals.service-details.destroy');
+        Route::get('animals/{animal}/microchip-letter', [AnimalController::class, 'microchipLetter'])->name('animals.microchip-letter');
+        Route::get('animals/{animal}/microchip-image', [AnimalController::class, 'showMicrochipImage'])->name('animals.microchip-image.show');
         Route::resource('animals', AnimalController::class);
         Route::delete('animals/{animal}/microchip-image', [AnimalController::class, 'destroyMicrochipImage'])->name('animals.microchip-image.destroy');
         Route::patch('animals/{animal}/toggle', [AnimalController::class, 'toggleStatus'])->name('animals.toggle');

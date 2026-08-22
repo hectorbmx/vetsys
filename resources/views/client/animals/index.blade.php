@@ -227,14 +227,17 @@
                                 {{ $animal->weight ? $animal->weight . ' kg' : '--' }}
                             </td>
 
-                            <td class="px-4 py-4">
+                            <td class="px-4 py-4 text-center">
                                 @if(filled($animal->allergies))
-                                    <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700" title="{{ $animal->allergies }}">
-                                        <span class="text-sm leading-none">&#9888;&#65039;</span>
-                                        <span>{{ \Illuminate\Support\Str::limit($animal->allergies, 24) }}</span>
+                                    <span
+                                        title="{{ $animal->allergies }}"
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-base text-amber-600 shadow-sm"
+                                        aria-label="Alergias: {{ $animal->allergies }}"
+                                    >
+                                        &#9888;
                                     </span>
                                 @else
-                                    <span class="text-xs text-slate-300 font-bold">--</span>
+                                    <span title="Sin alergias registradas" class="text-[10px] font-black uppercase tracking-widest text-slate-300">N/A</span>
                                 @endif
                             </td>
 
@@ -449,6 +452,18 @@
                         <div class="space-y-2">
                             <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Peso (kg)</label>
                             <input type="number" step="0.01" name="weight" placeholder="Ej. 12.5" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Color</label>
+                            <input type="text" name="color" placeholder="Ej. Cafe con blanco" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest">Microchip</label>
+                            <input type="text" name="microchip" inputmode="numeric" pattern="[0-9]{15}" maxlength="15" placeholder="15 digitos numericos" class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold theme-text-heading focus:bg-white theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-inner">
+                            <p class="text-[10px] font-semibold text-slate-400">Solo se aceptan 15 numeros.</p>
                         </div>
                     </div>
 

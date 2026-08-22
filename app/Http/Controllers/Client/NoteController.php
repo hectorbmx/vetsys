@@ -383,7 +383,7 @@ class NoteController extends Controller
                 ->route('client.ventas.create', ['customer_id' => $note->customer_id])
                 ->with('monthly_sale_state', $this->initialSaleStateFromNote($note->fresh(['details.catalogItem.inventory'])))
                 ->with('monthly_capture_prompt', [
-                    'return_url' => route('client.customers.show', ['customer' => $note->customer_id, 'tab' => 'notas']),
+                    'return_url' => route('client.customers.show', ['customer' => $note->customer_id]),
                 ])
                 ->with('success', "Nota {$note->folio} generada correctamente.");
         }

@@ -10,6 +10,7 @@ use App\Services\PortalNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class RadiologyController extends Controller
 {
@@ -23,11 +24,14 @@ class RadiologyController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'study_date' => ['required', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string'],
+            'modality' => ['nullable', Rule::in(RadiologyStudy::modalities())],
         ]);
+        $modality = $data['modality'] ?? RadiologyStudy::MODALITY_RADIOLOGY;
 
         $study = RadiologyStudy::create([
             'tenant_id' => $tenantId,
             'animal_id' => $animal->id,
+            'modality' => $modality,
             'name' => $data['name'],
             'study_date' => $data['study_date'],
             'notes' => $data['notes'] ?? null,
@@ -37,8 +41,8 @@ class RadiologyController extends Controller
 
         return redirect()
             ->route('client.animals.edit', $animal)
-            ->with('animalTab', 'radiologia')
-            ->with('success', 'Carpeta de radiologia creada correctamente.');
+            ->with('animalTab', $modality === RadiologyStudy::MODALITY_ULTRASOUND ? 'ultrasonido' : 'radiologia')
+            ->with('success', ($modality === RadiologyStudy::MODALITY_ULTRASOUND ? 'Carpeta de ultrasonido' : 'Carpeta de radiologia') . ' creada correctamente.');
     }
 
     public function storeImages(Request $request, RadiologyStudy $radiologyStudy)
@@ -61,7 +65,8 @@ class RadiologyController extends Controller
         foreach ($request->file('images', []) as $image) {
             $extension = strtolower($image->getClientOriginalExtension() ?: $image->extension() ?: 'jpg');
             $filename = Str::uuid() . '.' . $extension;
-            $path = "tenants/{$tenantId}/animals/{$radiologyStudy->animal_id}/radiology/{$radiologyStudy->id}/{$filename}";
+            $folder = $radiologyStudy->isUltrasound() ? 'ultrasound' : 'radiology';
+            $path = "tenants/{$tenantId}/animals/{$radiologyStudy->animal_id}/{$folder}/{$radiologyStudy->id}/{$filename}";
             $stream = fopen($image->getRealPath(), 'rb');
             $mimeType = $image->getMimeType() ?: 'image/jpeg';
 
@@ -96,8 +101,8 @@ class RadiologyController extends Controller
 
         return redirect()
             ->route('client.animals.edit', $radiologyStudy->animal)
-            ->with('animalTab', 'radiologia')
-            ->with('success', 'Imagenes RX guardadas correctamente.');
+            ->with('animalTab', $radiologyStudy->isUltrasound() ? 'ultrasonido' : 'radiologia')
+            ->with('success', ($radiologyStudy->isUltrasound() ? 'Imagenes de ultrasonido' : 'Imagenes RX') . ' guardadas correctamente.');
     }
 
     public function showImage(RadiologyImage $radiologyImage)
@@ -120,8 +125,8 @@ class RadiologyController extends Controller
 
         return redirect()
             ->route('client.animals.edit', $animal)
-            ->with('animalTab', 'radiologia')
-            ->with('success', 'Imagen RX eliminada correctamente.');
+            ->with('animalTab', $radiologyImage->study?->isUltrasound() ? 'ultrasonido' : 'radiologia')
+            ->with('success', ($radiologyImage->study?->isUltrasound() ? 'Imagen de ultrasonido' : 'Imagen RX') . ' eliminada correctamente.');
     }
 
     public function destroyStudy(RadiologyStudy $radiologyStudy)
@@ -139,7 +144,7 @@ class RadiologyController extends Controller
 
         return redirect()
             ->route('client.animals.edit', $animal)
-            ->with('animalTab', 'radiologia')
-            ->with('success', 'Carpeta de radiologia eliminada correctamente.');
+            ->with('animalTab', $radiologyStudy->isUltrasound() ? 'ultrasonido' : 'radiologia')
+            ->with('success', ($radiologyStudy->isUltrasound() ? 'Carpeta de ultrasonido' : 'Carpeta de radiologia') . ' eliminada correctamente.');
     }
 }

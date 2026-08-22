@@ -189,6 +189,8 @@ class CustomerStatementGenerator
             'totalPaid' => $totalPaid,
             'totalDebt' => $totalDebt,
             'previousBalance' => $previousBalance,
+            'globalBalance' => $this->globalBalance($customer),
+            'tenantLogoSrc' => $this->tenantLogoSrc($tenant),
             'usesMonthlyCutoffBilling' => $usesMonthlyCutoffBilling,
         ])
             ->setPaper('letter', 'portrait')
@@ -236,6 +238,7 @@ class CustomerStatementGenerator
         $periodCharges = (float) $serviceDetails->sum('subtotal');
         $periodPayments = (float) $payments->sum('amount');
         $endingBalance = max($previousBalance + $periodCharges - $periodPayments, 0);
+        $globalBalance = $this->globalBalance($customer);
 
         return [
             'notesByMonth' => $notes->groupBy(fn ($note) => ucfirst($note->date_at->translatedFormat('F Y'))),
@@ -245,7 +248,45 @@ class CustomerStatementGenerator
             'period_charges' => $periodCharges,
             'period_payments' => $periodPayments,
             'ending_balance' => $endingBalance,
+            'global_balance' => $globalBalance,
         ];
+    }
+
+    private function globalBalance(Customer $customer): float
+    {
+        $charges = (float) NoteDetail::where('note_details.tenant_id', $customer->tenant_id)
+            ->whereHas('note', fn ($query) => $query
+                ->where('tenant_id', $customer->tenant_id)
+                ->where('customer_id', $customer->id)
+                ->where('status', '!=', 'CANCELADA'))
+            ->sum('subtotal');
+
+        $payments = (float) Payment::where('tenant_id', $customer->tenant_id)
+            ->where('customer_id', $customer->id)
+            ->sum('amount');
+
+        return max($charges - $payments, 0);
+    }
+
+    private function tenantLogoSrc($tenant): ?string
+    {
+        if (! $tenant?->logo) {
+            return null;
+        }
+
+        if (filter_var($tenant->logo, FILTER_VALIDATE_URL)) {
+            return $tenant->logo;
+        }
+
+        try {
+            if (Storage::disk('public')->exists($tenant->logo)) {
+                return public_path('storage/' . ltrim($tenant->logo, '/'));
+            }
+
+            return Storage::disk('r2')->temporaryUrl($tenant->logo, now()->addMinutes(60));
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function closedPeriodForCutoff(int $cutoffDay): array

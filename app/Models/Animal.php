@@ -85,7 +85,14 @@ public function videos()
 
 public function radiologyStudies()
 {
-    return $this->hasMany(RadiologyStudy::class);
+    return $this->hasMany(RadiologyStudy::class)
+        ->where('modality', RadiologyStudy::MODALITY_RADIOLOGY);
+}
+
+public function ultrasoundStudies()
+{
+    return $this->hasMany(RadiologyStudy::class)
+        ->where('modality', RadiologyStudy::MODALITY_ULTRASOUND);
 }
 
 public function reports()

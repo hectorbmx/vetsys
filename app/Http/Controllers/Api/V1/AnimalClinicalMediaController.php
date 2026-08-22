@@ -232,11 +232,15 @@ class AnimalClinicalMediaController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'study_date' => ['required', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string'],
+            'modality' => ['nullable', Rule::in(RadiologyStudy::modalities())],
         ]);
+        $modality = $data['modality'] ?? RadiologyStudy::MODALITY_RADIOLOGY;
+        unset($data['modality']);
 
         $study = RadiologyStudy::create([
             'tenant_id' => $animal->tenant_id,
             'animal_id' => $animal->id,
+            'modality' => $modality,
             ...$data,
         ]);
 
@@ -260,7 +264,8 @@ class AnimalClinicalMediaController extends Controller
 
         foreach ($request->file('images', []) as $image) {
             $extension = strtolower($image->getClientOriginalExtension() ?: 'jpg');
-            $path = "tenants/{$radiologyStudy->tenant_id}/animals/{$radiologyStudy->animal_id}/radiology/{$radiologyStudy->id}/" . Str::uuid() . ".{$extension}";
+            $folder = $radiologyStudy->isUltrasound() ? 'ultrasound' : 'radiology';
+            $path = "tenants/{$radiologyStudy->tenant_id}/animals/{$radiologyStudy->animal_id}/{$folder}/{$radiologyStudy->id}/" . Str::uuid() . ".{$extension}";
             Storage::disk('r2')->put($path, fopen($image->getRealPath(), 'rb'), ['mimetype' => $image->getMimeType()]);
 
             $radiologyImage = RadiologyImage::create([
@@ -358,6 +363,7 @@ class AnimalClinicalMediaController extends Controller
             'vaccinationLetters' => fn ($query) => $query->latest('date')->latest('id'),
             'videos' => fn ($query) => $query->latest('video_date')->latest('id'),
             'radiologyStudies' => fn ($query) => $query->with('images')->latest('study_date')->latest('id'),
+            'ultrasoundStudies' => fn ($query) => $query->with('images')->latest('study_date')->latest('id'),
             'shares' => fn ($query) => $query->with('sharedWithTenant')->where('is_active', true)->latest('id'),
             'reports' => fn ($query) => $query->with(['author', 'images'])->latest('report_date')->latest('id'),
         ]);
@@ -390,6 +396,20 @@ class AnimalClinicalMediaController extends Controller
             'radiology_studies' => $animal->radiologyStudies->map(fn ($study) => [
                 'id' => $study->id,
                 'name' => $study->name,
+                'modality' => $study->modality,
+                'study_date' => $study->study_date?->toDateString(),
+                'notes' => $study->notes,
+                'images' => $study->images->map(fn ($image) => [
+                    'id' => $image->id,
+                    'label' => $image->label,
+                    'notes' => $image->notes,
+                    'url' => Storage::disk($image->disk)->temporaryUrl($image->path, now()->addMinutes(30)),
+                ])->values(),
+            ])->values(),
+            'ultrasound_studies' => $animal->ultrasoundStudies->map(fn ($study) => [
+                'id' => $study->id,
+                'name' => $study->name,
+                'modality' => $study->modality,
                 'study_date' => $study->study_date?->toDateString(),
                 'notes' => $study->notes,
                 'images' => $study->images->map(fn ($image) => [

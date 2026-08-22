@@ -41,7 +41,9 @@
         @endif
     </div>
     
-    @include('client.customers.partials.activation-invite')
+    {{-- Acceso app/web: se conserva para reactivarlo en una fase futura.
+        @include('client.customers.partials.activation-invite')
+    --}}
 
     @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES CON COLORES Y DEGRADADOS --}}
@@ -216,7 +218,7 @@
                 </span>
             </a>
         </th>
-        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">APP</th>
+        {{-- <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">APP</th> --}}
         
         @if($usesMonthlyCutoffBilling)
             <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Corte</th>
@@ -290,29 +292,6 @@
                                 </a>
                             </td>
 
-                            {{-- Status Toggle Dinámico --}}
-                         
-
-                  <td class="px-6 py-4">
-                    <form action="{{ route('client.customers.toggle', $customer->id) }}" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" 
-                                class="flex items-center gap-2 group focus:outline-none"
-                                title="{{ $customer->status === 'active' ? 'Click para inactivar' : 'Click para activar' }}">
-                            
-                            <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
-                                <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-3' : 'translate-x-0' }}"></div>
-                            </div>
-                            
-                            <span class="text-[9px] font-black uppercase tracking-widest {{ $customer->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
-                                {{ $customer->status === 'active' ? 'Activo' : 'Inactivo' }}
-                            </span>
-                        </button>
-                    </form>
-                </td>
-                
-
                             @if($usesMonthlyCutoffBilling)
                                 <td class="px-6 py-4">
                                     <button type="button"
@@ -338,7 +317,27 @@
                                     <!-- <button class="p-1.5 text-slate-400 theme-hover-text-heading transition-colors" title="Editar">✏️</button> -->
                                 </div>
                             </td>
-                               <td class="px-6 py-4">
+
+                            {{-- Status Toggle Dinámico --}}
+                            <td class="px-6 py-4">
+                                <form action="{{ route('client.customers.toggle', $customer->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-2 group focus:outline-none"
+                                            title="{{ $customer->status === 'active' ? 'Click para inactivar' : 'Click para activar' }}">
+                                        <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
+                                            <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-3' : 'translate-x-0' }}"></div>
+                                        </div>
+
+                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $customer->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
+                                            {{ $customer->status === 'active' ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </button>
+                                </form>
+                            </td>
+                            {{-- Acceso app/web: se conserva para reactivarlo en una fase futura.
+                            <td class="px-6 py-4">
                                 @php($portalAccessActive = $customer->portalAccesses->firstWhere('status', 'active'))
                                 <form action="{{ route('client.customers.portal-access.toggle', $customer) }}" method="POST"
                                       @submit="showPortalAccessLoading(@js($portalAccessActive ? 'Suspendiendo acceso...' : 'Activando acceso...'))">
@@ -357,11 +356,12 @@
                                     </button>
                                 </form>
                             </td>
+                            --}}
                         </tr>
                     @empty
                         {{-- Estado vacío si la consulta no devuelve nada --}}
                         <tr>
-                            <td colspan="{{ $usesMonthlyCutoffBilling ? 8 : 7 }}" class="px-6 py-12 text-center">
+                            <td colspan="{{ $usesMonthlyCutoffBilling ? 6 : 5 }}" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-slate-400">No se encontraron clientes registrados en este Tenant.</p>
                             </td>
                         </tr>

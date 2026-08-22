@@ -7,7 +7,7 @@
 @php
     $returnCustomerId = $prefilledCustomer['id'] ?? $editingNote?->customer_id;
     $returnUrl = $returnCustomerId
-        ? route('client.customers.show', ['customer' => $returnCustomerId, 'tab' => 'notas'])
+        ? route('client.customers.show', ['customer' => $returnCustomerId])
         : route('client.ventas.index');
 @endphp
 <div x-data="salesPOS()" x-init="initPOS()" class="-mt-6 px-6 pb-6 max-w-7xl mx-auto space-y-6">

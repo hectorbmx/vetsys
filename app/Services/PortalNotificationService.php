@@ -163,14 +163,17 @@ class PortalNotificationService
             return;
         }
 
+        $isUltrasound = $study->isUltrasound();
+
         $this->notifyAnimalResource($animal, 'show_radiology', [
             'type' => 'portal.radiology.study_created',
-            'title' => 'Estudio RX disponible',
+            'title' => $isUltrasound ? 'Estudio de ultrasonido disponible' : 'Estudio RX disponible',
             'body' => 'Se agrego el estudio ' . $study->name . ' al expediente de ' . $animal->name . '.',
             'url' => '/portal/mascotas/' . $animal->id,
             'data' => [
                 'animal_id' => $animal->id,
                 'radiology_study_id' => $study->id,
+                'modality' => $study->modality,
                 'study_date' => $study->study_date?->toDateString(),
             ],
         ]);
@@ -185,15 +188,18 @@ class PortalNotificationService
             return;
         }
 
+        $isUltrasound = $study->isUltrasound();
+
         $this->notifyAnimalResource($animal, 'show_radiology', [
             'type' => 'portal.radiology.images_created',
-            'title' => 'Imagenes RX disponibles',
-            'body' => 'Se agregaron ' . $imageCount . ' imagen(es) RX al expediente de ' . $animal->name . '.',
+            'title' => $isUltrasound ? 'Imagenes de ultrasonido disponibles' : 'Imagenes RX disponibles',
+            'body' => 'Se agregaron ' . $imageCount . ($isUltrasound ? ' imagen(es) de ultrasonido' : ' imagen(es) RX') . ' al expediente de ' . $animal->name . '.',
             'url' => '/portal/mascotas/' . $animal->id,
             'data' => [
                 'animal_id' => $animal->id,
                 'radiology_study_id' => $study->id,
                 'radiology_image_id' => $lastImageId,
+                'modality' => $study->modality,
                 'image_count' => $imageCount,
             ],
         ]);

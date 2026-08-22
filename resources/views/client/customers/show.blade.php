@@ -1,4 +1,4 @@
-﻿@extends('layouts.client')
+@extends('layouts.client')
 
 @section('content')
 @php
@@ -9,6 +9,7 @@
         tab: '{{ session('activeCustomerTab', request('tab', 'mascotas')) }}',
         hideCustomerKpis: false,
         animalModalOpen: false,
+        animalSearch: '',
         init() {
             this.hideCustomerKpis = localStorage.getItem('customerProfile.hideCustomerKpis') === '1';
             if (@js($usesMonthlyCutoffBilling) && this.tab === 'configuracion') {
@@ -22,34 +23,8 @@
         ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }}),
         ...statementModalState()
     }"
-    class="-mt-4 p-6 max-w-7xl mx-auto space-y-6"
+    class="-mt-4 p-4 max-w-[1500px] mx-auto space-y-4"
 >
-
-    {{-- CABECERA --}}
-    <div class="bg-white border border-slate-200 rounded-[24px] overflow-hidden">
-        <div class="p-5 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
-                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                    {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                @unless($usesMonthlyCutoffBilling)
-                    <button @click="open = true" class="theme-button-primary px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
-                        + Registrar Pago
-                    </button>
-                @endunless
-                {{-- <a href="{{ route('client.customers.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">&larr; Volver</a> --}}
-            <a href="{{ route('client.customers.index') }}"
-       class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-black transition-all">
-        &larr; Volver
-    </a>
-            </div>
-        </div>
-
-    </div>
-
     {{-- FLASH --}}
     @if(session('success'))
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-3 rounded-2xl text-xs font-bold">
@@ -403,6 +378,20 @@
 
     {{-- CONTENIDO DE TABS --}}
     <div class="bg-white border border-slate-200 rounded-[24px] overflow-hidden">
+        <div class="border-b border-slate-100 bg-slate-50/50 p-5">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
+                    <p class="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">
+                        {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
+                    </p>
+                </div>
+                <a href="{{ route('client.customers.index') }}"
+                   class="inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-2 text-xs font-black text-slate-700 transition-all hover:bg-slate-200">
+                    &larr; Volver
+                </a>
+            </div>
+        </div>
         <div class="border-b border-slate-100 bg-white p-4">
             <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div class="flex flex-wrap gap-2">
@@ -424,6 +413,22 @@
                     </button>
                 </div>
                 <div x-show="tab === 'notas' || tab === 'pagos'" x-cloak class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                    @if($usesMonthlyCutoffBilling)
+                        <button
+                            x-show="tab === 'notas'"
+                            x-cloak
+                            type="button"
+                            @click="openStatementModal({
+                                id: {{ $customer->id }},
+                                name: @js($customer->full_name),
+                                previewUrl: @js(route('client.customers.statements.preview', $customer)),
+                                storeUrl: @js(route('client.customers.statements.store-manual', $customer))
+                            })"
+                            class="theme-button-dark rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all"
+                        >
+                            Generar corte
+                        </button>
+                    @endif
                     <button type="button" @click="open = true" class="theme-button-primary rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
                         {{ $usesMonthlyCutoffBilling ? 'Registrar abono' : 'Registrar pago' }}
                     </button>
@@ -434,10 +439,14 @@
         {{-- TAB: NOTAS / CUENTAS --}}
         <div x-show="tab === 'notas'" class="p-6">
             @if($usesMonthlyCutoffBilling)
-            <div class="flex justify-between items-center gap-4 mb-5">
+            <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Cortes del cliente</h2>
                     <p class="text-[11px] text-slate-400 font-semibold mt-1">Resumen de estados de cuenta generados para este cliente.</p>
+                </div>
+                <div class="lg:min-w-[260px] text-left lg:text-right">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Balance total del cliente</p>
+                    <p class="mt-1 text-xl font-black text-rose-600">${{ number_format((float) $billingBalance, 2) }}</p>
                 </div>
                 {{-- <a href="{{ route('client.ventas.create', ['customer_id' => $customer->id]) }}"
                    class="theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
@@ -445,35 +454,26 @@
                 </a> --}}
             </div>
 
-                <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4">
-                <button type="button"
-                        @click="openStatementModal({
-                            id: {{ $customer->id }},
-                            name: @js($customer->full_name),
-                            previewUrl: @js(route('client.customers.statements.preview', $customer)),
-                            storeUrl: @js(route('client.customers.statements.store-manual', $customer))
-                        })"
-                        class="theme-button-dark rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">
-                    Generar corte
-                </button>
-                <span class="text-[11px] font-semibold text-slate-400">Selecciona manualmente el inicio y fin del corte para previsualizar servicios disponibles antes de generarlo.</span>
-            </div>
-
-            <table class="w-full text-left">
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+            <table class="w-full min-w-[980px] table-fixed text-center">
                 <thead>
                     <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
-                        <th class="px-6 py-4 font-black">Periodo</th>
-                        <th class="px-6 py-4 font-black text-right">Consumo</th>
-                        <th class="px-6 py-4 font-black text-right">Pagos</th>
-                        <th class="px-6 py-4 font-black text-right">Saldo final</th>
-                        <th class="px-6 py-4 font-black text-center">Estado</th>
-                        <th class="px-6 py-4 font-black text-right">Acciones</th>
+                        <th class="px-6 py-4 font-black text-center">Fecha de creacion</th>
+                        <th class="px-6 py-4 font-black text-center">Periodo</th>
+                        <th class="px-6 py-4 font-black text-center">Servicios</th>
+                        <th class="px-6 py-4 font-black text-center">Costo</th>
+                        <th class="px-6 py-4 font-black text-center">Pagos del periodo</th>
+                        {{-- Saldo final y estado se omiten aqui para evitar confundir balance del corte con saldo global del cliente. --}}
+                        <th class="px-6 py-4 font-black text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-slate-100">
                     @forelse($customer->statements as $statement)
-                        <tr>
-                            <td class="py-4 text-xs font-bold theme-text-heading">
+                        <tr class="odd:bg-white even:bg-slate-50/70 hover:bg-slate-100/70 transition-colors">
+                            <td class="px-6 py-4 text-center text-xs font-bold text-slate-500">
+                                {{ $statement->created_at?->format('d/m/Y') ?? '--' }}
+                            </td>
+                            <td class="px-6 py-4 text-center text-xs font-bold theme-text-heading">
                                 {{ $statement->period_start?->format('d/m/Y') ?? '--' }} - {{ $statement->period_end?->format('d/m/Y') ?? '--' }}
                                 @if($statement->needs_recalculation ?? false)
                                     <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-amber-700">
@@ -481,22 +481,47 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-4 text-right text-xs font-black theme-text-heading">${{ number_format((float) $statement->period_charges, 2) }}</td>
-                            <td class="py-4 text-right text-xs font-black text-emerald-600">${{ number_format((float) $statement->period_payments, 2) }}</td>
-                            <td class="py-4 text-right text-xs font-black {{ (float) $statement->ending_balance > 0 ? 'text-rose-600' : 'theme-text-heading' }}">${{ number_format((float) $statement->ending_balance, 2) }}</td>
-                            <td class="py-4 text-center">
-                                <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">{{ $statement->status }}</span>
-                            </td>
-                            <td class="py-4 text-right">
-                                <div class="flex flex-wrap items-center justify-end gap-2">
-                                    <a href="{{ route('client.customers.statements.show', [$customer, $statement]) }}" class="rounded-xl border border-slate-200 px-3 py-2 text-[10px] font-black uppercase tracking-widest theme-text-primary theme-hover-text-heading">Abrir</a>
+                            <td class="px-6 py-4 text-center text-xs font-black theme-text-heading">{{ number_format((int) ($statement->services_count ?? 0)) }}</td>
+                            <td class="px-6 py-4 text-center text-xs font-black theme-text-heading">${{ number_format((float) $statement->period_charges, 2) }}</td>
+                            <td class="px-6 py-4 text-center text-xs font-black text-emerald-600">${{ number_format((float) $statement->period_payments, 2) }}</td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex flex-wrap items-center justify-center gap-2">
+                                    <a href="{{ route('client.customers.statements.show', [$customer, $statement]) }}"
+                                       title="Abrir corte"
+                                       aria-label="Abrir corte"
+                                       class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 theme-text-primary transition hover:bg-slate-50 theme-hover-text-heading">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </a>
                                     @if($statement->pdf_path)
-                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}" target="_blank" class="rounded-xl border border-slate-100 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">PDF</a>
+                                        <a href="{{ route('client.customers.statements.pdf', [$customer, $statement]) }}"
+                                           target="_blank"
+                                           title="Abrir PDF"
+                                           aria-label="Abrir PDF"
+                                           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-600 transition hover:border-rose-200 hover:bg-rose-100 hover:text-rose-700">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path>
+                                                <path d="M14 2v6h6"></path>
+                                                <path d="M9 15h1"></path>
+                                                <path d="M14 15h1"></path>
+                                                <path d="M9 18h6"></path>
+                                            </svg>
+                                        </a>
                                     @endif
                                     <form action="{{ route('client.customers.statements.recalculate', [$customer, $statement]) }}" method="POST">
                                         @csrf
-                                        <button type="submit" class="rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition {{ ($statement->needs_recalculation ?? false) ? 'border-amber-300 bg-amber-100 text-amber-800 shadow-sm hover:bg-amber-200' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
-                                            Recalcular
+                                        <button type="submit"
+                                                title="Recalcular corte"
+                                                aria-label="Recalcular corte"
+                                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border transition {{ ($statement->needs_recalculation ?? false) ? 'border-amber-300 bg-amber-100 text-amber-800 shadow-sm hover:bg-amber-200' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M3 12a9 9 0 0 1 15-6.7"></path>
+                                                <path d="M21 4v6h-6"></path>
+                                                <path d="M21 12a9 9 0 0 1-15 6.7"></path>
+                                                <path d="M3 20v-6h6"></path>
+                                            </svg>
                                         </button>
                                     </form>
                                 </div>
@@ -511,6 +536,7 @@
                     @endforelse
                 </tbody>
             </table>
+            </div>
             @else
             <div class="flex justify-between items-center gap-4 mb-5">
                 <div>
@@ -655,24 +681,24 @@
                 {{-- Nombre + Tipo --}}
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Nombre *</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Nombre *</label>
                         <input
                             type="text"
                             name="name"
                             required
                             placeholder="Ej. Firulais"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Especie *</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Especie *</label>
                         @php
                             $defaultAnimalTypeId = old('animal_type_id', optional($animalTypes->first())->id);
                         @endphp
                         <select
                             name="animal_type_id"
                             required
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                             <option value="" {{ blank($defaultAnimalTypeId) ? 'selected' : '' }}>Seleccionar...</option>
                             @foreach($animalTypes as $type)
@@ -685,11 +711,11 @@
                 {{-- Sexo + Fecha nacimiento --}}
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Sexo *</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Sexo *</label>
                         <select
                             name="sex"
                             required
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                             <option value="">Seleccionar...</option>
                             <option value="male">Macho</option>
@@ -698,20 +724,20 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Fecha de nacimiento</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Fecha de nacimiento</label>
                         <input
                             type="date"
                             name="birthdate"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Club</label>
+                    <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Club</label>
                     <select
                         name="club_id"
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                     >
                         <option value="">Sin club</option>
                         @foreach($clubs as $club)
@@ -723,47 +749,62 @@
                 {{-- Color + Peso --}}
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Color</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Color</label>
                         <input
                             type="text"
                             name="color"
                             placeholder="Ej. Cafe con blanco"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Peso (kg)</label>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Peso (kg)</label>
                         <input
                             type="number"
                             name="weight"
                             step="0.01"
                             min="0"
                             placeholder="Ej. 4.50"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                         >
                     </div>
                 </div>
 
                 {{-- Microchip --}}
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Microchip</label>
+                    <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Microchip</label>
                     <input
                         type="text"
                         name="microchip"
-                        placeholder="Numero de microchip"
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary"
+                        inputmode="numeric"
+                        pattern="[0-9]{15}"
+                        maxlength="15"
+                        placeholder="15 digitos numericos"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary"
                     >
+                    <p class="mt-1 text-[10px] font-semibold text-slate-400">Solo se aceptan 15 numeros.</p>
                 </div>
 
-                {{-- Notas --}}
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Notas</label>
-                    <textarea
-                        name="notes"
-                        rows="2"
-                        placeholder="Alergias, condiciones especiales..."
-                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 theme-focus-ring-primary resize-none"
-                    ></textarea>
+                {{-- Notas clinicas + alergias --}}
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Notas clinicas</label>
+                        <textarea
+                            name="notes"
+                            rows="3"
+                            placeholder="Ej. Comportamiento nervioso, indicaciones generales..."
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 theme-focus-ring-primary resize-none"
+                        ></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black theme-text-heading uppercase tracking-widest mb-1">Alergias</label>
+                        <textarea
+                            name="allergies"
+                            rows="3"
+                            placeholder="Ej. Penicilina, pollo, anestesia..."
+                            class="w-full rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2 text-sm font-semibold theme-text-heading focus:outline-none focus:ring-2 focus:ring-amber-100 resize-none"
+                        ></textarea>
+                    </div>
                 </div>
 
                 {{-- Actions --}}
@@ -779,7 +820,7 @@
                         type="submit"
                         class="px-5 py-2 theme-button-primary text-xs font-black rounded-xl transition-colors"
                     >
-                        Guardar Paciente
+                        Guardar Caballo
                     </button>
                 </div>
             </form>
@@ -787,7 +828,27 @@
     </div>
 
     {{-- CONTENIDO DEL TAB --}}
-    <div >
+    <div>
+        <div class="mb-4 flex justify-end">
+            <div class="relative w-full lg:max-w-sm">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
+                <input
+                    type="search"
+                    x-model.debounce.150ms="animalSearch"
+                    placeholder="Buscar caballo..."
+                    class="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-10 text-xs font-semibold theme-text-heading placeholder-slate-400 shadow-sm outline-none transition-all theme-input focus:ring-4 theme-ring-primary"
+                >
+                <button
+                    type="button"
+                    x-show="animalSearch.length > 0"
+                    x-cloak
+                    @click="animalSearch = ''"
+                    class="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-black text-slate-400 hover:text-rose-500"
+                >
+                    x
+                </button>
+            </div>
+        </div>
 
         {{-- Tabla de mascotas --}}
         <div class="overflow-x-auto">
@@ -800,6 +861,7 @@
                         <th class="px-6 py-4 font-black">Sexo</th>
                         <th class="px-6 py-4 font-black">Edad</th>
                         <th class="px-6 py-4 font-black">Club</th>
+                        <th class="px-6 py-4 font-black text-center">Alergias</th>
                         <th class="px-6 py-4 font-black">Estatus</th>
                         <th class="px-6 py-4 font-black text-right">Acciones</th>
                     </tr>
@@ -807,6 +869,7 @@
                 <tbody class="divide-y divide-slate-100" x-data="{ openShare: null }">
                     @forelse($customer->animals as $animal)
                         @php
+                            $animalSearchText = str($animal->name . ' ' . $animal->sex . ' ' . ($animal->club?->name ?? '') . ' ' . ($animal->allergies ?? ''))->lower()->ascii();
                             $portalUserId = $activePortalAccess?->user_id;
                             $animalAssignment = $customer->finalUserPatientAssignments
                                 ->where('animal_id', $animal->id)
@@ -831,7 +894,11 @@
                                 'show_appointments' => 'Citas',
                             ];
                         @endphp
-                        <tr class="bg-white hover:bg-slate-50/70 transition-colors">
+                        <tr
+                            x-show="animalSearch.trim() === '' || $el.dataset.search.includes(animalSearch.toLowerCase())"
+                            data-search="{{ $animalSearchText }}"
+                            class="bg-white hover:bg-slate-50/70 transition-colors"
+                        >
                        <td class="px-4 py-4 border-l-4 theme-border-primary">
                             <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="group block min-w-0 transition-all">
                                 <div class="flex items-center gap-3">
@@ -891,6 +958,19 @@
                                     <span class="text-[10px] text-slate-400 font-bold uppercase">Sin club</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-4 text-center">
+                                @if(filled($animal->allergies))
+                                    <span
+                                        title="{{ $animal->allergies }}"
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-base text-amber-600 shadow-sm"
+                                        aria-label="Alergias: {{ $animal->allergies }}"
+                                    >
+                                        &#9888;
+                                    </span>
+                                @else
+                                    <span title="Sin alergias registradas" class="text-[10px] font-black uppercase tracking-widest text-slate-300">N/A</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-4">
                                 <form action="{{ route('client.animals.toggle', $animal->id) }}" method="POST">
                                     @csrf
@@ -921,7 +1001,7 @@
                             </td>
                         </tr>
                         <tr x-show="openShare === {{ $animal->id }}" x-cloak class="bg-slate-50/80">
-                            <td colspan="8" class="px-4 py-4">
+                            <td colspan="9" class="px-4 py-4">
                                 <form action="{{ route('client.customers.portal-animals.update', $customer) }}" method="POST" class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                     @csrf
                                     @method('PATCH')
@@ -956,7 +1036,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-10 text-center text-xs font-semibold text-slate-400">
+                            <td colspan="9" class="py-10 text-center text-xs font-semibold text-slate-400">
                                 No hay mascotas registradas para este cliente.
                             </td>
                         </tr>
@@ -1193,3 +1273,4 @@
 @push('scripts')
     @include('client.customers.partials.statement-modal-script')
 @endpush
+
