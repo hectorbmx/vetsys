@@ -107,9 +107,6 @@
                         </select>
                         <span class="text-[10px] font-bold text-slate-400">filas</span>
                     </form>
-                    <div class="dynamic-pagination max-w-full">
-                        {{ $usesMonthlyCutoffBilling ? $serviceDetails->links() : $notes->links() }}
-                    </div>
                     <a href="{{ route('client.ventas.create') }}" class="inline-flex items-center justify-center gap-2 theme-surface-dark px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg theme-shadow-primary hover:shadow-xl hover:-translate-y-0.5 theme-hover-bg-primary transition-all duration-300 whitespace-nowrap">
                         <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black">+</span>
                         Nueva Nota de Venta
@@ -302,6 +299,11 @@
                 </tbody>
                 @endif
             </table>
+        </div>
+        <div class="border-t border-slate-100 px-5 py-4">
+            <div class="dynamic-pagination max-w-full overflow-x-auto">
+                {{ $usesMonthlyCutoffBilling ? $serviceDetails->links() : $notes->links() }}
+            </div>
         </div>
 
     </div>

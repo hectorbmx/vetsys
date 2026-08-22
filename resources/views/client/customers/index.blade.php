@@ -137,9 +137,6 @@
                         Nuevo Cliente
                     </button>
 
-                    <div class="dynamic-pagination max-w-full">
-                        {{ $customers->links() }}
-                    </div>
                 </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -368,6 +365,11 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="border-t border-slate-100 px-5 py-4">
+            <div class="dynamic-pagination max-w-full overflow-x-auto">
+                {{ $customers->links() }}
+            </div>
         </div>
 
     </div>

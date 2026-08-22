@@ -192,9 +192,6 @@
                         </select>
                         <span class="text-[10px] font-bold text-slate-400">filas</span>
                     </form>
-                    <div class="dynamic-pagination max-w-full">
-                        {{ $items->links() }}
-                    </div>
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                         <a href="{{ route('client.servicios.inventory') }}" class="inline-flex items-center justify-center gap-2 theme-bg-primary-soft theme-text-primary-strong border theme-border-primary-soft theme-hover-border-primary-soft px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all whitespace-nowrap">
                             Inventario
@@ -341,6 +338,11 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="border-t border-slate-100 px-5 py-4">
+            <div class="dynamic-pagination max-w-full overflow-x-auto">
+                {{ $items->links() }}
+            </div>
         </div>
 
     </div>
