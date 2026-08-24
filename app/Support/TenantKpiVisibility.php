@@ -13,6 +13,7 @@ class TenantKpiVisibility
     public const VENTAS_INDEX = 'ventas_index';
     public const SERVICIOS_INDEX = 'servicios_index';
     public const CLUBES_INDEX = 'clubes_index';
+    public const BUDGETS_INDEX = 'budgets_index';
 
     public static function all(): array
     {
@@ -41,6 +42,11 @@ class TenantKpiVisibility
                 'label' => 'Ventas',
                 'description' => 'KPIs de ventas, notas y pacientes atendidos.',
                 'route' => 'client.ventas.index',
+            ],
+            self::BUDGETS_INDEX => [
+                'label' => 'Presupuestos',
+                'description' => 'KPIs de presupuestos generados, aceptados y por vencer.',
+                'route' => 'client.budgets.index',
             ],
             self::SERVICIOS_INDEX => [
                 'label' => 'Servicios',

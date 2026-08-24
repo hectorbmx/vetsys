@@ -129,4 +129,14 @@ public function appointments()
 {
     return $this->hasMany(Appointment::class);
 }
+
+public function budgetAnimals()
+{
+    return $this->hasMany(BudgetAnimal::class);
+}
+
+public function budgetItems()
+{
+    return $this->hasMany(BudgetItem::class);
+}
 }

@@ -200,6 +200,21 @@ class Tenant extends Model
         return $this->hasMany(Note::class);
     }
 
+    public function budgets()
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    public function budgetAnimals()
+    {
+        return $this->hasMany(BudgetAnimal::class);
+    }
+
+    public function budgetItems()
+    {
+        return $this->hasMany(BudgetItem::class);
+    }
+
     public function clientPayments()
     {
         // Usamos clientPayments para diferenciarlo de tus "payments" de suscripción de Stripe

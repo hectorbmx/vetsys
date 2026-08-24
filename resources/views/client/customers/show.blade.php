@@ -458,11 +458,12 @@
             <table class="w-full min-w-[980px] table-fixed text-center">
                 <thead>
                     <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
-                        <th class="px-6 py-4 font-black text-center">Fecha de creacion</th>
-                        <th class="px-6 py-4 font-black text-center">Periodo</th>
-                        <th class="px-6 py-4 font-black text-center">Servicios</th>
+                        <th class="px-6 py-4 font-black text-center">Fecha registro</th>
                         <th class="px-6 py-4 font-black text-center">Costo</th>
-                        <th class="px-6 py-4 font-black text-center">Pagos del periodo</th>
+                        <th class="px-6 py-4 font-black text-center">Servicios</th>
+                        <th class="px-6 py-4 font-black text-center">Desde</th>
+                        <th class="px-6 py-4 font-black text-center">Hasta</th>
+                        {{-- <th class="px-6 py-4 font-black text-center">Pagos del mes</th> --}}
                         {{-- Saldo final y estado se omiten aqui para evitar confundir balance del corte con saldo global del cliente. --}}
                         <th class="px-6 py-4 font-black text-center">Acciones</th>
                     </tr>
@@ -473,17 +474,20 @@
                             <td class="px-6 py-4 text-center text-xs font-bold text-slate-500">
                                 {{ $statement->created_at?->format('d/m/Y') ?? '--' }}
                             </td>
+                            <td class="px-6 py-4 text-center text-xs font-black theme-text-heading">${{ number_format((float) $statement->period_charges, 2) }}</td>
+                            <td class="px-6 py-4 text-center text-xs font-black theme-text-heading">{{ number_format((int) ($statement->services_count ?? 0)) }}</td>
                             <td class="px-6 py-4 text-center text-xs font-bold theme-text-heading">
-                                {{ $statement->period_start?->format('d/m/Y') ?? '--' }} - {{ $statement->period_end?->format('d/m/Y') ?? '--' }}
+                                {{ $statement->period_start?->format('d/m/Y') ?? '--' }}
                                 @if($statement->needs_recalculation ?? false)
                                     <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-amber-700">
                                         Recalculo disponible
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-center text-xs font-black theme-text-heading">{{ number_format((int) ($statement->services_count ?? 0)) }}</td>
-                            <td class="px-6 py-4 text-center text-xs font-black theme-text-heading">${{ number_format((float) $statement->period_charges, 2) }}</td>
-                            <td class="px-6 py-4 text-center text-xs font-black text-emerald-600">${{ number_format((float) $statement->period_payments, 2) }}</td>
+                            <td class="px-6 py-4 text-center text-xs font-bold theme-text-heading">
+                                {{ $statement->period_end?->format('d/m/Y') ?? '--' }}
+                            </td>
+                            {{-- <td class="px-6 py-4 text-center text-xs font-black text-emerald-600">${{ number_format((float) $statement->period_payments, 2) }}</td> --}}
                             <td class="px-6 py-4 text-center">
                                 <div class="flex flex-wrap items-center justify-center gap-2">
                                     <a href="{{ route('client.customers.statements.show', [$customer, $statement]) }}"

@@ -10,6 +10,7 @@ class TenantMenuModules
     public const CLUBS = 'clubs';
     public const SALES = 'sales';
     public const SERVICES = 'services';
+    public const BUDGETS = 'budgets';
     public const AGENDA = 'agenda';
 
     public static function all(): array
@@ -29,6 +30,11 @@ class TenantMenuModules
                 'label' => 'Ventas',
                 'description' => 'Notas, tickets, cobros y saldos.',
                 'route' => 'client.ventas.index',
+            ],
+            self::BUDGETS => [
+                'label' => 'Presupuestos',
+                'description' => 'Cotizaciones por cliente, paciente y servicios.',
+                'route' => 'client.budgets.index',
             ],
             self::AGENDA => [
                 'label' => 'Agenda',

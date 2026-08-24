@@ -45,6 +45,30 @@ class VaccinationLetterController extends Controller
         return redirect()->away($pdfService->temporaryUrl($vaccinationLetter));
     }
 
+    public function destroy(VaccinationLetter $vaccinationLetter)
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        abort_unless($vaccinationLetter->tenant_id === $tenantId, 404);
+
+        $animal = $vaccinationLetter->animal;
+
+        if ($vaccinationLetter->image_path) {
+            Storage::disk('public')->delete($vaccinationLetter->image_path);
+        }
+
+        if ($vaccinationLetter->pdf_path) {
+            Storage::disk($vaccinationLetter->pdf_disk ?: 'r2')->delete($vaccinationLetter->pdf_path);
+        }
+
+        $vaccinationLetter->delete();
+
+        return redirect()
+            ->route('client.animals.edit', ['animal' => $animal, 'tab' => 'vacunacion'])
+            ->with('animalTab', 'vacunacion')
+            ->with('success', 'Carta de vacunacion eliminada correctamente.');
+    }
+
     public function store(Request $request, Animal $animal, VaccinationLetterPdfService $pdfService)
     {
         $tenantId = auth()->user()->tenant_id;

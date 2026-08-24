@@ -14,6 +14,7 @@ use App\Http\Controllers\Client\AnimalReportController;
 use App\Http\Controllers\Client\AnimalVideoController;
 use App\Http\Controllers\Client\AppointmentConfigurationController;
 use App\Http\Controllers\Client\AppointmentController;
+use App\Http\Controllers\Client\BudgetController;
 use App\Http\Controllers\Client\CatalogItemController;
 use App\Http\Controllers\Client\ClubController;
 use App\Http\Controllers\Client\ConfiguracionController as ClientConfiguracionController;
@@ -185,6 +186,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::patch('customers/{customer}/portal-animals', [CustomerController::class, 'updateAnimalPortalVisibility'])->name('customers.portal-animals.update');
         Route::get('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'show'])->name('vaccination-letters.show');
         Route::get('vaccination-letters/{vaccinationLetter}/print', [VaccinationLetterController::class, 'print'])->name('vaccination-letters.print');
+        Route::delete('vaccination-letters/{vaccinationLetter}', [VaccinationLetterController::class, 'destroy'])->name('vaccination-letters.destroy');
         Route::post('animals/{animal}/vaccination-letters', [VaccinationLetterController::class, 'store'])->name('animals.vaccination-letters.store');
         Route::post('animals/{animal}/reports', [AnimalReportController::class, 'store'])->name('animals.reports.store');
         Route::get('animal-reports/{animalReport}/edit', [AnimalReportController::class, 'edit'])->name('animal-reports.edit');
@@ -236,6 +238,22 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::post('servicios/{catalogItem}/movements', [CatalogItemController::class, 'storeMovement'])->name('servicios.movements.store');
         Route::patch('servicios/{catalogItem}/toggle', [CatalogItemController::class, 'toggleStatus'])->name('servicios.toggle');
         Route::patch('servicios/{catalogItem}/negative-stock', [CatalogItemController::class, 'toggleNegativeStock'])->name('servicios.toggle-negative-stock');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRESUPUESTOS
+        |--------------------------------------------------------------------------
+        |*/
+        Route::get('presupuestos/customers/search', [BudgetController::class, 'searchCustomers'])->name('budgets.customers.search');
+        Route::get('presupuestos/customers/{customer}/animals', [BudgetController::class, 'customerAnimals'])->name('budgets.customers.animals');
+        Route::get('presupuestos/services/search', [BudgetController::class, 'searchServices'])->name('budgets.services.search');
+        Route::post('presupuestos/{budget}/animals/{budgetAnimal}/items', [BudgetController::class, 'storeItem'])->name('budgets.animals.items.store');
+        Route::patch('presupuestos/{budget}/items/{budgetItem}', [BudgetController::class, 'updateItem'])->name('budgets.items.update');
+        Route::delete('presupuestos/{budget}/items/{budgetItem}', [BudgetController::class, 'destroyItem'])->name('budgets.items.destroy');
+        Route::get('presupuestos/{budget}/pdf', [BudgetController::class, 'pdf'])->name('budgets.pdf');
+        Route::resource('presupuestos', BudgetController::class)
+            ->parameters(['presupuestos' => 'budget'])
+            ->names('budgets');
 
         /*
         |--------------------------------------------------------------------------

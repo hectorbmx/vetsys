@@ -142,4 +142,9 @@ public function appointments()
 {
     return $this->hasMany(Appointment::class);
 }
+
+public function budgets()
+{
+    return $this->hasMany(Budget::class);
+}
 }

@@ -39,6 +39,8 @@ class CatalogItem extends Model
 
     public function appointments() { return $this->hasMany(Appointment::class); }
 
+    public function budgetItems() { return $this->hasMany(BudgetItem::class); }
+
     public function appointmentSettingsForLateFee()
     {
         return $this->hasMany(AppointmentSetting::class, 'late_fee_catalog_item_id');

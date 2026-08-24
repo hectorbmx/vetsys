@@ -14,6 +14,8 @@ class TenantDocumentTemplateService
 
     public const CLINICAL_REPORT = 'clinical_report';
 
+    public const BUDGET = 'budget';
+
     public function __construct(private readonly RichTextSanitizer $sanitizer) {}
 
     public function definitions(): array
@@ -56,6 +58,18 @@ class TenantDocumentTemplateService
                     'patient_name', 'owner_name', 'species', 'breed', 'color', 'sex', 'age',
                     'document_date', 'veterinarian_name', 'veterinarian_title', 'license_number',
                     'clinic_name',
+                ],
+            ],
+            self::BUDGET => [
+                'label' => 'Presupuesto',
+                'description' => 'Texto y formato base para las cotizaciones enviadas a clientes.',
+                'header_color' => '#0F766E',
+                'body_html' => '<p>Estimado(a) <strong>{{customer_name}}</strong>, presentamos el presupuesto <strong>{{budget_folio}}</strong> por los servicios solicitados. Este presupuesto tiene una vigencia al {{valid_until}} y un total de {{budget_total}}.</p>',
+                'closing_text' => 'Quedamos atentos a cualquier duda o ajuste requerido.',
+                'image_section_title' => 'Detalle del presupuesto',
+                'variables' => [
+                    'customer_name', 'budget_folio', 'budget_date', 'valid_until', 'budget_status',
+                    'budget_total', 'services_count', 'animals_count', 'clinic_name',
                 ],
             ],
         ];

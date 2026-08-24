@@ -95,6 +95,7 @@
                         ['module' => 'animals', 'route' => 'client.animals.index', 'icon' => '🐎', 'label' => 'Caballos'],
                         ['module' => 'clubs', 'route' => 'client.clubes.index', 'icon' => '&#127943;', 'label' => 'Clubes'],
                         ['module' => 'sales', 'route' => 'client.ventas.index', 'icon' => '&#128722;', 'label' => 'Ventas'],
+                        ['module' => 'budgets', 'route' => 'client.budgets.index', 'active' => 'client.budgets.*', 'icon' => '&#128196;', 'label' => 'Presupuestos'],
                         ['module' => 'services', 'route' => 'client.servicios.index', 'icon' => '&#128137;', 'label' => 'Servicios'],
                         ['route' => 'client.mi-configuracion.index', 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
@@ -278,7 +279,7 @@
 
         {{-- Accesos principales globales --}}
         <div class="border-b border-slate-200 bg-slate-50/80 px-6 py-2">
-            <div class="mx-auto grid max-w-7xl grid-cols-1 gap-3 md:grid-cols-3">
+            <div class="mx-auto grid max-w-7xl grid-cols-1 gap-3 md:grid-cols-4">
                 <a href="{{ route('client.customers.index') }}"
                    class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
                     <div class="flex items-center justify-center gap-3 text-center">
@@ -303,6 +304,19 @@
                         <span>
                             <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Caballos</span>
                             <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Caballos activos</span>
+                        </span>
+                    </div>
+                </a>
+
+                <a href="{{ route('client.budgets.index') }}"
+                   class="group rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:shadow-md">
+                    <div class="flex items-center justify-center gap-3 text-center">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-lg text-slate-500 transition-all group-hover:bg-white group-hover:text-teal-700">
+                            &#128196;
+                        </span>
+                        <span>
+                            <span class="block text-[11px] font-black uppercase tracking-widest theme-text-heading">Presupuestos</span>
+                            <span class="mt-0.5 block text-[10px] font-semibold text-slate-400">Cotizaciones por paciente</span>
                         </span>
                     </div>
                 </a>

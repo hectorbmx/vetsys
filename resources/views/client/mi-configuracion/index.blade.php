@@ -612,7 +612,7 @@
                         <button type="button" @click="documentTemplateOpen = null" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-black text-slate-500 hover:bg-slate-200">x</button>
                     </div>
 
-                    <form action="{{ route('client.mi-configuracion.document-templates.update', $documentTemplate['type']) }}" method="POST" data-document-template-form @submit="templateSaving = true" class="grid max-h-[82vh] grid-cols-1 overflow-y-auto lg:grid-cols-2">
+                    <form action="{{ route('client.mi-configuracion.document-templates.update', $documentTemplate['type']) }}" method="POST" data-document-template-form data-document-template-type="{{ $documentTemplate['type'] }}" @submit="templateSaving = true" class="grid max-h-[82vh] grid-cols-1 overflow-y-auto lg:grid-cols-2">
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="document_template_type" value="{{ $documentTemplate['type'] }}">
@@ -674,7 +674,7 @@
                                     <p class="absolute bottom-3 right-5 z-20 text-right text-sm font-black text-white">{{ $documentTemplate['label'] }}</p>
                                 </div>
                                 <div data-template-preview class="prose prose-sm max-w-none text-xs leading-6 text-slate-700"></div>
-                                <div class="mt-8 w-52 border-t border-slate-200 pt-4">
+                                <div data-template-signature-preview class="mt-8 w-52 border-t border-slate-200 pt-4">
                                     <p data-template-closing-preview class="text-[10px] font-semibold text-slate-500">{{ $templateClosing ?: 'Cualquier duda estoy a sus ordenes.' }}</p>
                                     <div class="mt-3 h-10 w-32 rounded bg-slate-200"></div>
                                     <p class="mt-2 text-xs font-black theme-text-heading">MVZ Carlos Gorozpe</p>
@@ -690,7 +690,7 @@
                     </form>
 
                     @if($documentTemplate['customized'])
-                        <form action="{{ route('client.mi-configuracion.document-templates.restore', $documentTemplate['type']) }}" method="POST" class="border-t border-slate-100 px-6 py-4 text-right" onsubmit="return confirm('Restaurar el texto predeterminado de esta carta?')">
+                        <form action="{{ route('client.mi-configuracion.document-templates.restore', $documentTemplate['type']) }}" method="POST" class="border-t border-slate-100 px-6 py-4 text-right" onsubmit="return confirm('Restaurar el texto predeterminado de este documento?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-rose-600 hover:underline">Restaurar predeterminada</button>
@@ -1780,6 +1780,8 @@
                 const headerPreview = form.querySelector('[data-template-header-preview]');
                 const closingInput = form.querySelector('[data-template-closing]');
                 const closingPreview = form.querySelector('[data-template-closing-preview]');
+                const signaturePreview = form.querySelector('[data-template-signature-preview]');
+                const isBudgetTemplate = form.dataset.documentTemplateType === 'budget';
                 let quill = null;
 
                 const syncHeaderColor = () => {
@@ -1790,6 +1792,11 @@
                 syncHeaderColor();
 
                 const renderPreview = (html, richText = false) => {
+                    if (isBudgetTemplate) {
+                        preview.innerHTML = '';
+                        return;
+                    }
+
                     const rendered = html.replace(/\{\{([a-z_]+)\}\}/g, (match, key) => sampleData[key] ?? match);
                     if (richText) {
                         preview.innerHTML = rendered;
@@ -1804,6 +1811,9 @@
                 };
                 closingInput.addEventListener('input', syncClosingPreview);
                 syncClosingPreview();
+                if (isBudgetTemplate && signaturePreview) {
+                    signaturePreview.classList.add('hidden');
+                }
 
                 if (typeof Quill !== 'undefined') {
                     editorElement.classList.remove('hidden');
@@ -1815,6 +1825,7 @@
                             toolbar: [
                                 [{ header: [1, 2, 3, false] }],
                                 ['bold', 'italic', 'underline'],
+                                [{ color: [] }],
                                 [{ list: 'ordered' }, { list: 'bullet' }],
                                 [{ align: [] }],
                                 ['blockquote', 'link'],
