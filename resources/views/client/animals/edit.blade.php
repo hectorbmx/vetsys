@@ -561,6 +561,7 @@
                             @forelse($animal->vaccinationLetters as $letter)
                                 @php
                                     $vaccinationPublicUrl = route('public.vaccination-letters.share', $letter->public_token);
+                                    $vaccinationWhatsappText = $vaccinationPublicUrl . ' Carta de vacunacion de ' . $animal->name;
                                 @endphp
                                 <tr class="hover:bg-slate-50/70 transition-colors" x-data="{ copied: false }">
                                     <td class="px-4 py-3 text-center">
@@ -580,7 +581,7 @@
                                     </td>
                                     <td class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <a href="https://wa.me/?text={{ rawurlencode($vaccinationPublicUrl) }}"
+                                            <a href="https://wa.me/?text={{ rawurlencode($vaccinationWhatsappText) }}"
                                                target="_blank"
                                                rel="noopener"
                                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366]/10 p-2 text-[#25D366] shadow-sm transition-all hover:bg-[#25D366] hover:text-white"
