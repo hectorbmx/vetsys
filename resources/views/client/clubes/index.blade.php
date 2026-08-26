@@ -139,7 +139,10 @@
                                         {{ substr($club->name, 0, 1) }}
                                     </div>
                                     <div>
-                                        <p class="text-sm font-black theme-text-heading">{{ $club->name }}</p>
+                                        <a href="{{ route('client.clubes.edit', $club) }}"
+                                           class="text-sm font-black theme-text-heading theme-hover-text-primary transition-colors">
+                                            {{ $club->name }}
+                                        </a>
                                         <p class="text-[10px] text-slate-400 font-semibold">Creado {{ $club->created_at->format('d/m/Y') }}</p>
                                     </div>
                                 </div>
