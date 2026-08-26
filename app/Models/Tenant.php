@@ -173,6 +173,11 @@ class Tenant extends Model
         return $this->hasMany(Club::class);
     }
 
+    public function clubNotes()
+    {
+        return $this->hasMany(ClubNote::class);
+    }
+
     public function animalTypeFields()
     {
         return $this->hasMany(AnimalTypeField::class);

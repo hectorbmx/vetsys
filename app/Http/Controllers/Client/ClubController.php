@@ -124,7 +124,12 @@ class ClubController extends Controller
         $tenantId = auth()->user()->tenant_id;
         abort_unless($clube->tenant_id === $tenantId, 404);
 
-        $clube->load(['animals.customer', 'animals.animalType', 'coggins']);
+        $clube->load([
+            'animals.customer',
+            'animals.animalType',
+            'coggins',
+            'notes.details.catalogItem',
+        ]);
 
         return view('client.clubes.edit', [
             'club' => $clube,

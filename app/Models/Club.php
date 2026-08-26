@@ -31,4 +31,9 @@ class Club extends Model
     {
         return $this->hasMany(Coggin::class);
     }
+
+    public function notes()
+    {
+        return $this->hasMany(ClubNote::class);
+    }
 }

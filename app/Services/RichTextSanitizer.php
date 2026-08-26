@@ -71,6 +71,7 @@ class RichTextSanitizer
 
             $class = $node->getAttribute('class');
             $href = $node->getAttribute('href');
+            $style = $node->getAttribute('style');
 
             while ($node->attributes->length > 0) {
                 $node->removeAttributeNode($node->attributes->item(0));
@@ -80,6 +81,14 @@ class RichTextSanitizer
             );
             if ($classes) {
                 $node->setAttribute('class', implode(' ', $classes));
+            }
+
+            if ($tag === 'span') {
+                $color = $this->colorFromQuillClass($class) ?: $this->colorFromStyle($style);
+
+                if ($color) {
+                    $node->setAttribute('style', 'color: '.$color.';');
+                }
             }
 
             if ($tag === 'a' && $this->isSafeLink($href)) {
@@ -97,5 +106,34 @@ class RichTextSanitizer
         $scheme = strtolower((string) parse_url($href, PHP_URL_SCHEME));
 
         return in_array($scheme, ['http', 'https', 'mailto'], true);
+    }
+
+    private function colorFromQuillClass(string $class): ?string
+    {
+        $quillColorMap = [
+            'ql-color-red' => '#e60000',
+            'ql-color-orange' => '#f90',
+            'ql-color-yellow' => '#ffff00',
+            'ql-color-green' => '#008a00',
+            'ql-color-blue' => '#06c',
+            'ql-color-purple' => '#93f',
+        ];
+
+        foreach (preg_split('/\s+/', trim($class)) ?: [] as $className) {
+            if (isset($quillColorMap[$className])) {
+                return $quillColorMap[$className];
+            }
+        }
+
+        return null;
+    }
+
+    private function colorFromStyle(string $style): ?string
+    {
+        if (! preg_match('/(?:^|;)\s*color\s*:\s*(#[0-9a-f]{3,6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|[a-z]+)\s*(?:;|$)/i', $style, $match)) {
+            return null;
+        }
+
+        return strtolower($match[1]);
     }
 }

@@ -16,6 +16,8 @@ class TenantDocumentTemplateService
 
     public const BUDGET = 'budget';
 
+    public const CLUB_NOTE = 'club_note';
+
     public function __construct(private readonly RichTextSanitizer $sanitizer) {}
 
     public function definitions(): array
@@ -70,6 +72,18 @@ class TenantDocumentTemplateService
                 'variables' => [
                     'customer_name', 'budget_folio', 'budget_date', 'valid_until', 'budget_status',
                     'budget_total', 'services_count', 'animals_count', 'clinic_name',
+                ],
+            ],
+            self::CLUB_NOTE => [
+                'label' => 'Nota de club',
+                'description' => 'Texto base para las notas de servicios cargadas directamente a clubes.',
+                'header_color' => '#0F766E',
+                'body_html' => '<p>Por medio de la presente se detallan los servicios registrados al club <strong>{{club_name}}</strong> bajo el folio <strong>{{club_note_folio}}</strong>, con fecha {{club_note_date}} y total de {{club_note_total}}.</p>',
+                'closing_text' => 'Quedamos atentos a cualquier duda o aclaracion.',
+                'image_section_title' => 'Detalle de servicios',
+                'variables' => [
+                    'club_name', 'club_note_folio', 'club_note_date', 'club_note_total',
+                    'services_count', 'clinic_name',
                 ],
             ],
         ];

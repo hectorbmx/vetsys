@@ -5,6 +5,7 @@
 @section('content')
 <div class="space-y-6" x-data="{
     tab: @js($errors->has('file') ? 'coggins' : request('tab', 'datos')),
+    successVisible: @js((bool) session('success')),
     animalQuery: '',
     animalResults: [],
     selectedAnimals: @js($club->animals->map(fn($a) => ['id' => $a->id, 'name' => $a->name, 'customer' => $a->customer->full_name ?? 'N/A', 'type' => $a->animalType->name ?? 'N/A'])),
@@ -37,7 +38,7 @@
     removeAnimal(index) {
         this.selectedAnimals.splice(index, 1);
     }
-}">
+}" x-init="if (successVisible) setTimeout(() => successVisible = false, 3500)">
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-slate-200 rounded-[24px] p-6">
         <div class="flex items-center gap-4">
@@ -49,15 +50,21 @@
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Administración integral del club y sus miembros.</p>
             </div>
         </div>
-        <a href="{{ route('client.clubes.index') }}" class="inline-flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">
-            ← Volver a la lista
-        </a>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <a href="{{ route('client.clubes.services.create', $club) }}"
+               class="inline-flex items-center justify-center theme-button-dark px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm">
+                Agregar servicios
+            </a>
+            <a href="{{ route('client.clubes.index') }}" class="inline-flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">
+                ← Volver a la lista
+            </a>
+        </div>
     </div>
 
     {{-- Alert Messages --}}
     @if(session('success'))
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-3 rounded-2xl text-xs font-bold">
-            ✓ {{ session('success') }}
+        <div x-show="successVisible" x-transition.opacity.duration.300ms class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-3 rounded-2xl text-xs font-bold">
+            {{ session('success') }}
         </div>
     @endif
 
@@ -65,6 +72,7 @@
     <div class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
         <button @click="tab = 'datos'" :class="tab === 'datos' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Datos del Club</button>
         <button @click="tab = 'miembros'" :class="tab === 'miembros' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Miembros ({{ $club->animals_count }})</button>
+        <button @click="tab = 'servicios'" :class="tab === 'servicios' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Servicios ({{ $club->notes->count() }})</button>
         <button @click="tab = 'coggins'" :class="tab === 'coggins' ? 'theme-button-primary shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-700 hover:border-slate-300'" class="rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all">Coggins</button>
     </div>
 
@@ -205,6 +213,95 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        {{-- TAB: SERVICIOS --}}
+        <div x-show="tab === 'servicios'" class="p-8 space-y-8" x-cloak>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Servicios del club</h3>
+                    <p class="text-[11px] text-slate-400 font-semibold mt-1">Notas/cargos registrados directamente al club, sin cliente ni caballo obligatorio.</p>
+                </div>
+            </div>
+
+            <div class="overflow-hidden border border-slate-100 rounded-2xl">
+                <table class="w-full min-w-[760px] text-left">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Folio</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Conceptos</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Total</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        @forelse($club->notes->sortByDesc('date_at') as $clubNote)
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ $clubNote->date_at?->format('d/m/Y') }}</td>
+                                <td class="px-6 py-4 text-xs font-black theme-text-heading">{{ $clubNote->folio }}</td>
+                                <td class="px-6 py-4">
+                                    <p class="text-xs font-bold theme-text-heading">{{ $clubNote->details->count() }} concepto(s)</p>
+                                    <p class="mt-1 text-[10px] font-semibold text-slate-400">
+                                        {{ $clubNote->details->take(2)->map(fn ($detail) => ($detail->catalogItem?->name ?? 'Concepto eliminado') . ' x ' . number_format((float) $detail->quantity, 2))->join(', ') ?: 'Sin detalle' }}
+                                    </p>
+                                </td>
+                                <td class="px-6 py-4 text-right text-xs font-black theme-text-heading">${{ number_format((float) $clubNote->total, 2) }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">{{ $clubNote->status }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{{ route('client.clubes.services.pdf', [$club, $clubNote]) }}"
+                                           target="_blank"
+                                           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 transition-all hover:border-cyan-200 hover:bg-cyan-100"
+                                           title="Imprimir nota"
+                                           aria-label="Imprimir nota {{ $clubNote->folio }}">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                <path d="M6 9V2h12v7" />
+                                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                                <path d="M6 14h12v8H6z" />
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('client.clubes.services.edit', [$club, $clubNote]) }}"
+                                           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-700 transition-all hover:border-amber-200 hover:bg-amber-100"
+                                           title="Editar nota"
+                                           aria-label="Editar nota {{ $clubNote->folio }}">
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                <path d="M12 20h9" />
+                                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                            </svg>
+                                        </a>
+                                        <form action="{{ route('client.clubes.services.destroy', [$club, $clubNote]) }}" method="POST" onsubmit="return confirm('Eliminar esta nota de club? Esta accion revertira inventario asociado y no se puede deshacer.');" class="inline-flex">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-700 transition-all hover:border-rose-200 hover:bg-rose-100"
+                                                    title="Eliminar nota"
+                                                    aria-label="Eliminar nota {{ $clubNote->folio }}">
+                                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                    <path d="M3 6h18" />
+                                                    <path d="M8 6V4h8v2" />
+                                                    <path d="M19 6l-1 14H6L5 6" />
+                                                    <path d="M10 11v5" />
+                                                    <path d="M14 11v5" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-sm font-bold text-slate-400">
+                                    No hay servicios registrados para este club.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
