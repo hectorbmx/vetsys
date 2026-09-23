@@ -27,9 +27,18 @@ class TenantsController extends Controller
 {
    public function index()
 {
-    $tenants = Tenant::with('plan')
+    $tenants = Tenant::with([
+        'plan',
+        'payments',
+        'subscriptions',
+    ])
         ->latest()
         ->paginate(10);
+
+    $tenantBillingSummaries = $tenants->getCollection()
+        ->mapWithKeys(fn (Tenant $tenant) => [
+            $tenant->id => $this->tenantBillingSummary($tenant),
+        ]);
 
     $totalTenants = Tenant::count();
     $activeTenants = Tenant::where('status', 'active')->count();
@@ -37,6 +46,7 @@ class TenantsController extends Controller
 
     return view('admin.tenants.index', compact(
         'tenants',
+        'tenantBillingSummaries',
         'totalTenants',
         'activeTenants',
         'inactiveTenants'

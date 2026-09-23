@@ -63,12 +63,16 @@
                         <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Contacto</th>
                         <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Plan</th>
                         <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Estado</th>
+                        <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Vencimiento</th>
                         <th class="px-6 py-4 text-right font-black uppercase tracking-widest text-[10px]">Gestión</th>
                     </tr>
                 </thead>
 
                 <tbody class="divide-y divide-slate-100">
                     @forelse($tenants as $tenant)
+                        @php
+                            $billingSummary = $tenantBillingSummaries[$tenant->id] ?? null;
+                        @endphp
                         <tr class="hover:bg-slate-50/80 transition-colors group">
                             <td class="px-6 py-5">
                                 <div class="flex items-center gap-3">
@@ -106,6 +110,17 @@
                                 @endif
                             </td>
 
+                            <td class="px-6 py-5">
+                                <div class="space-y-1.5">
+                                    <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-black uppercase tracking-wide {{ $billingSummary['badge'] ?? 'bg-slate-100 text-slate-500' }}">
+                                        {{ $billingSummary['label'] ?? 'Sin registro' }}
+                                    </span>
+                                    <p class="text-xs font-bold text-slate-500">
+                                        {{ ($billingSummary['ends_at'] ?? null) ? $billingSummary['ends_at']->format('d M, Y') : 'Sin fecha' }}
+                                    </p>
+                                </div>
+                            </td>
+
                             <td class="px-6 py-5 text-right">
                                 <a href="{{ route('admin.tenants.show', $tenant) }}"
                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:bg-[#0F172A] hover:text-white transition-all">
@@ -115,7 +130,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-20 text-center">
+                            <td colspan="6" class="px-6 py-20 text-center">
                                 <div class="flex flex-col items-center">
                                     <span class="text-4xl mb-4 opacity-20">📂</span>
                                     <p class="text-slate-400 font-bold">No se encontraron clientes registrados.</p>
