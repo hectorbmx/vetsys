@@ -109,8 +109,7 @@
             {{-- <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus pacientes.</p> --}}
         </div>
                 
-                <div class="flex w-full flex-col items-start gap-3 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
-                    <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-end">
                     <form method="GET" action="{{ route('client.customers.index') }}" class="flex items-center gap-2">
                         @if(request()->filled('q'))
                             <input type="hidden" name="q" value="{{ request('q') }}">
@@ -137,7 +136,6 @@
                         <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black transition-transform group-hover:scale-125 group-hover:rotate-90 duration-300">+</span>
                         Nuevo Cliente
                     </button>
-                    </div>
 
                 </div>
             </div>
