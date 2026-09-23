@@ -63,7 +63,7 @@
                     <h1 class="text-3xl font-black tracking-tighter theme-text-heading">Presupuestos</h1>
                     <p class="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">Cotizaciones por cliente, caballo y servicios.</p>
                 </div>
-                <div class="flex flex-col items-start gap-3 sm:items-end">
+                <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-end">
                     <form method="GET" action="{{ route('client.budgets.index') }}" class="flex items-center gap-2">
                         @if($search !== '')
                             <input type="hidden" name="q" value="{{ $search }}">
@@ -84,26 +84,22 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <form method="GET" action="{{ route('client.budgets.index') }}" class="relative w-full sm:max-w-md">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-xs text-slate-400">&#128269;</span>
-                    <input type="text" name="q" value="{{ $search }}" placeholder="Buscar folio, cliente, correo o telefono..." class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-10 pr-12 text-xs font-semibold theme-text-heading shadow-sm outline-none transition-all placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary">
-                    @if($search !== '')
-                        <a href="{{ route('client.budgets.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-black text-slate-400 hover:text-rose-500">x</a>
-                    @endif
-                </form>
-                @if($search !== '')
-                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ $search }}</span>
-                @endif
-            </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left">
                 <thead>
                     <tr class="theme-surface-dark">
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white">Folio</th>
+                        <th class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white">
+                            <form method="GET" action="{{ route('client.budgets.index') }}" class="relative w-full max-w-xs">
+                                <input type="hidden" name="per_page" value="{{ $perPage }}">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-[10px]">&#128269;</span>
+                                <input type="text" name="q" value="{{ $search }}" placeholder="Buscar folio..." aria-label="Buscar presupuesto" class="w-full rounded-lg border border-white/10 bg-white py-2 pl-8 pr-8 text-[10px] font-bold text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all focus:border-white focus:ring-2 focus:ring-white/20">
+                                @if($search !== '')
+                                    <a href="{{ route('client.budgets.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-black text-slate-400 hover:text-rose-500">x</a>
+                                @endif
+                            </form>
+                        </th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white">Cliente</th>
                         <th class="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-white">Caballos</th>
                         <th class="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-white">Servicios</th>

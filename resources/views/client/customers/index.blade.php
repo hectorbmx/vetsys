@@ -105,11 +105,12 @@
         <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Clientes</h1>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus pacientes.</p>
+            <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Lista de Clientes</h1>
+            {{-- <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Administra la base de datos de tus clientes y sus pacientes.</p> --}}
         </div>
                 
-                <div class="flex flex-col items-start gap-3 sm:items-end">
+                <div class="flex w-full flex-col items-start gap-3 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
+                    <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                     <form method="GET" action="{{ route('client.customers.index') }}" class="flex items-center gap-2">
                         @if(request()->filled('q'))
                             <input type="hidden" name="q" value="{{ request('q') }}">
@@ -136,30 +137,9 @@
                         <span class="flex items-center justify-center w-4 h-4 rounded-full theme-bg-primary text-white text-xs font-black transition-transform group-hover:scale-125 group-hover:rotate-90 duration-300">+</span>
                         Nuevo Cliente
                     </button>
+                    </div>
 
                 </div>
-            </div>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <form method="GET" action="{{ route('client.customers.index') }}" class="relative w-full sm:max-w-md">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar cliente, correo o telefono..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
-                    @if(request('status'))
-                        <input type="hidden" name="status" value="{{ request('status') }}">
-                    @endif
-                    @if(request()->filled('sort'))
-                        <input type="hidden" name="sort" value="{{ request('sort') }}">
-                    @endif
-                    @if(request()->filled('direction'))
-                        <input type="hidden" name="direction" value="{{ request('direction') }}">
-                    @endif
-                    @if(request()->filled('q') || request()->filled('status'))
-                        <a href="{{ route('client.customers.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
-                    @endif
-                </form>
-                @if(request()->filled('q') || request()->filled('status'))
-                    <span class="text-[11px] font-bold text-slate-400">Filtros activos</span>
-                @endif
             </div>
         </div>
 
@@ -189,7 +169,25 @@
             <table class="w-full text-left border-collapse">
        <thead>
 <tr class="theme-surface-dark text-center">
-        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+        <th class="px-6 py-3 text-[10px] font-black text-white uppercase tracking-widest">
+            <form method="GET" action="{{ route('client.customers.index') }}" class="relative mx-auto w-full max-w-xs">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
+                @if(request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
+                @if(request()->filled('sort'))
+                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                @endif
+                @if(request()->filled('direction'))
+                    <input type="hidden" name="direction" value="{{ request('direction') }}">
+                @endif
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-[10px]">🔍</span>
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar cliente..." aria-label="Buscar cliente" class="w-full rounded-lg border border-white/10 bg-white py-2 pl-8 pr-8 text-[10px] font-bold text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all focus:border-white focus:ring-2 focus:ring-white/20">
+                @if(request()->filled('q') || request()->filled('status'))
+                    <a href="{{ route('client.customers.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                @endif
+            </form>
+        </th>
         {{-- <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Contacto</th> --}}
         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest">
             @php($animalSort = $sortIndicator('animals_count'))

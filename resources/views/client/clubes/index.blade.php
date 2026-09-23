@@ -84,7 +84,7 @@
                     <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Clubes</h1>
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Organiza mascotas por clubes y administra sus miembros.</p>
                 </div>
-                <div class="flex flex-col items-start gap-3 sm:items-end">
+                <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-end">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ $clubs->count() }} registro(s)</span>
                     <form method="GET" action="{{ route('client.clubes.index') }}" class="flex items-center gap-2">
                         @if(request()->filled('q'))
@@ -104,26 +104,22 @@
                     </button>
                 </div>
             </div>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <form method="GET" action="{{ route('client.clubes.index') }}" class="relative w-full sm:max-w-md">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar club o descripcion..." class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-12 py-3.5 text-xs font-semibold theme-text-heading placeholder-slate-400 theme-input focus:ring-4 theme-ring-primary transition-all outline-none shadow-sm">
-                    @if(request()->filled('q'))
-                        <a href="{{ route('client.clubes.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
-                    @endif
-                </form>
-                @if(request()->filled('q'))
-                    <span class="text-[11px] font-bold text-slate-400">Filtro: {{ request('q') }}</span>
-                @endif
-            </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-100 theme-surface-dark ">
-                        <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Club</th>
+                        <th class="px-6 py-3 text-[10px] font-black text-white uppercase tracking-widest">
+                            <form method="GET" action="{{ route('client.clubes.index') }}" class="relative w-full max-w-xs">
+                                <input type="hidden" name="per_page" value="{{ $perPage }}">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-[10px]">🔍</span>
+                                <input type="text" name="q" value="{{ request('q') }}" placeholder="Buscar club..." aria-label="Buscar club" class="w-full rounded-lg border border-white/10 bg-white py-2 pl-8 pr-8 text-[10px] font-bold text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all focus:border-white focus:ring-2 focus:ring-white/20">
+                                @if(request()->filled('q'))
+                                    <a href="{{ route('client.clubes.index', ['per_page' => $perPage]) }}" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-rose-500 text-xs font-black">x</a>
+                                @endif
+                            </form>
+                        </th>
                         <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Descripcion</th>
                         <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Miembros</th>
                         <th class="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">Estado</th>

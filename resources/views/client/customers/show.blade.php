@@ -23,7 +23,7 @@
         ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }}),
         ...statementModalState()
     }"
-    class="-mt-4 p-4 max-w-[1500px] mx-auto space-y-4"
+    class="-mt-10 p-4 max-w-[1500px] mx-auto space-y-3"
 >
     {{-- FLASH --}}
     @if(session('success'))
@@ -381,7 +381,7 @@
         <div class="border-b border-slate-100 bg-slate-50/50 p-5">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 class="text-2xl font-black theme-text-heading">{{ $customer->full_name }}</h1>
+                    <h1 class="text-2xl font-black theme-text-heading">CLIENTE: {{ $customer->full_name }}</h1>
                     <p class="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">
                         {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
                     </p>
@@ -833,33 +833,32 @@
 
     {{-- CONTENIDO DEL TAB --}}
     <div>
-        <div class="mb-4 flex justify-end">
-            <div class="relative w-full lg:max-w-sm">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-xs">🔍</span>
-                <input
-                    type="search"
-                    x-model.debounce.150ms="animalSearch"
-                    placeholder="Buscar caballo..."
-                    class="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-10 text-xs font-semibold theme-text-heading placeholder-slate-400 shadow-sm outline-none transition-all theme-input focus:ring-4 theme-ring-primary"
-                >
-                <button
-                    type="button"
-                    x-show="animalSearch.length > 0"
-                    x-cloak
-                    @click="animalSearch = ''"
-                    class="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-black text-slate-400 hover:text-rose-500"
-                >
-                    x
-                </button>
-            </div>
-        </div>
-
         {{-- Tabla de mascotas --}}
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
                     <tr class="theme-surface-dark text-[10px] text-white uppercase tracking-widest">
-                        <th class="px-6 py-4 font-black">Nombre</th>
+                        <th class="px-6 py-3 font-black">
+                            <div class="relative w-full max-w-xs">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-[10px]">🔍</span>
+                                <input
+                                    type="search"
+                                    x-model.debounce.150ms="animalSearch"
+                                    placeholder="Buscar caballo..."
+                                    aria-label="Buscar caballo"
+                                    class="w-full rounded-lg border border-white/10 bg-white py-2 pl-8 pr-8 text-[10px] font-bold text-slate-900 placeholder-slate-400 shadow-sm outline-none transition-all focus:border-white focus:ring-2 focus:ring-white/20"
+                                >
+                                <button
+                                    type="button"
+                                    x-show="animalSearch.length > 0"
+                                    x-cloak
+                                    @click="animalSearch = ''"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-black text-slate-400 hover:text-rose-500"
+                                >
+                                    x
+                                </button>
+                            </div>
+                        </th>
                         <th class="px-6 py-4 font-black text-center">Historial</th>
                         <th class="px-6 py-4 font-black text-center">Vacunacion</th>
                         <th class="px-6 py-4 font-black">Sexo</th>
