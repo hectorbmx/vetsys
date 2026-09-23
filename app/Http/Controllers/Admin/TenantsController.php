@@ -20,6 +20,7 @@ use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Models\TenantNotification;
 use App\Rules\GloballyUniqueEmail;
+use Throwable;
 
 use App\Models\User;
 
@@ -37,7 +38,7 @@ class TenantsController extends Controller
 
     $tenantBillingSummaries = $tenants->getCollection()
         ->mapWithKeys(fn (Tenant $tenant) => [
-            $tenant->id => $this->tenantBillingSummary($tenant),
+            $tenant->id => $this->safeTenantBillingSummary($tenant),
         ]);
 
     $totalTenants = Tenant::count();
@@ -577,6 +578,34 @@ private function tenantBillingSummary(Tenant $tenant): array
         'active_subscription' => null,
         'payment' => null,
     ];
+}
+
+private function safeTenantBillingSummary(Tenant $tenant): array
+{
+    try {
+        return $this->tenantBillingSummary($tenant);
+    } catch (Throwable $exception) {
+        report($exception);
+
+        try {
+            $endsAt = $tenant->subscription_ends_at;
+        } catch (Throwable $dateException) {
+            report($dateException);
+            $endsAt = null;
+        }
+
+        $isExpired = $endsAt && $endsAt->isPast();
+
+        return [
+            'status' => $isExpired ? 'expired' : 'billing_unavailable',
+            'label' => $isExpired ? 'Vencido' : 'Revision requerida',
+            'description' => 'No fue posible calcular el resumen completo de facturacion.',
+            'badge' => $isExpired ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700',
+            'ends_at' => $endsAt,
+            'active_subscription' => null,
+            'payment' => null,
+        ];
+    }
 }
 
 public function destroyPayment(Tenant $tenant, TenantPayment $payment)
