@@ -8,7 +8,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::ANIMALS_INDEX);
 @endphp
-<div class="-mt-4 space-y-6" x-data="{ animalModal: false }">
+<div class="-mt-10 space-y-5" x-data="{ animalModal: false }">
     
     {{-- SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
@@ -101,6 +101,7 @@
     <div data-tour="animals-list" class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
         
         <div class="p-5 border-b border-slate-100 bg-slate-50/50 space-y-3">
+            
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-3xl font-black theme-text-heading tracking-tighter">Gestión de Caballos</h1>

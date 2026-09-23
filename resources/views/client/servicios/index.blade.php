@@ -8,11 +8,11 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::SERVICIOS_INDEX);
 @endphp
-<div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="-mt-4 space-y-6">
+<div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="-mt-10 space-y-6">
 
 @if($showKpiCards)
 {{-- CARDS / TRES KPIS SUPERIORES --}}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
     {{-- KPI 1: PRODUCTO ESTRELLA --}}
     <div class="group theme-surface-dark border border-slate-900 rounded-[24px] p-6 shadow-xl flex items-center justify-between transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden">

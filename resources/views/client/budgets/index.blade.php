@@ -6,7 +6,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::BUDGETS_INDEX);
 @endphp
-<div class="-mt-4 space-y-6">
+<div class="-mt-4 space-y-5">
     @if($showKpiCards)
     <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div class="group theme-surface-dark relative overflow-hidden rounded-[24px] border border-slate-900 p-6 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">

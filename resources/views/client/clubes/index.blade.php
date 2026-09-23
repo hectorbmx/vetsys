@@ -6,7 +6,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CLUBES_INDEX);
 @endphp
-<div class="-mt-4 space-y-6" x-data="{ clubModal: false, editClub: null, membersClub: null }">
+<div class="-mt-10 space-y-5" x-data="{ clubModal: false, editClub: null, membersClub: null }">
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">
         @if(session('success'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition class="bg-white border-l-4 border-emerald-500 rounded-xl shadow-xl p-4 flex items-center justify-between border border-slate-100">

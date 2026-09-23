@@ -8,7 +8,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::CUSTOMERS_INDEX);
 @endphp
-<div class="-mt-4 space-y-6" x-data="customersIndex()">
+<div class="-mt-10 space-y-5" x-data="customersIndex()">
     
     {{-- INCLUSIÓN DEL SISTEMA DE TOASTS FLOTANTES --}}
     <div class="fixed top-4 right-4 z-[99] space-y-3 min-w-[320px]">

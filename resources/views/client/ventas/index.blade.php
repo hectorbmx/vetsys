@@ -4,7 +4,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::VENTAS_INDEX);
 @endphp
-<div class="-mt-4 space-y-6">
+<div class="-mt-4 space-y-5">
 
     @if($showKpiCards)
     {{-- CARDS / TRES KPIS SUPERIORES --}}
