@@ -284,7 +284,7 @@ class MobileBootstrapController extends Controller
     {
         return CustomerStatement::with(['customer:id,name,last_name'])
             ->where('tenant_id', $tenantId)
-            ->when($since, fn (Builder $query) => $this->changedSince($query, $since))
+            ->when($since, fn (Builder $query) => $query->where('updated_at', '>=', $since))
             ->orderByDesc('period_end')
             ->orderByDesc('id')
             ->get()

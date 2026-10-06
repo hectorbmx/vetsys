@@ -10,8 +10,14 @@ use App\Models\CustomerPortalAccess;
 use App\Models\FinalUserPatientAssignment;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\VaccinationLetter;
+use App\Http\Middleware\EnsureApiTenantAccess;
+use App\Http\Middleware\EnsureValidMobileAccessSession;
 use App\Services\CustomerPortalAccessService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class CustomerPortalAnimalVisibilityTest extends TestCase
@@ -70,14 +76,62 @@ class CustomerPortalAnimalVisibilityTest extends TestCase
         }
     }
 
+    public function test_customer_portal_can_download_finalized_vaccination_letter_pdf(): void
+    {
+        Storage::fake('r2');
+        [$animal, $actor, $portalUser] = $this->scenario();
+        $this->withoutMiddleware([EnsureValidMobileAccessSession::class, EnsureApiTenantAccess::class]);
+        Sanctum::actingAs($portalUser);
+
+        FinalUserPatientAssignment::create([
+            'tenant_id' => $animal->tenant_id,
+            'customer_id' => $animal->customer_id,
+            'user_id' => $portalUser->id,
+            'animal_id' => $animal->id,
+            'assigned_by' => $actor->id,
+            'assigned_at' => now(),
+        ]);
+        AnimalPortalVisibilitySetting::create([
+            'tenant_id' => $animal->tenant_id,
+            'customer_id' => $animal->customer_id,
+            'user_id' => $portalUser->id,
+            'animal_id' => $animal->id,
+            'show_vaccines' => true,
+            'updated_by' => $actor->id,
+        ]);
+
+        $path = "tenants/{$animal->tenant_id}/animals/{$animal->id}/vaccination-letters/test.pdf";
+        Storage::disk('r2')->put($path, '%PDF-1.4 portal vaccination test');
+        $letter = VaccinationLetter::create([
+            'tenant_id' => $animal->tenant_id,
+            'animal_id' => $animal->id,
+            'image_path' => 'unused/when/pdf/already/finalized.png',
+            'pdf_disk' => 'r2',
+            'pdf_path' => $path,
+            'finalized_at' => now(),
+            'date' => '2026-10-06',
+            'visible_to_customer' => true,
+            'published_at' => now(),
+            'published_by' => $actor->id,
+        ]);
+
+        $this->get('/api/v1/portal/vaccination-letters/'.$letter->id.'/pdf')
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'inline; filename="carta-vacunacion-paciente-portal-20261006.pdf"')
+            ->assertSee('%PDF-1.4 portal vaccination test', false);
+    }
+
     private function scenario(): array
     {
+        Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web']);
         $tenant = Tenant::create([
             'name' => 'Portal Visibility Tenant',
             'slug' => 'portal-visibility-'.str()->random(8),
         ]);
         $actor = User::factory()->create(['tenant_id' => $tenant->id]);
-        $portalUser = User::factory()->create(['tenant_id' => $tenant->id]);
+        $portalUser = User::factory()->create(['tenant_id' => $tenant->id, 'is_active' => true]);
+        $portalUser->assignRole('customer');
         $customer = Customer::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente',

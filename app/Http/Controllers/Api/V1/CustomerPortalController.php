@@ -17,8 +17,8 @@ use App\Models\RadiologyImage;
 use App\Models\RadiologyStudy;
 use App\Models\Tenant;
 use App\Services\CustomerStatementGenerator;
+use App\Services\VaccinationLetterPdfService;
 use App\Models\VaccinationLetter;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -365,7 +365,11 @@ class CustomerPortalController extends Controller
         ]);
     }
 
-    public function vaccinationLetterPdf(Request $request, VaccinationLetter $vaccinationLetter)
+    public function vaccinationLetterPdf(
+        Request $request,
+        VaccinationLetter $vaccinationLetter,
+        VaccinationLetterPdfService $pdfService
+    )
     {
         $access = $this->portalAccess($request);
 
@@ -373,27 +377,19 @@ class CustomerPortalController extends Controller
         abort_unless($vaccinationLetter->animal, 404);
 
         $this->authorizePatientSection($access, $vaccinationLetter->animal, 'show_vaccines');
-        abort_unless($this->publicStorageFileExists($vaccinationLetter->image_path), 404);
 
-        $vaccinationLetter->loadMissing(['tenant', 'animal.customer', 'animal.animalType']);
+        $pdfService->ensureFinalized($vaccinationLetter);
+        $vaccinationLetter->refresh();
 
-        $pdf = Pdf::loadView('client.animals.vaccination-letter-pdf', [
-            'letter' => $vaccinationLetter,
-            'animal' => $vaccinationLetter->animal,
-            'customer' => $vaccinationLetter->animal->customer,
-            'tenant' => $vaccinationLetter->tenant,
-            'imageDataUri' => $this->publicStorageImageAsDataUri($vaccinationLetter->image_path),
-            'tenantLogoDataUri' => $this->publicStorageImageAsDataUri($vaccinationLetter->tenant?->logo),
-            'generatedDate' => Carbon::now()->format('Y-m-d'),
-        ])
-            ->setPaper('letter', 'portrait')
-            ->setOption('defaultFont', 'DejaVu Sans')
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('isRemoteEnabled', true);
+        $disk = $vaccinationLetter->pdf_disk ?: 'r2';
+        abort_unless($vaccinationLetter->pdf_path && Storage::disk($disk)->exists($vaccinationLetter->pdf_path), 404);
 
         $filename = 'carta-vacunacion-' . str($vaccinationLetter->animal->name)->slug() . '-' . $vaccinationLetter->date->format('Ymd') . '.pdf';
 
-        return $pdf->stream($filename);
+        return response(Storage::disk($disk)->get($vaccinationLetter->pdf_path), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 
     public function statements(Request $request)

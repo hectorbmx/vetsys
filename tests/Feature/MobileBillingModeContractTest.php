@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Customer;
+use App\Models\CustomerStatement;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantPayment;
@@ -50,6 +52,45 @@ class MobileBillingModeContractTest extends TestCase
         ])->assertOk();
 
         $login->assertJsonPath('user.tenant.billing_mode', Tenant::BILLING_MODE_NOTE_BASED);
+    }
+
+    public function test_incremental_mobile_bootstrap_returns_customer_statements_without_deleted_at_column(): void
+    {
+        $user = $this->tenantUser(Tenant::BILLING_MODE_MONTHLY_CUTOFF);
+
+        $customer = Customer::create([
+            'tenant_id' => $user->tenant_id,
+            'name' => 'Cliente',
+            'last_name' => 'Cortes',
+            'email' => str()->random(6).'@example.test',
+            'status' => 'active',
+        ]);
+
+        $since = now()->subHour();
+
+        $statement = CustomerStatement::create([
+            'tenant_id' => $user->tenant_id,
+            'customer_id' => $customer->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'cutoff_day' => 30,
+            'period_charges' => 250,
+            'period_payments' => 100,
+            'ending_balance' => 150,
+            'generated_at' => now(),
+            'status' => 'generated',
+        ]);
+
+        $login = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'device_name' => 'contract-test-phone',
+        ])->assertOk();
+
+        $this->withToken($login->json('token'))
+            ->getJson('/api/v1/mobile/bootstrap?since='.$since->toISOString())
+            ->assertOk()
+            ->assertJsonPath('customer_statements.0.id', $statement->id);
     }
 
     private function tenantUser(string $billingMode): User
