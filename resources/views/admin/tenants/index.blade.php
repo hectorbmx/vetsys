@@ -23,23 +23,24 @@
     </div>
 
     {{-- Stats Grid --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         @php
             $stats = [
-                ['label' => 'Total clientes', 'value' => $totalTenants, 'icon' => '👥', 'color' => 'bg-slate-50'],
-                ['label' => 'Clientes activos', 'value' => $activeTenants, 'icon' => '●', 'color' => 'bg-emerald-50 text-emerald-600'],
-                ['label' => 'Inactivos / Suspendidos', 'value' => $inactiveTenants, 'icon' => '○', 'color' => 'bg-red-50 text-red-600'],
+                ['label' => 'Total clientes', 'value' => $totalTenants, 'icon' => '👥', 'status' => null],
+                ['label' => 'Clientes activos', 'value' => $activeTenants, 'icon' => '●', 'status' => 'active'],
+                ['label' => 'Inactivos / Suspendidos', 'value' => $inactiveTenants, 'icon' => '○', 'status' => 'inactive'],
             ];
         @endphp
 
         @foreach($stats as $stat)
-        <div class="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 text-4xl group-hover:scale-110 transition-transform">
+        <a href="{{ route('admin.tenants.index', $stat['status'] ? ['status' => $stat['status']] : []) }}"
+           class="bg-white border rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all relative overflow-hidden group {{ $statusFilter === $stat['status'] ? 'border-[#0F172A] ring-2 ring-[#0F172A]/10' : 'border-slate-200' }}">
+            <div class="absolute top-0 right-0 p-3 opacity-10 text-3xl group-hover:scale-110 transition-transform">
                 {{ $stat['icon'] }}
             </div>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{{ $stat['label'] }}</p>
-            <p class="text-4xl font-black mt-2 text-[#0F172A] tracking-tighter">{{ $stat['value'] }}</p>
-        </div>
+            <p class="text-3xl font-black mt-1 text-[#0F172A] tracking-tighter">{{ $stat['value'] }}</p>
+        </a>
         @endforeach
     </div>
 
@@ -58,13 +59,13 @@
         <div class="overflow-x-auto">
             <table class="w-full text-sm border-separate border-spacing-0">
                 <thead>
-                    <tr class="text-[#0F172A]">
-                        <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Cliente</th>
-                        <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Contacto</th>
-                        <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Plan</th>
-                        <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Estado</th>
-                        <th class="px-6 py-4 text-left font-black uppercase tracking-widest text-[10px]">Vencimiento</th>
-                        <th class="px-6 py-4 text-right font-black uppercase tracking-widest text-[10px]">Gestión</th>
+                    <tr class="bg-[#0F172A] text-white">
+                        <th class="px-6 py-3.5 text-left font-black uppercase tracking-widest text-[10px]">Cliente</th>
+                        <th class="px-6 py-3.5 text-left font-black uppercase tracking-widest text-[10px]">Contacto</th>
+                        <th class="px-6 py-3.5 text-left font-black uppercase tracking-widest text-[10px]">Plan</th>
+                        <th class="px-6 py-3.5 text-left font-black uppercase tracking-widest text-[10px]">Estado</th>
+                        <th class="px-6 py-3.5 text-left font-black uppercase tracking-widest text-[10px]">Vencimiento</th>
+                        <th class="px-6 py-3.5 text-right font-black uppercase tracking-widest text-[10px]">Gestión</th>
                     </tr>
                 </thead>
 

@@ -303,14 +303,14 @@
     <table class="w-full text-left">
     
        <thead>
-    <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
-        <th class="px-8 py-4">Fecha</th>
-        <th class="px-8 py-4">Plan</th>
-        <th class="px-8 py-4">Monto</th>
-        <th class="px-8 py-4">Método</th>
-        <th class="px-8 py-4">Status</th>
-        <th class="px-8 py-4">Vence</th>
-        <th class="px-8 py-4 text-right">Accion</th>
+    <tr class="bg-[#0F172A] text-[10px] font-black uppercase tracking-widest text-white">
+        <th class="px-8 py-3.5">Fecha</th>
+        <th class="px-8 py-3.5">Plan</th>
+        <th class="px-8 py-3.5">Monto</th>
+        <th class="px-8 py-3.5">Método</th>
+        <th class="px-8 py-3.5">Status</th>
+        <th class="px-8 py-3.5">Vence</th>
+        <th class="px-8 py-3.5 text-right">Accion</th>
     </tr>
 </thead>
 
@@ -401,7 +401,15 @@
             </td>
 
             <td class="px-8 py-4 text-right">
-                @if($payment->provider === 'stripe' && $payment->payment_method === 'stripe_checkout' && $payment->provider_payment_id && ($payment->status === 'pending' || ($payment->status === 'cancelled' && $payment->cancellation_reason === 'stripe_checkout_expired')))
+                @if($payment->provider === 'manual' && $payment->status === 'pending')
+                    <form action="{{ route('admin.tenants.payments.destroy', [$tenant, $payment]) }}" method="POST" onsubmit="return confirm('¿Eliminar este registro pendiente y su suscripción pendiente?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-rose-500 hover:text-rose-700 transition" title="Eliminar registro pendiente">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 01-1-1h-4a1 1 0 01-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </form>
+                @elseif($payment->provider === 'stripe' && $payment->payment_method === 'stripe_checkout' && $payment->provider_payment_id && ($payment->status === 'pending' || ($payment->status === 'cancelled' && $payment->cancellation_reason === 'stripe_checkout_expired')))
                     <button type="button" @click="replacementPaymentId = {{ $payment->id }}" class="rounded-lg bg-amber-50 px-3 py-2 text-[10px] font-black uppercase text-amber-800 hover:bg-amber-100">Registrar por otro medio</button>
                 @elseif($payment->status === 'cancelled' && $payment->cancellation_reason !== 'replaced_by_manual_payment' && ! $payments->contains('replaces_tenant_payment_id', $payment->id))
                     <form action="{{ route('admin.tenants.payments.destroy', [$tenant, $payment]) }}" method="POST" onsubmit="return confirm('¿Eliminar este registro de pago cancelado?')">

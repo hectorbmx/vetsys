@@ -27,15 +27,28 @@ use App\Models\User;
 
 class TenantsController extends Controller
 {
-   public function index()
+public function index(Request $request)
 {
-    $tenants = Tenant::with([
+    $statusFilter = $request->query('status');
+
+    $tenantQuery = Tenant::with([
         'plan',
         'payments',
         'subscriptions',
-    ])
+    ]);
+
+    if ($statusFilter === 'active') {
+        $tenantQuery->where('status', 'active');
+    } elseif ($statusFilter === 'inactive') {
+        $tenantQuery->whereIn('status', ['inactive', 'suspended', 'cancelled']);
+    } else {
+        $statusFilter = null;
+    }
+
+    $tenants = $tenantQuery
         ->latest()
-        ->paginate(10);
+        ->paginate(10)
+        ->withQueryString();
 
     $tenantBillingSummaries = $tenants->getCollection()
         ->mapWithKeys(fn (Tenant $tenant) => [
@@ -51,7 +64,8 @@ class TenantsController extends Controller
         'tenantBillingSummaries',
         'totalTenants',
         'activeTenants',
-        'inactiveTenants'
+        'inactiveTenants',
+        'statusFilter'
     ));
 }
 public function show(Tenant $tenant)
@@ -646,6 +660,43 @@ public function destroyPayment(Tenant $tenant, TenantPayment $payment)
 {
     if ((int) $payment->tenant_id !== (int) $tenant->id) {
         abort(404);
+    }
+
+    if ($payment->status === 'pending' && $payment->provider === 'manual') {
+        DB::transaction(function () use ($tenant, $payment) {
+            $subscription = $payment->tenant_subscription_id
+                ? TenantSubscription::where('tenant_id', $tenant->id)
+                    ->find($payment->tenant_subscription_id)
+                : null;
+            $restorePlan = (int) $tenant->plan_id === (int) $payment->plan_id;
+
+            $payment->delete();
+
+            if ($subscription
+                && $subscription->status === 'pending'
+                && $subscription->provider === 'manual'
+                && ! TenantPayment::where('tenant_subscription_id', $subscription->id)->exists()) {
+                $subscription->delete();
+            }
+
+            if ($restorePlan) {
+                $fallbackPlanId = TenantSubscription::where('tenant_id', $tenant->id)
+                    ->whereIn('status', ['active', 'scheduled'])
+                    ->latest('starts_at')
+                    ->value('plan_id');
+
+                if (! $fallbackPlanId) {
+                    $fallbackPlanId = TenantPayment::where('tenant_id', $tenant->id)
+                        ->where('status', 'paid')
+                        ->latest('period_ends_at')
+                        ->value('plan_id');
+                }
+
+                $tenant->update(['plan_id' => $fallbackPlanId]);
+            }
+        });
+
+        return back()->with('success', 'El registro pendiente y su suscripción pendiente fueron eliminados.');
     }
 
     if ($payment->status !== 'cancelled') {
