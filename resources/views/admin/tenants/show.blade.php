@@ -129,104 +129,101 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 font-medium">
-        
-        {{-- COLUMNA IZQUIERDA: Info y KPIs --}}
-        <div class="lg:col-span-4 space-y-6">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan asignado</p>
-                    <p class="text-lg font-black text-[#0F172A] mt-1">{{ $tenant->plan->name ?? 'N/A' }}</p>
-                </div>
-                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuarios</p>
-                    <p class="text-lg font-black text-[#0F172A] mt-1">{{ $tenant->users->count() }}</p>
-                </div>
+   <div class="space-y-6 font-medium">
+
+    {{-- ====== FRANJA DE RESUMEN ====== --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {{-- Plan + Usuarios --}}
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm grid grid-cols-2 gap-4 content-center">
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan asignado</p>
+                <p class="text-lg font-black text-[#0F172A] mt-1">{{ $tenant->plan->name ?? 'N/A' }}</p>
             </div>
-
-            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suscripcion</p>
-                        <p class="text-xl font-black text-[#0F172A] mt-1">{{ $billingSummary['label'] }}</p>
-                        <p class="text-xs font-semibold text-slate-500 mt-1">{{ $billingSummary['description'] }}</p>
-                    </div>
-                    <span class="shrink-0 inline-flex rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest {{ $billingSummary['badge'] }}">
-                        {{ $billingSummary['status'] }}
-                    </span>
-                </div>
-                <div class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vence</p>
-                        <p class="text-sm font-black text-[#0F172A] mt-1">{{ $billingSummary['ends_at'] ? $billingSummary['ends_at']->format('d M, Y') : 'Sin fecha' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Evidencia</p>
-                        <p class="text-sm font-black text-[#0F172A] mt-1">
-                            @if($billingSummary['payment'])
-                                Pago #{{ $billingSummary['payment']->id }}
-                            @elseif($billingSummary['active_subscription'])
-                                Sub #{{ $billingSummary['active_subscription']->id }}
-                            @else
-                                Sin registro
-                            @endif
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div x-data="{ editingContact: false }" class="bg-slate-900 rounded-[24px] p-6 text-white shadow-xl relative overflow-hidden">
-                <div class="relative z-10 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-[#38B2AC]">Datos de Contacto</h3>
-                        <button @click="editingContact = !editingContact" class="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
-                            <span x-text="editingContact ? 'Cancelar' : 'Editar'"></span>
-                        </button>
-                    </div>
-
-                    <template x-if="!editingContact">
-                        <div class="space-y-4">
-                            <div class="space-y-1">
-                                <p class="text-[10px] text-white/40 uppercase font-black">Email Corporativo</p>
-                                <p class="text-sm truncate">{{ $tenant->email ?: 'N/A' }}</p>
-                            </div>
-                            <div class="space-y-1">
-                                <p class="text-[10px] text-white/40 uppercase font-black">Línea Directa</p>
-                                <p class="text-sm">{{ $tenant->phone ?: 'N/A' }}</p>
-                            </div>
-                        </div>
-                    </template>
-
-                    <template x-if="editingContact">
-                        <form action="{{ route('admin.tenants.update', $tenant) }}" method="POST" class="space-y-4">
-                            @csrf
-                            @method('PATCH')
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-white/40 uppercase font-black">Email Corporativo</label>
-                                <input type="email" name="email" value="{{ $tenant->email }}" required class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#38B2AC] transition-all">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] text-white/40 uppercase font-black">Línea Directa</label>
-                                <input type="text" name="phone" value="{{ $tenant->phone }}" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#38B2AC] transition-all">
-                            </div>
-                            <button type="submit" class="w-full bg-[#38B2AC] hover:bg-[#2C9A94] text-white text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-all">
-                                Actualizar Datos
-                            </button>
-                        </form>
-                    </template>
-
-                    <div class="pt-4 border-t border-white/10 space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] text-white/40 uppercase font-black">Suscripción</span>
-                            <span class="text-xs font-bold">{{ $billingSummary['label'] }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="absolute -right-4 -bottom-4 text-7xl opacity-10">🏥</div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuarios</p>
+                <p class="text-lg font-black text-[#0F172A] mt-1">{{ $tenant->users->count() }}</p>
             </div>
         </div>
 
-        {{-- COLUMNA DERECHA: Tablas --}}
+        {{-- Suscripción --}}
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suscripcion</p>
+                    <p class="text-lg font-black text-[#0F172A] mt-1">{{ $billingSummary['label'] }}</p>
+                    <p class="text-[11px] font-semibold text-slate-500 mt-0.5">{{ $billingSummary['description'] }}</p>
+                </div>
+                <span class="shrink-0 inline-flex rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest {{ $billingSummary['badge'] }}">
+                    {{ $billingSummary['status'] }}
+                </span>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vence</p>
+                    <p class="text-sm font-black text-[#0F172A] mt-0.5">{{ $billingSummary['ends_at'] ? $billingSummary['ends_at']->format('d M, Y') : 'Sin fecha' }}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Evidencia</p>
+                    <p class="text-sm font-black text-[#0F172A] mt-0.5">
+                        @if($billingSummary['payment'])
+                            Pago #{{ $billingSummary['payment']->id }}
+                        @elseif($billingSummary['active_subscription'])
+                            Sub #{{ $billingSummary['active_subscription']->id }}
+                        @else
+                            Sin registro
+                        @endif
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Contacto --}}
+        <div x-data="{ editingContact: false }" class="bg-slate-900 rounded-2xl p-5 text-white shadow-sm">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-[#38B2AC]">Datos de Contacto</h3>
+                <button type="button" @click="editingContact = !editingContact" class="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+                    <span x-text="editingContact ? 'Cancelar' : 'Editar'"></span>
+                </button>
+            </div>
+
+            <template x-if="!editingContact">
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <p class="text-[10px] text-white/40 uppercase font-black">Email Corporativo</p>
+                        <p class="text-sm truncate">{{ $tenant->email ?: 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/40 uppercase font-black">Línea Directa</p>
+                        <p class="text-sm">{{ $tenant->phone ?: 'N/A' }}</p>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="editingContact">
+                <form action="{{ route('admin.tenants.update', $tenant) }}" method="POST" class="space-y-3">
+                    @csrf
+                    @method('PATCH')
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-white/40 uppercase font-black">Email</label>
+                            <input type="email" name="email" value="{{ $tenant->email }}" required class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#38B2AC] transition-all">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-white/40 uppercase font-black">Línea</label>
+                            <input type="text" name="phone" value="{{ $tenant->phone }}" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#38B2AC] transition-all">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-[#38B2AC] hover:bg-[#2C9A94] text-white text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-all">
+                        Actualizar Datos
+                    </button>
+                </form>
+            </template>
+        </div>
+    </div>
+
+    {{-- ====== TABLAS (ancho completo) ====== --}}
+    <div class="space-y-8">
         <div class="lg:col-span-8 space-y-8">
             
             {{-- TABLA: Historial de Suscripciones --}}
