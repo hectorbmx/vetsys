@@ -14,6 +14,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('statements:generate-monthly')->dailyAt('01:00');
+        $schedule->command('tenants:send-pending-payment-reminders')
+            ->dailyAt('09:00')
+            ->timezone('America/Mexico_City')
+            ->withoutOverlapping();
         $schedule->job(new ExpireAppointmentProposals)
             ->everyFiveMinutes()
             ->withoutOverlapping();

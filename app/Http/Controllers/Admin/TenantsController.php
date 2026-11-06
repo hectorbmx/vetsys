@@ -19,6 +19,7 @@ use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
 use App\Services\ReplaceStripeTenantPayment;
+use App\Services\PendingPaymentReminderService;
 use App\Models\TenantNotification;
 use App\Rules\GloballyUniqueEmail;
 use Throwable;
@@ -380,6 +381,14 @@ public function assignPlan(Request $request, Tenant $tenant)
         $this->cancelPendingManualBilling($tenant);
         $this->createManualBillingRecord($tenant, $data);
     });
+
+    if ($data['billing_action'] === 'pending') {
+        try {
+            app(PendingPaymentReminderService::class)->notifyIfNeeded($tenant->fresh());
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
 
     return redirect()
         ->route('admin.tenants.show', $tenant)
