@@ -48,6 +48,7 @@ class StripeWebhookController extends Controller
 
         match ($event->type) {
             'checkout.session.completed' => $this->handleCheckoutCompleted($event->data->object),
+            'checkout.session.expired' => $this->handleCheckoutExpired($event->data->object),
 	    'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
             'invoice.paid' => $this->handleInvoicePaid($event->data->object),
             'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event->data->object),
@@ -75,12 +76,23 @@ class StripeWebhookController extends Controller
             return;
         }
 
+        DB::transaction(function () use ($session) {
         $tenant = Tenant::find($session->metadata->tenant_id ?? null);
         $plan = Plan::find($session->metadata->plan_id ?? null);
-        $subscription = TenantSubscription::find($session->metadata->tenant_subscription_id ?? null);
-        $payment = TenantPayment::find($session->metadata->tenant_payment_id ?? null);
+        $payment = TenantPayment::whereKey($session->metadata->tenant_payment_id ?? null)->lockForUpdate()->first();
+        $subscription = TenantSubscription::whereKey($session->metadata->tenant_subscription_id ?? null)->lockForUpdate()->first();
 
-        if (!$tenant || !$plan || !$subscription || !$payment) {
+        if (!$tenant || !$plan || !$subscription || !$payment
+            || $payment->tenant_id !== $tenant->id || $subscription->tenant_id !== $tenant->id
+            || $payment->tenant_subscription_id !== $subscription->id || $payment->plan_id !== $plan->id
+            || $payment->provider !== 'stripe' || $payment->provider_payment_id !== $session->id) {
+            return;
+        }
+        if ($payment->status === 'cancelled' || $subscription->status === 'cancelled'
+            || TenantPayment::where('replaces_tenant_payment_id', $payment->id)->exists()) {
+            if (($session->payment_status ?? null) === 'paid') {
+                \Log::critical('Stripe cobro una sesion sustituida; requiere conciliacion', ['session_id' => $session->id, 'payment_id' => $payment->id]);
+            }
             return;
         }
 
@@ -113,6 +125,26 @@ class StripeWebhookController extends Controller
         if (($session->payment_status ?? null) === 'paid') {
             $this->activateTenantPlan($tenant, $plan, $subscription, $payment->period_starts_at, $payment->period_ends_at);
         }
+        });
+    }
+
+    private function handleCheckoutExpired($session): void
+    {
+        if (($session->metadata->flow ?? null) !== 'saas_plan_checkout') {
+            return;
+        }
+        DB::transaction(function () use ($session) {
+            $payment = TenantPayment::whereKey($session->metadata->tenant_payment_id ?? null)->lockForUpdate()->first();
+            if (!$payment || $payment->provider !== 'stripe' || $payment->provider_payment_id !== $session->id
+                || $payment->status !== 'pending' || $payment->tenant_id != ($session->metadata->tenant_id ?? null)) {
+                return;
+            }
+            $subscription = TenantSubscription::whereKey($payment->tenant_subscription_id)->lockForUpdate()->first();
+            $payment->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => 'stripe_checkout_expired']);
+            if ($subscription && $subscription->provider === 'stripe' && $subscription->status === 'pending') {
+                $subscription->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+            }
+        });
     }
 
     private function handleCustomerAccountCheckoutCompleted($session): void
@@ -253,15 +285,21 @@ class StripeWebhookController extends Controller
 
     private function handleInvoicePaid($invoice): void
     {
+        DB::transaction(function () use ($invoice) {
         $providerSubscriptionId = is_string($invoice->subscription ?? null) ? $invoice->subscription : null;
 
         if (!$providerSubscriptionId) {
             return;
         }
 
-        $subscription = TenantSubscription::where('provider_subscription_id', $providerSubscriptionId)->first();
+        $subscription = TenantSubscription::where('provider_subscription_id', $providerSubscriptionId)->lockForUpdate()->first();
 
         if (!$subscription) {
+            return;
+        }
+
+        if ($subscription->status === 'cancelled') {
+            \Log::critical('Stripe invoice para suscripcion cancelada; requiere conciliacion', ['invoice_id' => $invoice->id]);
             return;
         }
 
@@ -308,17 +346,23 @@ class StripeWebhookController extends Controller
         }
 
         $this->activateTenantPlan($tenant, $plan, $subscription, $periodStartsAt, $periodEndsAt);
+        });
     }
 
     private function handleInvoicePaymentFailed($invoice): void
     {
+        DB::transaction(function () use ($invoice) {
         if (!is_string($invoice->subscription ?? null)) {
             return;
         }
 
-        $subscription = TenantSubscription::where('provider_subscription_id', $invoice->subscription)->first();
+        $subscription = TenantSubscription::where('provider_subscription_id', $invoice->subscription)->lockForUpdate()->first();
 
         if (!$subscription) {
+            return;
+        }
+
+        if ($subscription->status === 'cancelled') {
             return;
         }
 
@@ -341,13 +385,20 @@ class StripeWebhookController extends Controller
                 'notes' => 'Pago fallido reportado por Stripe.',
             ]
         );
+        });
     }
 
     private function handleSubscriptionUpdated($stripeSubscription): void
     {
-        $subscription = TenantSubscription::where('provider_subscription_id', $stripeSubscription->id)->first();
+        DB::transaction(function () use ($stripeSubscription) {
+        $subscription = TenantSubscription::where('provider_subscription_id', $stripeSubscription->id)->lockForUpdate()->first();
 
         if (!$subscription) {
+            return;
+        }
+
+        if ($subscription->status === 'cancelled') {
+            \Log::warning('Actualizacion Stripe ignorada para suscripcion cancelada', ['subscription_id' => $stripeSubscription->id]);
             return;
         }
 
@@ -367,6 +418,7 @@ class StripeWebhookController extends Controller
         if ($status === 'active') {
             $this->activateTenantPlan($subscription->tenant, $subscription->plan, $subscription, $subscription->starts_at, $endsAt);
         }
+        });
     }
 
     private function handleSubscriptionDeleted($stripeSubscription): void

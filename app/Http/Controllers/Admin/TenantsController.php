@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
+use App\Services\ReplaceStripeTenantPayment;
 use App\Models\TenantNotification;
 use App\Rules\GloballyUniqueEmail;
 use Throwable;
@@ -63,7 +64,7 @@ public function show(Tenant $tenant)
     ]);
 
     $payments = $tenant->payments()
-        ->with('plan')
+        ->with(['plan', 'createdBy', 'cancelledBy'])
         ->latest('paid_at')
         ->get();
 
@@ -74,6 +75,7 @@ public function show(Tenant $tenant)
 
     $pendingPlanRequest = $tenant->subscriptions
         ->where('status', 'pending')
+        ->filter(fn ($subscription) => ! $subscription->ends_at || ! $subscription->ends_at->isPast())
         ->sortByDesc('created_at')
         ->first();
     $billingSummary = $this->tenantBillingSummary($tenant);
@@ -370,6 +372,32 @@ public function assignPlan(Request $request, Tenant $tenant)
         ->with('success', 'Plan asignado correctamente.');
 }
 
+public function replaceStripePayment(Request $request, Tenant $tenant, TenantPayment $payment)
+{
+    abort_unless($payment->tenant_id === $tenant->id, 404);
+
+    $data = $request->validate([
+        'payment_method' => ['required', Rule::in(['cash', 'transfer', 'card_manual', 'other'])],
+        'paid_at' => ['required', 'date', 'before_or_equal:now'],
+        'amount' => ['required', 'numeric', 'gt:0'],
+        'payment_reference' => ['required_if:payment_method,transfer,card_manual', 'nullable', 'string', 'max:255'],
+        'notes' => ['nullable', 'string', 'max:2000'],
+        'starts_at' => ['required', 'date'],
+        'ends_at' => ['required', 'date', 'after_or_equal:starts_at'],
+        'confirm_replacement' => ['accepted'],
+    ]);
+
+    try {
+        app(ReplaceStripeTenantPayment::class)->replace($tenant, $payment, $data, (int) $request->user()->id);
+    } catch (\Stripe\Exception\ApiErrorException $exception) {
+        report($exception);
+        return back()->with('error', 'No fue posible verificar la sesión Stripe. No se registró el pago manual.');
+    }
+
+    return redirect()->route('admin.tenants.show', $tenant)
+        ->with('success', 'Pago manual registrado y checkout Stripe cancelado.');
+}
+
 public function stripeCheckoutLink(Request $request, Tenant $tenant)
 {
     $data = $request->validate([
@@ -507,6 +535,12 @@ private function tenantBillingSummary(Tenant $tenant): array
         ->first();
     $pendingPayment = $payments
         ->where('status', 'pending')
+        ->filter(fn ($payment) => ! $payment->period_ends_at || ! $payment->period_ends_at->isPast())
+        ->sortByDesc('created_at')
+        ->first();
+    $pendingPlanRequest = $subscriptions
+        ->where('status', 'pending')
+        ->filter(fn ($subscription) => ! $subscription->ends_at || ! $subscription->ends_at->isPast())
         ->sortByDesc('created_at')
         ->first();
     $paidPayment = $payments
@@ -545,7 +579,7 @@ private function tenantBillingSummary(Tenant $tenant): array
         ];
     }
 
-    if ($pendingPayment || $pendingPlanRequest = $subscriptions->where('status', 'pending')->sortByDesc('created_at')->first()) {
+    if ($pendingPayment || $pendingPlanRequest) {
         return [
             'status' => 'pending_payment',
             'label' => 'Pago pendiente',
@@ -618,6 +652,10 @@ public function destroyPayment(Tenant $tenant, TenantPayment $payment)
         return back()->with('error', 'Solo se pueden eliminar pagos con estatus cancelado.');
     }
 
+    if ($payment->cancellation_reason === 'replaced_by_manual_payment' || $payment->replaces_tenant_payment_id) {
+        return back()->with('error', 'Un pago sustituido forma parte del historial y no puede eliminarse.');
+    }
+
     $payment->delete();
 
     return back()->with('success', 'El registro de pago ha sido eliminado.');
@@ -627,6 +665,10 @@ public function clearCancelledPayments(Tenant $tenant)
 {
     $count = $tenant->payments()
         ->where('status', 'cancelled')
+        ->whereNull('replaces_tenant_payment_id')
+        ->where(function ($query) {
+            $query->whereNull('cancellation_reason')->orWhere('cancellation_reason', '!=', 'replaced_by_manual_payment');
+        })
         ->delete();
 
     return back()->with('success', "Se han eliminado {$count} registros de pago cancelados.");

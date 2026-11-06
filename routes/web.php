@@ -151,6 +151,7 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
         // asigna plan a tenant
         Route::post('/tenants/{tenant}/assign-plan', [TenantsController::class, 'assignPlan'])->name('tenants.assign-plan');
+        Route::post('/tenants/{tenant}/payments/{payment}/replace-stripe', [TenantsController::class, 'replaceStripePayment'])->name('tenants.payments.replace-stripe');
         Route::post('/tenants/{tenant}/stripe-checkout-link', [TenantsController::class, 'stripeCheckoutLink'])->name('tenants.stripe-checkout-link');
         Route::delete('/tenants/{tenant}/payments/clear-cancelled', [TenantsController::class, 'clearCancelledPayments'])->name('tenants.payments.clear-cancelled');
         Route::delete('/tenants/{tenant}/payments/{payment}', [TenantsController::class, 'destroyPayment'])->name('tenants.payments.destroy');

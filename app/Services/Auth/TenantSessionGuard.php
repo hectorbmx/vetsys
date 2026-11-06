@@ -103,8 +103,10 @@ class TenantSessionGuard
             ->sortByDesc(fn ($subscription) => $subscription->starts_at ?? $subscription->created_at)
             ->first();
 
-        $pendingSubscription = $subscriptions->where('status', 'pending')->first();
-        $pendingPayment = $payments->where('status', 'pending')->first();
+        $pendingSubscription = $subscriptions->where('status', 'pending')
+            ->first(fn ($subscription) => ! $this->isExpired($subscription->ends_at));
+        $pendingPayment = $payments->where('status', 'pending')
+            ->first(fn ($payment) => ! $this->isExpired($payment->period_ends_at));
 
         if (! $activeSubscription) {
             if ($pendingSubscription || $pendingPayment) {

@@ -25,12 +25,17 @@ class TenantPayment extends Model
     'period_ends_at',
     'created_by',
     'notes',
+    'replaces_tenant_payment_id',
+    'cancelled_at',
+    'cancelled_by',
+    'cancellation_reason',
 ];
 
 protected $casts = [
     'paid_at' => 'datetime',
     'period_starts_at' => 'datetime',
     'period_ends_at' => 'datetime',
+    'cancelled_at' => 'datetime',
 ];
 
 public function plan()
@@ -46,5 +51,15 @@ public function tenant()
 public function subscription()
 {
     return $this->belongsTo(TenantSubscription::class, 'tenant_subscription_id');
+}
+
+public function createdBy()
+{
+    return $this->belongsTo(User::class, 'created_by');
+}
+
+public function cancelledBy()
+{
+    return $this->belongsTo(User::class, 'cancelled_by');
 }
 }
