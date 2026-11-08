@@ -401,6 +401,19 @@
             </td>
 
             <td class="px-8 py-4 text-right">
+                @if($payment->status === 'pending' && filter_var($tenant->email, FILTER_VALIDATE_EMAIL))
+                    <form action="{{ route('admin.tenants.pending-payment-reminder', $tenant) }}" method="POST" class="inline-block mr-2" onsubmit="return confirm('¿Enviar recordatorio de pago a este cliente?')">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:bg-[#38B2AC]/10 hover:text-[#0F172A] transition"
+                                title="Recordatorio de pago"
+                                aria-label="Recordatorio de pago">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </button>
+                    </form>
+                @endif
                 @if($payment->provider === 'manual' && $payment->status === 'pending')
                     <form action="{{ route('admin.tenants.payments.destroy', [$tenant, $payment]) }}" method="POST" onsubmit="return confirm('¿Eliminar este registro pendiente y su suscripción pendiente?')">
                         @csrf

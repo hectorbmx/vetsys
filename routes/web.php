@@ -140,6 +140,7 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::get('/notificaciones/{notification}', [AdminNotificationController::class, 'open'])->name('notifications.open');
         Route::patch('/notificaciones/{notification}/leer', [AdminNotificationController::class, 'markRead'])->name('notifications.mark-read');
         Route::resource('tenants', TenantsController::class);
+        Route::post('/tenants/{tenant}/pending-payment-reminder', [TenantsController::class, 'sendPendingPaymentReminder'])->name('tenants.pending-payment-reminder');
         Route::post('/tenants/{tenant}/resend-activation-code', [TenantsController::class, 'resendTenantActivationCode'])->name('tenants.resend-activation-code');
         Route::post('/tenants/{tenant}/users', [TenantsController::class, 'storeUser'])->name('tenants.users.store');
         Route::patch('/tenants/{tenant}/users/{user}', [TenantsController::class, 'updateUser'])->name('tenants.users.update');

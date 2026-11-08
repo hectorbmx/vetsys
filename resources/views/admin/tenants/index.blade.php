@@ -6,6 +6,12 @@
 
 <div class="space-y-8">
 
+    @if(session('success') || session('error'))
+        <div class="rounded-2xl border px-5 py-4 text-sm font-bold {{ session('success') ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700' }}">
+            {{ session('success') ?? session('error') }}
+        </div>
+    @endif
+
     {{-- Header Section --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -73,6 +79,8 @@
                     @forelse($tenants as $tenant)
                         @php
                             $billingSummary = $tenantBillingSummaries[$tenant->id] ?? null;
+                            $hasPendingPayment = ($billingSummary['status'] ?? null) === 'pending_payment';
+                            $hasTenantEmail = filter_var($tenant->email, FILTER_VALIDATE_EMAIL);
                         @endphp
                         <tr class="hover:bg-slate-50/80 transition-colors group">
                             <td class="px-6 py-5">
@@ -123,10 +131,27 @@
                             </td>
 
                             <td class="px-6 py-5 text-right">
-                                <a href="{{ route('admin.tenants.show', $tenant) }}"
-                                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:bg-[#0F172A] hover:text-white transition-all">
+                                <div class="flex items-center justify-end gap-1">
+                                    @if($hasPendingPayment && $hasTenantEmail)
+                                        <form method="POST" action="{{ route('admin.tenants.pending-payment-reminder', $tenant) }}" onsubmit="return confirm('¿Enviar recordatorio de pago a este cliente?')">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:bg-[#38B2AC]/10 hover:text-[#0F172A] transition-all"
+                                                    title="Recordatorio de pago"
+                                                    aria-label="Recordatorio de pago">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('admin.tenants.show', $tenant) }}"
+                                       class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:bg-[#0F172A] hover:text-white transition-all"
+                                       title="Ver cliente"
+                                       aria-label="Ver cliente">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                </a>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty

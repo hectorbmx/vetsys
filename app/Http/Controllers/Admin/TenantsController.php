@@ -69,6 +69,22 @@ public function index(Request $request)
         'statusFilter'
     ));
 }
+
+public function sendPendingPaymentReminder(Tenant $tenant)
+{
+    try {
+        app(PendingPaymentReminderService::class)->sendManual($tenant);
+    } catch (\InvalidArgumentException $exception) {
+        return back()->with('error', $exception->getMessage());
+    } catch (Throwable $exception) {
+        report($exception);
+
+        return back()->with('error', 'No fue posible enviar el recordatorio de pago.');
+    }
+
+    return back()->with('success', 'Recordatorio de pago enviado correctamente.');
+}
+
 public function show(Tenant $tenant)
 {
     $tenant->load([
