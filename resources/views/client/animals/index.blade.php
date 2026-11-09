@@ -329,9 +329,9 @@
             <form action="{{ route('client.animals.store') }}" method="POST" @submit="if (!selectedCustomer) { $event.preventDefault(); return; } loading = true">
                 @csrf
                 
-                <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 class="text-lg font-black theme-text-heading tracking-tighter">Registrar Nueva Caballo</h3>
-                    <button type="button" @click="animalModal = false" :disabled="loading" class="text-slate-400 hover:text-red-500 transition-colors">✕</button>
+                <div class="px-8 py-6 border-b theme-border-primary flex justify-between items-center theme-bg-primary text-white">
+                    <h3 class="text-lg font-black text-white tracking-tighter">Registrar Nuevo Caballo</h3>
+                    <button type="button" @click="animalModal = false" :disabled="loading" class="text-white/80 hover:text-white transition-colors">✕</button>
                 </div>
 
                 <div class="p-8 space-y-5">

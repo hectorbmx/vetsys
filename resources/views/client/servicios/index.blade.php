@@ -8,7 +8,7 @@
 @php
     $showKpiCards = \App\Support\TenantKpiVisibility::isVisible(auth()->user()?->tenant, \App\Support\TenantKpiVisibility::SERVICIOS_INDEX);
 @endphp
-<div x-data="{ openForm: false, type: 'service', hasInventory: false }" class="-mt-10 space-y-6">
+<div x-data="{ openForm: false, type: 'service', hasInventory: false, loading: false }" class="-mt-10 space-y-6">
 
 @if($showKpiCards)
 {{-- CARDS / TRES KPIS SUPERIORES --}}
@@ -80,14 +80,29 @@
 </div>
 @endif
 
-    {{-- FORMULARIO DE ALTA --}}
-    <div x-show="openForm" x-collapse class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-            <h3 class="text-sm font-black theme-text-heading uppercase tracking-widest">Nuevo Artículo</h3>
-            <p class="text-[11px] text-slate-400 font-medium mt-0.5">Define si es un servicio o producto. El historial de precios se congelará automáticamente al guardar.</p>
-        </div>
+    {{-- MODAL: NUEVO ARTÍCULO --}}
+    <div x-show="openForm"
+         x-cloak
+         x-transition.opacity
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;">
+        <div class="fixed inset-0 theme-overlay backdrop-blur-sm" @click="if (!loading) openForm = false"></div>
+        <div class="flex min-h-screen items-center justify-center px-4 py-8">
+            <div class="relative inline-block w-full max-w-4xl max-h-[90vh] overflow-y-auto text-left align-middle bg-white rounded-[24px] shadow-2xl border border-slate-100">
+                <div x-show="loading" class="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md" style="display: none;">
+                    <div class="w-10 h-10 border-4 border-slate-200 theme-spinner-primary rounded-full animate-spin"></div>
+                    <p class="text-[10px] font-black theme-text-heading uppercase tracking-[0.2em] animate-pulse">Guardando en catálogo...</p>
+                </div>
 
-        <form action="{{ route('client.servicios.store') }}" method="POST" class="p-6 space-y-6">
+                <div class="px-8 py-6 border-b theme-border-primary flex justify-between items-center theme-bg-primary text-white">
+                    <div>
+                        <h3 class="text-lg font-black text-white tracking-tighter">Registrar Nuevo Artículo</h3>
+                        <p class="text-[11px] text-white/80 font-medium mt-0.5">Define si es un servicio o producto.</p>
+                    </div>
+                    <button type="button" @click="openForm = false" :disabled="loading" class="text-white/80 hover:text-white transition-colors">✕</button>
+                </div>
+
+        <form action="{{ route('client.servicios.store') }}" method="POST" class="p-8 space-y-6" @submit="loading = true">
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -168,7 +183,9 @@
                     Guardar en Catálogo
                 </button>
             </div>
-        </form>
+                </form>
+            </div>
+        </div>
     </div>
 
     {{-- LISTADO EN TABLA --}}
@@ -197,8 +214,8 @@
                             Inventario
                         </a>
 
-                        <button data-tour="add-service" @click="openForm = !openForm" class="inline-flex items-center justify-center gap-2 theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all whitespace-nowrap">
-                            <span x-text="openForm ? 'Cancelar Registro' : '+ Agregar al Catalogo'"></span>
+                        <button data-tour="add-service" @click="openForm = true" class="inline-flex items-center justify-center gap-2 theme-button-dark px-5 py-3 rounded-xl font-bold text-xs tracking-wide shadow-sm transition-all whitespace-nowrap">
+                            + Agregar al Catalogo
                         </button>
                     </div>
                 </div>

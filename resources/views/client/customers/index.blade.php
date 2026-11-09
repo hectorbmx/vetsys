@@ -224,21 +224,14 @@
                     @forelse($customers as $customer)
                         <tr class="hover:bg-slate-50/60 transition-colors text-center">
                             {{-- Nombre Completo usando el Accessor de tu Modelo --}}
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
+                            <td class="px-6 py-2">
+                                <div>
                                     <a href="{{ route('client.customers.show', $customer->id) }}"
-                                       class="w-9 h-9 rounded-full theme-surface-dark flex items-center justify-center font-bold text-xs transition-transform hover:scale-105 focus:outline-none theme-focus-primary"
+                                       class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors"
                                        title="Ver ficha de {{ $customer->full_name }}">
-                                        {{ substr($customer->name, 0, 1) }}{{ substr($customer->last_name, 0, 1) }}
+                                        {{ $customer->full_name }}
                                     </a>
-                                    <div>
-                                        <a href="{{ route('client.customers.show', $customer->id) }}"
-                                           class="text-sm font-bold theme-text-heading leading-tight theme-hover-text-primary transition-colors"
-                                           title="Ver ficha de {{ $customer->full_name }}">
-                                            {{ $customer->full_name }}
-                                        </a>
-                                        {{-- <p class="text-[10px] font-medium text-slate-400 mt-0.5">ID: #{{ $customer->id }}</p> --}}
-                                    </div>
+                                    {{-- <p class="text-[10px] font-medium text-slate-400 mt-0.5">ID: #{{ $customer->id }}</p> --}}
                                 </div>
                             </td>
 
@@ -250,7 +243,7 @@
 
                             {{-- Mascotas (Relación belongsTo/hasMany dinámico) --}}
                             {{-- Cantidad de Mascotas --}}
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-2">
                                 <a href="{{ route('client.customers.show', ['customer' => $customer->id, 'tab' => 'mascotas']) }}"
                                    class="inline-flex items-center text-[10px] font-black theme-text-primary theme-bg-primary-soft px-2.5 py-1 rounded-full transition hover:scale-105 focus:outline-none theme-focus-primary"
                                    title="Ver caballos de {{ $customer->full_name }}">
@@ -271,7 +264,7 @@
                             </td> --}}
 
                             {{-- Adeudo General --}}
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-2">
                                 @php($generalDebt = (float) ($customer->general_debt ?? 0))
                                 <a href="{{ route('client.customers.show', ['customer' => $customer->id, 'tab' => 'notas']) }}"
                                    class="inline-block rounded-lg transition hover:bg-slate-50 focus:outline-none theme-focus-primary"
@@ -286,7 +279,7 @@
                             </td>
 
                             @if($usesMonthlyCutoffBilling)
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-2">
                                     <button type="button"
                                             @click="openStatementModal({
                                                 id: {{ $customer->id }},
@@ -302,7 +295,7 @@
                             @endif
 
                             {{-- Acciones --}}
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-6 py-2 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('client.customers.show', $customer->id) }}" 
                                         class="p-1.5 text-slate-400 theme-hover-text-primary transition-colors"
@@ -312,20 +305,17 @@
                             </td>
 
                             {{-- Status Toggle Dinámico --}}
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-2">
                                 <form action="{{ route('client.customers.toggle', $customer->id) }}" method="POST">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                            class="inline-flex items-center gap-2 group focus:outline-none"
-                                            title="{{ $customer->status === 'active' ? 'Click para inactivar' : 'Click para activar' }}">
+                                            class="inline-flex items-center justify-center group focus:outline-none"
+                                            title="{{ $customer->status === 'active' ? 'Click para inactivar' : 'Click para activar' }}"
+                                            aria-label="{{ $customer->status === 'active' ? 'Cliente activo. Click para inactivar' : 'Cliente inactivo. Click para activar' }}">
                                         <div class="w-8 h-5 flex items-center p-1 rounded-full transition-colors duration-300 {{ $customer->status === 'active' ? 'bg-emerald-500' : 'bg-slate-300' }}">
                                             <div class="w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform {{ $customer->status === 'active' ? 'translate-x-3' : 'translate-x-0' }}"></div>
                                         </div>
-
-                                        <span class="text-[9px] font-black uppercase tracking-widest {{ $customer->status === 'active' ? 'text-emerald-600' : 'text-slate-400' }}">
-                                            {{ $customer->status === 'active' ? 'Activo' : 'Inactivo' }}
-                                        </span>
                                     </button>
                                 </form>
                             </td>
@@ -386,9 +376,9 @@
 
                 <form action="{{ route('client.customers.store') }}" method="POST" @submit="loading = true">
                     @csrf
-                    <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="text-lg font-black theme-text-heading tracking-tighter">Registrar Nuevo Cliente (Owner)</h3>
-                        <button type="button" @click="customerModal = false" :disabled="loading" class="text-slate-400 hover:text-red-500 transition-colors">✕</button>
+                    <div class="px-8 py-6 border-b theme-border-primary flex justify-between items-center theme-bg-primary text-white">
+                        <h3 class="text-lg font-black text-white tracking-tighter">Registrar Nuevo Cliente</h3>
+                        <button type="button" @click="customerModal = false" :disabled="loading" class="text-white/80 hover:text-white transition-colors">✕</button>
                     </div>
                     <div class="p-8 space-y-5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
