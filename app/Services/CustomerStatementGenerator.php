@@ -241,8 +241,8 @@ class CustomerStatementGenerator
         $globalBalance = $this->globalBalance($customer);
 
         return [
-            'notesByMonth' => $notes->groupBy(fn ($note) => ucfirst($note->date_at->translatedFormat('F Y'))),
-            'serviceDetailsByMonth' => $serviceDetails->groupBy(fn (NoteDetail $detail) => ucfirst($detail->note->date_at->translatedFormat('F Y'))),
+            'notesByMonth' => $notes->groupBy(fn ($note) => ucfirst($note->date_at->copy()->locale('es')->translatedFormat('F Y'))),
+            'serviceDetailsByMonth' => $serviceDetails->groupBy(fn (NoteDetail $detail) => ucfirst($detail->note->date_at->copy()->locale('es')->translatedFormat('F Y'))),
             'payments' => $payments,
             'previous_balance' => $previousBalance,
             'period_charges' => $periodCharges,

@@ -79,7 +79,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[760px] text-left">
                             <thead>
-                                <tr class="border-b border-slate-100 bg-white text-[10px] uppercase tracking-widest text-slate-400">
+                                <tr class="border-b theme-border-primary theme-bg-primary text-[10px] uppercase tracking-widest text-white">
                                     <th class="px-5 py-3">Paciente</th>
                                     <th class="px-5 py-3">Servicio</th>
                                     <th class="px-5 py-3 text-right">Cant.</th>
@@ -165,7 +165,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[640px] text-left">
                     <thead>
-                        <tr class="border-b border-slate-100 text-[10px] uppercase tracking-widest text-slate-400">
+                        <tr class="border-b theme-border-primary theme-bg-primary text-[10px] uppercase tracking-widest text-white">
                             <th class="pb-3">Fecha</th>
                             <th class="pb-3">Referencia</th>
                             <th class="pb-3">Metodo</th>

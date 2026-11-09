@@ -63,7 +63,7 @@ class StatementController extends Controller
 
         // Agrupar notas por "Mes Año" (ej: "Mayo 2026")
         $notesByMonth = $notes->groupBy(function ($note) {
-            return ucfirst($note->date_at->translatedFormat('F Y'));
+            return ucfirst($note->date_at->copy()->locale('es')->translatedFormat('F Y'));
         });
 
         // Saldo pendiente total al final del período
