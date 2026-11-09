@@ -20,6 +20,8 @@ class TenantPayment extends Model
     'status',
     'payment_method',
     'payment_reference',
+    'evidence_disk',
+    'evidence_path',
     'paid_at',
     'period_starts_at',
     'period_ends_at',

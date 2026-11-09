@@ -207,7 +207,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-100 theme-surface-dark " >
+                    <tr class="border-b theme-border-primary theme-bg-primary" >
                         <th class="px-6 py-3 text-[10px] font-black text-white uppercase tracking-widest">
                             <form method="GET" action="{{ route('client.servicios.index') }}" class="relative w-full max-w-xs">
                                 <input type="hidden" name="per_page" value="{{ $perPage }}">

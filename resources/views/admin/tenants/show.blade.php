@@ -228,7 +228,7 @@
             
             {{-- TABLA: Historial de Suscripciones --}}
           <div 
-    x-data="{ openAssignPlanModal: false, replacementPaymentId: {{ (int) old('replacement_payment_id', 0) ?: 'null' }} }"
+    x-data="{ openAssignPlanModal: false, replacementPaymentId: {{ (int) old('replacement_payment_id', 0) ?: 'null' }}, paymentToRegister: null }"
     class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden"
 >
     <div class="px-8 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
@@ -333,6 +333,9 @@
                 @elseif($payment->cancellation_reason === 'stripe_checkout_expired')
                     <div class="mt-1 text-[10px] font-bold text-amber-700">Sesión Stripe vencida · {{ $payment->cancelled_at?->format('d/m/Y H:i') }}</div>
                 @endif
+                @if($payment->evidence_path)
+                    <a href="{{ route('admin.tenants.payments.evidence', [$tenant, $payment]) }}" class="mt-1 inline-flex text-[10px] font-bold text-[#0F172A] underline hover:text-[#38B2AC]">Ver evidencia</a>
+                @endif
             </td>
 
             <td class="px-8 py-4 font-black text-slate-900">
@@ -373,7 +376,11 @@
 </td>
 
             <td class="px-8 py-4">
-                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                @if($payment->status === 'pending' && $payment->provider === 'manual')
+                    <button type="button" @click="paymentToRegister = {{ $payment->id }}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer hover:ring-2 hover:ring-yellow-300
+                @else
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                @endif
                     @if($payment->status === 'paid')
                         bg-emerald-50 text-emerald-600
                     @elseif($payment->status === 'pending')
@@ -383,7 +390,7 @@
                     @else
                         bg-slate-100 text-slate-500
                     @endif
-                ">
+                " @if($payment->status === 'pending' && $payment->provider === 'manual') aria-label="Registrar pago pendiente" @endif>
                     @if($payment->status === 'paid')
                         Pagado
                     @elseif($payment->status === 'pending')
@@ -393,7 +400,11 @@
                     @else
                         {{ $payment->status }}
                     @endif
-                </span>
+                @if($payment->status === 'pending' && $payment->provider === 'manual')
+                    </button>
+                @else
+                    </span>
+                @endif
             </td>
 
             <td class="px-8 py-4 font-bold text-slate-600">
@@ -446,6 +457,62 @@
     </table>
 
     @foreach($payments as $payment)
+        @if($payment->status === 'pending' && $payment->provider === 'manual')
+            <div x-show="paymentToRegister === {{ $payment->id }}" x-cloak @keydown.escape.window="paymentToRegister = null"
+                 role="dialog" aria-modal="true" aria-labelledby="record-payment-title-{{ $payment->id }}"
+                 class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                <div class="absolute inset-0 bg-slate-900/50" @click="paymentToRegister = null"></div>
+                <div class="relative max-h-full w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl md:p-8">
+                    <div class="mb-5 flex items-start justify-between gap-4">
+                        <div>
+                            <h3 id="record-payment-title-{{ $payment->id }}" class="text-lg font-black text-slate-900">Registrar pago recibido</h3>
+                            <p class="mt-1 text-sm text-slate-600">{{ $tenant->business_name ?? $tenant->name }} · {{ $payment->plan?->name ?? 'Sin plan' }}</p>
+                        </div>
+                        <button type="button" @click="paymentToRegister = null" aria-label="Cerrar" class="text-2xl text-slate-500">×</button>
+                    </div>
+
+                    <div class="mb-5 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-xs text-yellow-900">
+                        <p class="font-bold">Pago #{{ $payment->id }} · Actualmente pendiente</p>
+                        <p class="mt-1">Al confirmar se actualizará este mismo registro y se habilitará la suscripción correspondiente.</p>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.tenants.payments.record-payment', [$tenant, $payment]) }}" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        @method('PATCH')
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <label class="block text-xs font-bold text-slate-700">Fecha de pago
+                                <input type="date" name="paid_at" value="{{ old('paid_at', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}" required class="mt-1 w-full rounded-xl border-slate-200">
+                            </label>
+                            <label class="block text-xs font-bold text-slate-700">Monto recibido
+                                <input type="number" name="amount" min="0.01" step="0.01" value="{{ old('amount', (float) $payment->amount > 0 ? $payment->amount : '') }}" required class="mt-1 w-full rounded-xl border-slate-200">
+                            </label>
+                            <label class="block text-xs font-bold text-slate-700">Método de pago
+                                <select name="payment_method" required class="mt-1 w-full rounded-xl border-slate-200">
+                                    <option value="transfer">Transferencia</option>
+                                    <option value="cash">Efectivo</option>
+                                    <option value="card_manual">Tarjeta manual</option>
+                                    <option value="other">Otro</option>
+                                </select>
+                            </label>
+                            <label class="block text-xs font-bold text-slate-700">Folio o referencia (opcional)
+                                <input type="text" name="payment_reference" maxlength="2000" class="mt-1 w-full rounded-xl border-slate-200">
+                            </label>
+                        </div>
+                        <label class="block text-xs font-bold text-slate-700">Evidencia (opcional)
+                            <input type="file" name="evidence" accept="image/jpeg,image/png,application/pdf" class="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2 text-xs">
+                            <span class="mt-1 block text-[10px] font-medium text-slate-400">JPG, PNG o PDF · máximo 10 MB</span>
+                        </label>
+                        <label class="block text-xs font-bold text-slate-700">Notas (opcional)
+                            <textarea name="notes" rows="2" maxlength="2000" class="mt-1 w-full rounded-xl border-slate-200"></textarea>
+                        </label>
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" @click="paymentToRegister = null" class="rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700">Cancelar</button>
+                            <button type="submit" class="rounded-xl bg-[#38B2AC] px-4 py-2 text-xs font-black text-white hover:bg-[#2C9A94]">Confirmar pago</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
         @if($payment->provider === 'stripe' && $payment->payment_method === 'stripe_checkout' && $payment->provider_payment_id && ($payment->status === 'pending' || ($payment->status === 'cancelled' && $payment->cancellation_reason === 'stripe_checkout_expired')))
             @php
                 $replacementStartsAt = now()->startOfDay();
@@ -693,11 +760,11 @@
 
             {{-- TABLA: Usuarios --}}
             <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
-                <div class="px-8 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h2 class="font-black text-[11px] uppercase tracking-widest text-slate-500">
+                <div class="px-8 py-4 border-b border-[#0F172A] bg-[#0F172A] flex justify-between items-center">
+                    <h2 class="font-black text-[11px] uppercase tracking-widest text-white">
                         Equipo de Trabajo
                     </h2>
-                    <button @click="userModal = true" class="text-[10px] font-black text-[#38B2AC] uppercase tracking-tighter hover:underline">
+                    <button @click="userModal = true" class="text-[10px] font-black text-[#38B2AC] uppercase tracking-tighter hover:text-white hover:underline">
                         + Agregar Miembro
                     </button>
                 </div>
@@ -707,32 +774,41 @@
                             @php($needsActivation = !$user->is_active || !$user->invitation_accepted_at)
                             <tr x-data="{ editing: false }" class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-8 py-4">
-                                    <template x-if="!editing">
-                                        <div>
-                                            <p class="font-black text-[#0F172A] not-italic">{{ $user->name }}</p>
-                                            <p class="text-xs text-slate-400 font-medium">{{ $user->email }}</p>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0" title="Imagen de usuario">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0"/>
+                                            </svg>
                                         </div>
-                                    </template>
-                                    <template x-if="editing">
-                                        <form id="edit-user-{{ $user->id }}" method="POST" action="{{ route('admin.tenants.users.update', [$tenant, $user]) }}" class="grid grid-cols-1 md:grid-cols-2 gap-3 not-italic">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                value="{{ old('name', $user->name) }}"
-                                                required
-                                                class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs font-bold text-[#0F172A] focus:border-[#38B2AC] focus:ring-[#38B2AC]"
-                                            >
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value="{{ old('email', $user->email) }}"
-                                                required
-                                                class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs font-bold text-[#0F172A] focus:border-[#38B2AC] focus:ring-[#38B2AC]"
-                                            >
-                                        </form>
-                                    </template>
+                                        <div class="min-w-0 flex-1">
+                                            <template x-if="!editing">
+                                                <div>
+                                                    <p class="font-black text-[#0F172A] not-italic">{{ $user->name }}</p>
+                                                    <p class="text-xs text-slate-400 font-medium">{{ $user->email }}</p>
+                                                </div>
+                                            </template>
+                                            <template x-if="editing">
+                                                <form id="edit-user-{{ $user->id }}" method="POST" action="{{ route('admin.tenants.users.update', [$tenant, $user]) }}" class="grid grid-cols-1 md:grid-cols-2 gap-3 not-italic">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input
+                                                        type="text"
+                                                        name="name"
+                                                        value="{{ old('name', $user->name) }}"
+                                                        required
+                                                        class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs font-bold text-[#0F172A] focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                                                    >
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value="{{ old('email', $user->email) }}"
+                                                        required
+                                                        class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs font-bold text-[#0F172A] focus:border-[#38B2AC] focus:ring-[#38B2AC]"
+                                                    >
+                                                </form>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-8 py-4">
                                     <div class="flex flex-wrap gap-2">

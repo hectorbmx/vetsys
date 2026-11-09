@@ -153,6 +153,8 @@ Route::middleware(['auth', 'role:super-admin'])
         // asigna plan a tenant
         Route::post('/tenants/{tenant}/assign-plan', [TenantsController::class, 'assignPlan'])->name('tenants.assign-plan');
         Route::post('/tenants/{tenant}/payments/{payment}/replace-stripe', [TenantsController::class, 'replaceStripePayment'])->name('tenants.payments.replace-stripe');
+        Route::patch('/tenants/{tenant}/payments/{payment}/record-payment', [TenantsController::class, 'recordPayment'])->name('tenants.payments.record-payment');
+        Route::get('/tenants/{tenant}/payments/{payment}/evidence', [TenantsController::class, 'downloadPaymentEvidence'])->name('tenants.payments.evidence');
         Route::post('/tenants/{tenant}/stripe-checkout-link', [TenantsController::class, 'stripeCheckoutLink'])->name('tenants.stripe-checkout-link');
         Route::delete('/tenants/{tenant}/payments/clear-cancelled', [TenantsController::class, 'clearCancelledPayments'])->name('tenants.payments.clear-cancelled');
         Route::delete('/tenants/{tenant}/payments/{payment}', [TenantsController::class, 'destroyPayment'])->name('tenants.payments.destroy');
@@ -241,6 +243,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         |*/
         Route::get('servicios', [CatalogItemController::class, 'index'])->name('servicios.index');
         Route::post('servicios', [CatalogItemController::class, 'store'])->name('servicios.store');
+        Route::post('api/servicios', [CatalogItemController::class, 'storeFromSale'])->name('api.servicios.store');
         Route::get('servicios/inventario', [CatalogItemController::class, 'inventoryIndex'])->name('servicios.inventory');
         Route::get('servicios/{catalogItem}', [CatalogItemController::class, 'show'])->name('servicios.show');
         Route::put('servicios/{catalogItem}', [CatalogItemController::class, 'update'])->name('servicios.update');
@@ -302,6 +305,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::patch('mi-configuracion/{animalType}/toggle', [ClientConfiguracionController::class, 'toggleStatus'])->name('mi-configuracion.toggle');
         Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
         Route::put('mi-configuracion/users/{teamUser}/veterinarian-profile', [ClientConfiguracionController::class, 'updateVeterinarianProfile'])->name('mi-configuracion.veterinarian-profiles.update');
+        Route::get('mi-configuracion/users/{teamUser}/avatar', [ClientConfiguracionController::class, 'userAvatar'])->name('mi-configuracion.users.avatar');
         Route::get('mi-configuracion/veterinarian-profiles/{veterinarianProfile}/signature', [ClientConfiguracionController::class, 'veterinarianSignature'])->name('mi-configuracion.veterinarian-profiles.signature');
         Route::delete('mi-configuracion/veterinarian-profiles/{veterinarianProfile}/signature', [ClientConfiguracionController::class, 'destroyVeterinarianSignature'])->name('mi-configuracion.veterinarian-profiles.signature.destroy');
         Route::put('mi-configuracion/documentos', [ClientConfiguracionController::class, 'updateDocumentSettings'])->name('mi-configuracion.documents.update');

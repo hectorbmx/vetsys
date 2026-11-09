@@ -268,11 +268,20 @@
                     </div>
                 </div>
 
-                <div class="text-right hidden sm:block">
-                    <p class="text-xs font-bold text-slate-900 leading-none">{{ auth()->user()->name }}</p>
-                    <p class="text-[10px] mt-1 uppercase tracking-wider font-semibold theme-text-primary">
-                        {{ auth()->user()->tenant->name ?? '' }}
-                    </p>
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full theme-bg-primary-soft theme-text-primary font-black text-xs ring-2 ring-white shadow-sm">
+                        @if(auth()->user()->avatar)
+                            <img src="{{ route('client.mi-configuracion.users.avatar', auth()->user()) }}" alt="Imagen de {{ auth()->user()->name }}" class="h-full w-full object-cover">
+                        @else
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        @endif
+                    </div>
+                    <div class="text-right hidden sm:block">
+                        <p class="text-xs font-bold text-slate-900 leading-none">{{ auth()->user()->name }}</p>
+                        <p class="text-[10px] mt-1 uppercase tracking-wider font-semibold theme-text-primary">
+                            {{ auth()->user()->tenant->name ?? '' }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </header>

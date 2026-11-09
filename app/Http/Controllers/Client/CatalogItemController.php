@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\CatalogItem;
+use App\Models\NoteDetail;
 use App\Services\InventoryService;
 use App\Services\TenantOnboardingService;
 use Illuminate\Http\Request;
@@ -111,12 +112,52 @@ class CatalogItemController extends Controller
     {
         $this->authorizeCatalogItem($catalogItem);
 
+        $historySearch = trim((string) request()->get('history_q', ''));
+        $allowedHistoryPerPage = [15, 30, 50, 100];
+        $requestedHistoryPerPage = request()->integer('history_per_page', 15);
+        $historyPerPage = in_array($requestedHistoryPerPage, $allowedHistoryPerPage, true)
+            ? $requestedHistoryPerPage
+            : 15;
+
         $catalogItem->load([
             'inventory.movements' => fn ($query) => $query->latest('occurred_at')->latest('id')->limit(50),
             'priceHistories' => fn ($query) => $query->latest('start_date')->latest('id'),
         ]);
 
-        return view('client.servicios.show', compact('catalogItem'));
+        $serviceHistory = null;
+
+        if (! $catalogItem->has_inventory) {
+            $serviceHistory = NoteDetail::query()
+                ->where('note_details.tenant_id', $catalogItem->tenant_id)
+                ->where('note_details.catalog_item_id', $catalogItem->id)
+                ->whereHas('note', function ($query) use ($catalogItem) {
+                    $query->where('tenant_id', $catalogItem->tenant_id)
+                        ->where('status', '!=', 'CANCELADA');
+                })
+                ->with(['animal', 'note'])
+                ->when($historySearch !== '', function ($query) use ($historySearch) {
+                    $query->where(function ($subQuery) use ($historySearch) {
+                        $subQuery->whereHas('animal', function ($animalQuery) use ($historySearch) {
+                            $animalQuery->where('name', 'like', "%{$historySearch}%");
+                        })->orWhereHas('note', function ($noteQuery) use ($historySearch) {
+                            $noteQuery->where('folio', 'like', "%{$historySearch}%");
+                        });
+                    });
+                })
+                ->join('notes', 'notes.id', '=', 'note_details.note_id')
+                ->select('note_details.*')
+                ->orderByDesc('notes.date_at')
+                ->orderByDesc('note_details.id')
+                ->paginate($historyPerPage, ['*'], 'history_page')
+                ->withQueryString();
+        }
+
+        return view('client.servicios.show', compact(
+            'catalogItem',
+            'serviceHistory',
+            'historySearch',
+            'historyPerPage'
+        ));
     }
 
     /**
@@ -200,6 +241,69 @@ class CatalogItemController extends Controller
 
         return redirect()->route('client.servicios.index')
             ->with('success', 'Artículo agregado al catálogo correctamente.');
+    }
+
+    /**
+     * Crea rápidamente un servicio desde la captura de una nota de venta.
+     *
+     * Este endpoint devuelve JSON para que la captura pueda continuar sin
+     * abandonar la pantalla de ventas.
+     */
+    public function storeFromSale(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+
+        $data = $request->validate([
+            'name' => 'required|string|max:150',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        $serviceName = trim($data['name']);
+
+        $item = DB::transaction(function () use ($tenant, $data, $serviceName) {
+            $existingItem = $tenant->catalogItems()
+                ->where('type', 'service')
+                ->where('is_active', true)
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($serviceName)])
+                ->first();
+
+            if ($existingItem) {
+                return $existingItem->load('inventory');
+            }
+
+            $item = $tenant->catalogItems()->create([
+                'name' => $serviceName,
+                'type' => 'service',
+                'description' => null,
+                'has_inventory' => false,
+                'tax_percentage' => 0.00,
+                'is_active' => true,
+            ]);
+
+            $item->priceHistories()->create([
+                'tenant_id' => $tenant->id,
+                'price' => $data['price'],
+                'start_date' => now(),
+                'end_date' => null,
+            ]);
+
+            return $item->load('inventory');
+        });
+
+        app(TenantOnboardingService::class)->reconcileSafely($tenant);
+
+        return response()->json([
+            'id' => $item->id,
+            'name' => $item->name,
+            'type' => $item->type,
+            // Conserva el precio capturado para esta nota aunque el servicio ya exista.
+            'price' => (float) $data['price'],
+            'catalog_price' => $item->current_price,
+            'has_inventory' => $item->has_inventory,
+            'stock_actual' => null,
+            'stock_minimo' => null,
+            'allow_negative_stock' => false,
+        ], 201);
     }
 
     /**

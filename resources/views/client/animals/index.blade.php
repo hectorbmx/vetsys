@@ -159,17 +159,7 @@
                         <tr class="bg-white hover:bg-slate-50/70 transition-colors">
                             {{-- Info Básica del Animal --}}
                             <td class="px-4 py-4 border-l-4 theme-border-primary">
-                                <div class="flex items-center gap-3">
-                                    <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="w-11 h-11 rounded-2xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-sm shadow-sm ring-1 ring-white transition-all hover:scale-105 hover:opacity-90" title="Ver ficha de {{ $animal->name }}">
-                                        {{ substr($animal->name, 0, 1) }}
-                                    </a>
-                                    <div class="min-w-0">
-                                        <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="block text-sm font-black theme-text-heading leading-tight theme-hover-text-primary transition-colors hover:underline decoration-2">{{ $animal->name }}</a>
-                                        <span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500">
-                                            Caballo
-                                        </span>
-                                    </div>
-                                </div>
+                                <a href="{{ route('client.animals.edit', ['animal' => $animal, 'tab' => 'historial']) }}" class="block text-sm font-black theme-text-heading leading-tight theme-hover-text-primary transition-colors hover:underline decoration-2">{{ $animal->name }}</a>
                             </td>
 
                             <td class="px-4 py-4 text-center">

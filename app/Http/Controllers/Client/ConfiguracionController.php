@@ -570,6 +570,8 @@ public function updateVeterinarianProfile(
         'professional_email' => ['nullable', 'email', 'max:255'],
         'professional_address' => ['nullable', 'string', 'max:1000'],
         'signature' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        'remove_avatar' => ['nullable', 'boolean'],
         'is_active' => ['nullable', 'boolean'],
     ]);
 
@@ -577,6 +579,9 @@ public function updateVeterinarianProfile(
     $profileSaved = false;
     $oldSignaturePath = $profile->signature_path;
     $oldSignatureDisk = $profile->signature_disk;
+    $oldAvatarPath = $teamUser->avatar;
+    $newAvatarPath = null;
+    $avatarSaved = false;
 
     try {
         if ($request->hasFile('signature')) {
@@ -589,10 +594,34 @@ public function updateVeterinarianProfile(
             $data['signature_path'] = $newSignaturePath;
         }
 
+        if ($request->hasFile('avatar')) {
+            $extension = strtolower($request->file('avatar')->getClientOriginalExtension() ?: 'jpg');
+            $newAvatarPath = "tenants/{$actor->tenant_id}/users/{$teamUser->id}/avatar-".Str::uuid().'.'.$extension;
+            Storage::disk('r2')->put($newAvatarPath, fopen($request->file('avatar')->getRealPath(), 'rb'), [
+                'mimetype' => $request->file('avatar')->getMimeType(),
+            ]);
+        }
+
         unset($data['signature']);
+        unset($data['avatar'], $data['remove_avatar']);
         $data['is_active'] = $request->boolean('is_active');
         $profile->fill($data)->save();
+        if ($newAvatarPath) {
+            $teamUser->update(['avatar' => $newAvatarPath]);
+            $avatarSaved = true;
+        } elseif ($request->boolean('remove_avatar') && $oldAvatarPath) {
+            $teamUser->update(['avatar' => null]);
+            $avatarSaved = true;
+        }
         $profileSaved = true;
+
+        if ($oldAvatarPath && $avatarSaved) {
+            try {
+                Storage::disk('r2')->delete($oldAvatarPath);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
 
         if ($newSignaturePath && $oldSignaturePath) {
             try {
@@ -605,6 +634,14 @@ public function updateVeterinarianProfile(
         if ($newSignaturePath && !$profileSaved) {
             try {
                 Storage::disk('r2')->delete($newSignaturePath);
+            } catch (\Throwable $cleanupException) {
+                report($cleanupException);
+            }
+        }
+
+        if ($newAvatarPath && !$avatarSaved) {
+            try {
+                Storage::disk('r2')->delete($newAvatarPath);
             } catch (\Throwable $cleanupException) {
                 report($cleanupException);
             }
@@ -623,6 +660,18 @@ public function updateVeterinarianProfile(
         ->route('client.mi-configuracion.index')
         ->with('activeTab', 'usuarios')
         ->with('success', 'Perfil profesional actualizado correctamente.');
+}
+
+public function userAvatar(User $teamUser)
+{
+    $actor = auth()->user();
+    abort_unless($teamUser->tenant_id === $actor->tenant_id, 404);
+    abort_unless($teamUser->avatar, 404);
+    abort_unless(Storage::disk('r2')->exists($teamUser->avatar), 404);
+
+    return redirect()->away(
+        Storage::disk('r2')->temporaryUrl($teamUser->avatar, now()->addMinutes(30))
+    );
 }
 
 public function updateDocumentSettings(

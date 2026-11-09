@@ -717,12 +717,12 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/10">
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Especie / Identificador</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Slug (Sistema)</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                        <tr class="border-b border-slate-100 theme-bg-primary">
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Especie / Identificador</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Slug (Sistema)</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Descripción</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Estado</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -790,12 +790,12 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-slate-100 bg-slate-50/10">
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuario</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rol</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Perfil profesional</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Invitacion</th>
+                            <tr class="border-b border-slate-100 theme-bg-primary">
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Usuario</th>
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Rol</th>
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Estado</th>
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Perfil profesional</th>
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Invitacion</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -803,8 +803,12 @@
                                 <tr class="hover:bg-slate-50/50 transition-colors">
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-xs">
-                                                {{ strtoupper(substr($teamUser->name, 0, 1)) }}
+                                            <div class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center font-black text-xs overflow-hidden">
+                                                @if($teamUser->avatar)
+                                                    <img src="{{ route('client.mi-configuracion.users.avatar', $teamUser) }}" alt="Imagen de {{ $teamUser->name }}" class="h-full w-full object-cover">
+                                                @else
+                                                    {{ strtoupper(substr($teamUser->name, 0, 1)) }}
+                                                @endif
                                             </div>
                                             <div>
                                                 <p class="text-xs font-black theme-text-heading">{{ $teamUser->name }}</p>
@@ -962,6 +966,29 @@
 
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <div class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+                                    @if($teamUser->avatar)
+                                        <img src="{{ route('client.mi-configuracion.users.avatar', $teamUser) }}" alt="Imagen de {{ $teamUser->name }}" class="h-full w-full object-cover">
+                                    @else
+                                        <span class="text-2xl font-black theme-text-primary">{{ strtoupper(substr($teamUser->name, 0, 1)) }}</span>
+                                    @endif
+                                </div>
+                                <div class="min-w-0 flex-1 space-y-2">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest theme-text-heading">Imagen de perfil</label>
+                                    <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="block w-full text-xs font-semibold text-slate-500 file:mr-3 file:rounded-xl file:border-0 theme-file-input file:px-4 file:py-2.5 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:text-white">
+                                    <p class="text-[10px] font-semibold text-slate-400">PNG, JPG o WEBP · máximo 5 MB.</p>
+                                    @if($teamUser->avatar)
+                                        <label class="inline-flex items-center gap-2 text-[10px] font-bold text-rose-600">
+                                            <input type="checkbox" name="remove_avatar" value="1" class="rounded border-slate-300">
+                                            Eliminar imagen actual
+                                        </label>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
                                 <div class="flex h-28 w-40 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
                                     @if($professionalProfile?->signature_path)
                                         <img src="{{ route('client.mi-configuracion.veterinarian-profiles.signature', $professionalProfile) }}" alt="Firma de {{ $teamUser->name }}" class="max-h-full max-w-full object-contain p-2">
@@ -1018,12 +1045,12 @@
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse text-left">
                     <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/10">
-                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente</th>
-                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Acceso</th>
-                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Pacientes</th>
-                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Ultimo ingreso</th>
-                            <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Acciones</th>
+                        <tr class="border-b border-slate-100 theme-bg-primary">
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest theme-text-primary-ink">Cliente</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest theme-text-primary-ink">Acceso</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest theme-text-primary-ink">Pacientes</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest theme-text-primary-ink">Ultimo ingreso</th>
+                            <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest theme-text-primary-ink">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -1246,13 +1273,13 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                            <th class="px-6 py-3">Fecha</th>
-                            <th class="px-6 py-3">Plan</th>
-                            <th class="px-6 py-3">Metodo</th>
-                            <th class="px-6 py-3">Referencia</th>
-                            <th class="px-6 py-3">Estado</th>
-                            <th class="px-6 py-3 text-right">Monto</th>
+                        <tr class="text-[10px] uppercase tracking-widest border-b border-slate-100 theme-bg-primary theme-text-primary-ink">
+                            <th class="px-6 py-3 theme-text-primary-ink">Fecha</th>
+                            <th class="px-6 py-3 theme-text-primary-ink">Plan</th>
+                            <th class="px-6 py-3 theme-text-primary-ink">Metodo</th>
+                            <th class="px-6 py-3 theme-text-primary-ink">Referencia</th>
+                            <th class="px-6 py-3 theme-text-primary-ink">Estado</th>
+                            <th class="px-6 py-3 text-right theme-text-primary-ink">Monto</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -1292,10 +1319,10 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-slate-100 bg-slate-50/10">
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rol</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripcion</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Usuarios</th>
+                            <tr class="border-b border-slate-100 theme-bg-primary">
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Rol</th>
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Descripcion</th>
+                                <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-right">Usuarios</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">

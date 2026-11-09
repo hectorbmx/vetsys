@@ -185,18 +185,29 @@
                                 </div>
                             </template>
                         </div>
+
+                        {{-- Acción para búsquedas sin coincidencias --}}
+                        <div x-show="itemQuery.trim().length >= 3 && !isSearchingItems && itemSuggestions.length === 0"
+                             x-cloak
+                             class="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                            <button type="button"
+                                    @click="addNewServiceDraft()"
+                                    class="w-full rounded-lg border border-dashed theme-border-primary-soft px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest theme-text-primary-strong transition hover:bg-slate-50">
+                                + Agregar servicio al catálogo
+                            </button>
+                        </div>
                     </div>
 
                     {{-- TABLA REACTIVA DE DETALLES --}}
                     <div class="overflow-hidden border border-slate-100 rounded-2xl">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100">
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Concepto</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">Cant.</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">Precio U.</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right w-28">Subtotal Unit.</th>
-                                    <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-12"></th>
+                                <tr class="theme-bg-primary border-b theme-border-primary">
+                                    <th class="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Concepto</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest w-20">Cant.</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest w-28">Precio U.</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-right w-28">Subtotal Unit.</th>
+                                    <th class="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-center w-12"></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -205,6 +216,9 @@
                                         {{-- Nombre e Inputs Ocultos del Renglón para Laravel --}}
                                         <td class="px-4 py-3">
                                             <span class="text-xs font-bold theme-text-heading block" x-text="row.name"></span>
+                                            <span x-show="row.is_new_service" class="text-[10px] font-black uppercase tracking-widest theme-text-primary-strong block" x-text="'Nuevo servicio' "></span>
+                                            <span x-show="row.is_saving" class="text-[10px] font-bold text-slate-400 block" x-text="'Guardando en catálogo...' "></span>
+                                            <span x-show="row.save_error" class="text-[10px] font-bold text-rose-600 block" x-text="row.save_error"></span>
                                             <span x-show="row.has_inventory" class="text-[10px] text-slate-400 font-semibold block" x-text="'Disponible: ' + parseFloat(row.stock_actual).toFixed(2)"></span>
                                             <span x-show="stockMessage(row)" class="text-[10px] font-bold block mt-1"
                                                   :class="stockState(row) === 'blocked' || stockState(row) === 'negative' ? 'text-rose-600' : 'text-amber-600'"
@@ -222,7 +236,7 @@
                                         <td class="px-4 py-3">
                                             <div class="relative flex items-center">
                                                 <span class="absolute left-1.5 text-xs text-slate-400 font-bold">$</span>
-                                                <input type="number" step="0.01" min="0" :name="'items['+index+'][price]'" x-model.number="row.price" @input="calculateTotals()" class="w-full text-xs font-bold text-right theme-text-heading bg-slate-50 border border-slate-200 rounded-lg py-1 pr-1.5 pl-4 theme-input">
+                                                <input type="number" step="0.01" min="0" :name="'items['+index+'][price]'" x-model.number="row.price" @input="calculateTotals()" @change="confirmNewServicePrice(row)" :disabled="row.is_saving === true" class="w-full text-xs font-bold text-right theme-text-heading bg-slate-50 border border-slate-200 rounded-lg py-1 pr-1.5 pl-4 theme-input disabled:cursor-wait disabled:opacity-60">
                                             </div>
                                         </td>
 
@@ -333,7 +347,7 @@
 </div>
 
                     {{-- BOTÓN PRINCIPAL DE ENVÍO --}}
-                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="isSubmitting || basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
+                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="isSubmitting || isSavingNewService || hasPendingCatalogItems() || basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
                         <span x-text="submitLabel()"></span>
                     </button>
                 </div>
@@ -351,12 +365,14 @@ function salesPOS() {
         storeRoute: "{{ $editingNote ? route('client.ventas.update', $editingNote) : route('client.ventas.store') }}",
         searchCustomerUrl: "{{ route('client.api.buscar-clientes') }}",
         searchItemUrl: "{{ route('client.api.buscar-articulos') }}",
+        storeServiceUrl: "{{ route('client.api.servicios.store') }}",
         prefilledCustomer: @js($prefilledCustomer),
         initialSaleState: @js($initialSaleState),
         usesMonthlyCutoffBilling: @js($usesMonthlyCutoffBilling ?? false),
         shouldPromptMonthlyCapture: @js((bool) session('monthly_capture_prompt')),
         isEditing: @js((bool) $editingNote),
         isSubmitting: false,
+        isSavingNewService: false,
         showMonthlyCapturePrompt: false,
         
         // Estados de búsqueda
@@ -364,6 +380,7 @@ function salesPOS() {
         itemQuery: '',
         customerSuggestions: [],
         itemSuggestions: [],
+        isSearchingItems: false,
         
         // Datos de la Nota
         selectedCustomer: null,
@@ -471,11 +488,15 @@ function salesPOS() {
         searchItems() {
             if (this.itemQuery.length < 2) {
                 this.itemSuggestions = [];
+                this.isSearchingItems = false;
                 return;
             }
+
+            this.isSearchingItems = true;
             fetch(`${this.searchItemUrl}?q=${encodeURIComponent(this.itemQuery)}`)
                 .then(res => res.json())
-                .then(data => { this.itemSuggestions = data; });
+                .then(data => { this.itemSuggestions = data; })
+                .finally(() => { this.isSearchingItems = false; });
         },
 
         // Agregar artículo a la tabla reactiva
@@ -499,6 +520,131 @@ function salesPOS() {
             this.itemQuery = '';
             this.itemSuggestions = [];
             this.calculateTotals();
+        },
+
+        // Agrega una fila local para capturar un servicio que aún no existe.
+        addNewServiceDraft() {
+            const name = this.itemQuery.trim();
+
+            if (name.length < 3) {
+                return;
+            }
+
+            const alreadyDrafted = this.basket.some(row =>
+                row.is_new_service && row.name.trim().toLowerCase() === name.toLowerCase()
+            );
+
+            if (alreadyDrafted) {
+                this.itemQuery = '';
+                this.itemSuggestions = [];
+                return;
+            }
+
+            this.basket.push({
+                id: null,
+                name,
+                quantity: 1,
+                price: 0,
+                has_inventory: false,
+                stock_actual: 0,
+                stock_minimo: 0,
+                allow_negative_stock: false,
+                is_new_service: true,
+                confirmed_price: null,
+                price_confirmed: false,
+                is_saving: false,
+                save_error: '',
+            });
+
+            this.itemQuery = '';
+            this.itemSuggestions = [];
+            this.calculateTotals();
+        },
+
+        // Confirma el precio antes de permitir que el borrador avance al guardado.
+        confirmNewServicePrice(row) {
+            if (!row.is_new_service || row.is_saving === true) {
+                return;
+            }
+
+            const price = Math.max(0, Number(row.price) || 0);
+            const previousPrice = row.confirmed_price === null
+                ? 0
+                : Number(row.confirmed_price) || 0;
+            const previousConfirmation = Boolean(row.price_confirmed);
+
+            row.price = price;
+
+            const accepted = window.confirm(
+                `El nuevo servicio "${row.name}" quedará con un precio de $${price.toFixed(2)}. ¿Está seguro?`
+            );
+
+            if (!accepted) {
+                row.price = previousPrice;
+                row.price_confirmed = previousConfirmation;
+            } else {
+                row.confirmed_price = price;
+                row.price_confirmed = true;
+                this.createNewService(row);
+            }
+
+            this.calculateTotals();
+        },
+
+        // Persiste el servicio confirmado y convierte la fila temporal en una fila normal.
+        async createNewService(row) {
+            if (!row.is_new_service || row.is_saving || row.id) {
+                return;
+            }
+
+            row.is_saving = true;
+            row.save_error = '';
+            this.isSavingNewService = true;
+
+            try {
+                const response = await fetch(this.storeServiceUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                            || document.querySelector('input[name="_token"]')?.value
+                            || '',
+                    },
+                    body: JSON.stringify({
+                        name: row.name,
+                        price: row.price,
+                    }),
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    const validationMessage = data.errors
+                        ? Object.values(data.errors).flat()[0]
+                        : null;
+                    throw new Error(validationMessage || data.message || 'No fue posible guardar el servicio.');
+                }
+
+                row.id = data.id;
+                row.name = data.name;
+                row.price = parseFloat(data.price);
+                row.has_inventory = Boolean(data.has_inventory);
+                row.stock_actual = parseFloat(data.stock_actual ?? 0);
+                row.stock_minimo = parseFloat(data.stock_minimo ?? 0);
+                row.allow_negative_stock = Boolean(data.allow_negative_stock);
+                row.is_new_service = false;
+                row.is_saving = false;
+                row.price_confirmed = false;
+                row.confirmed_price = null;
+                this.calculateTotals();
+            } catch (error) {
+                row.is_saving = false;
+                row.save_error = error.message;
+                window.alert(error.message);
+            } finally {
+                this.isSavingNewService = this.basket.some(item => item.is_saving === true);
+            }
         },
 
         // Eliminar fila de la nota
@@ -532,6 +678,12 @@ function salesPOS() {
             return rows.map(row => ({
                 ...row,
                 quantity: this.normalizeQuantity(row.quantity),
+                is_new_service: Boolean(row.is_new_service),
+                // Una petición no puede continuar después de recargar la página.
+                is_saving: false,
+                save_error: '',
+                confirmed_price: row.confirmed_price ?? null,
+                price_confirmed: Boolean(row.price_confirmed),
             }));
         },
 
@@ -577,6 +729,10 @@ function salesPOS() {
 
         hasBlockingStock() {
             return this.basket.some(row => this.stockState(row) === 'blocked');
+        },
+
+        hasPendingCatalogItems() {
+            return this.basket.some(row => !row.id || row.is_saving === true || row.save_error);
         },
 
         // Persistencia local (Guarda el progreso de la sesión ante apagones/accidentes)
@@ -646,6 +802,12 @@ function salesPOS() {
         handleSubmit(event) {
             if (this.hasBlockingStock()) {
                 event.preventDefault();
+                return;
+            }
+
+            if (this.hasPendingCatalogItems()) {
+                event.preventDefault();
+                window.alert('Espera a que el nuevo servicio termine de guardarse en el catálogo.');
                 return;
             }
 

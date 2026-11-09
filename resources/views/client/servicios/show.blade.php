@@ -178,9 +178,69 @@
                     </div>
                 </div>
             @else
-                <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-10 text-center">
-                    <p class="text-sm font-black theme-text-heading">Este registro no maneja inventario.</p>
-                    <p class="text-xs text-slate-400 font-semibold mt-2">Los servicios y productos no inventariables solo muestran precio e historial.</p>
+                <div class="bg-white border border-slate-200 rounded-[18px] shadow-sm px-5 py-4 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl theme-bg-primary-soft theme-text-primary flex items-center justify-center text-sm">✓</div>
+                    <div>
+                        <p class="text-xs font-black theme-text-heading">Sin inventario</p>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Este registro conserva precio e historial de servicios.</p>
+                    </div>
+                </div>
+            @endif
+
+            @if($serviceHistory)
+                <div class="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/70 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h2 class="text-sm font-black theme-text-heading uppercase tracking-widest">Servicios ejecutados</h2>
+                            <p class="text-[11px] text-slate-400 font-semibold mt-1">Caballo, fecha y costo registrado en cada nota.</p>
+                        </div>
+                        <form method="GET" action="{{ route('client.servicios.show', $catalogItem) }}" class="flex flex-col sm:flex-row gap-2">
+                            <input type="hidden" name="history_per_page" value="{{ $historyPerPage }}">
+                            <input type="text" name="history_q" value="{{ $historySearch }}" placeholder="Buscar caballo o folio..." aria-label="Buscar historial de servicios" class="w-full sm:w-56 rounded-lg border border-slate-200 bg-white py-2 px-3 text-[10px] font-bold theme-text-heading placeholder-slate-400 shadow-sm outline-none theme-input">
+                            <button type="submit" class="theme-button-dark rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-widest">Buscar</button>
+                        </form>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b theme-border-primary theme-bg-primary">
+                                    <th class="px-6 py-3 text-[10px] font-black text-white uppercase tracking-widest">Caballo</th>
+                                    <th class="px-6 py-3 text-[10px] font-black text-white uppercase tracking-widest">Fecha</th>
+                                    <th class="px-6 py-3 text-[10px] font-black text-white uppercase tracking-widest text-right">Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @forelse($serviceHistory as $detail)
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <span class="text-xs font-black theme-text-heading">{{ $detail->animal?->name ?? 'Sin caballo' }}</span>
+                                            <span class="block text-[10px] text-slate-400 font-semibold mt-0.5">{{ $detail->note?->folio ?? 'Sin folio' }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ optional($detail->note?->date_at)->format('d/m/Y') ?? 'Sin fecha' }}</td>
+                                        <td class="px-6 py-4 text-right text-xs font-black theme-text-heading">{{ '$' . number_format((float) $detail->subtotal, 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-10 text-center text-xs font-bold text-slate-400">Todavía no hay servicios ejecutados.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="border-t border-slate-100 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <form method="GET" action="{{ route('client.servicios.show', $catalogItem) }}" class="flex items-center gap-2">
+                            <input type="hidden" name="history_q" value="{{ $historySearch }}">
+                            <label for="history-per-page" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mostrar</label>
+                            <select id="history-per-page" name="history_per_page" onchange="this.form.submit()" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold theme-text-heading outline-none theme-input">
+                                @foreach([15, 30, 50, 100] as $option)
+                                    <option value="{{ $option }}" {{ $historyPerPage === $option ? 'selected' : '' }}>{{ $option }} filas</option>
+                                @endforeach
+                            </select>
+                        </form>
+                        <div class="dynamic-pagination max-w-full overflow-x-auto">
+                            {{ $serviceHistory->links() }}
+                        </div>
+                    </div>
                 </div>
             @endif
         </div>

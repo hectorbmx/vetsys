@@ -162,12 +162,12 @@
                     
                     <div class="overflow-hidden border border-slate-100 rounded-2xl">
                         <table class="w-full text-left">
-                            <thead class="bg-slate-50 border-b border-slate-100">
+                            <thead class="theme-bg-primary border-b border-slate-100">
                                 <tr>
-                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Especie</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dueño</th>
-                                    <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                    <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Nombre</th>
+                                    <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Especie</th>
+                                    <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Dueño</th>
+                                    <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50">
@@ -227,14 +227,14 @@
 
             <div class="overflow-hidden border border-slate-100 rounded-2xl">
                 <table class="w-full min-w-[760px] text-left">
-                    <thead class="bg-slate-50 border-b border-slate-100">
+                    <thead class="theme-bg-primary border-b border-slate-100">
                         <tr>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Folio</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Conceptos</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Total</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Fecha</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Folio</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Conceptos</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-right">Total</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-center">Estado</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -320,11 +320,11 @@
 
             <div class="overflow-hidden border border-slate-100 rounded-2xl">
                 <table class="w-full text-left">
-                    <thead class="bg-slate-50 border-b border-slate-100">
+                    <thead class="theme-bg-primary border-b border-slate-100">
                         <tr>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Archivo</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Archivo</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest">Fecha</th>
+                            <th class="px-6 py-4 text-[10px] font-black theme-text-primary-ink uppercase tracking-widest text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">

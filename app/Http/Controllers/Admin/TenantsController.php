@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use App\Models\TenantSubscription;
 use App\Models\TenantPayment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
 use App\Services\StripeTenantCheckoutService;
@@ -435,6 +436,94 @@ public function replaceStripePayment(Request $request, Tenant $tenant, TenantPay
 
     return redirect()->route('admin.tenants.show', $tenant)
         ->with('success', 'Pago manual registrado y checkout Stripe cancelado.');
+}
+
+public function recordPayment(Request $request, Tenant $tenant, TenantPayment $payment)
+{
+    abort_unless((int) $payment->tenant_id === (int) $tenant->id, 404);
+
+    $data = $request->validate([
+        'paid_at' => ['required', 'date', 'before_or_equal:now'],
+        'amount' => ['required', 'numeric', 'gt:0'],
+        'payment_method' => ['required', Rule::in(['cash', 'transfer', 'card_manual', 'other'])],
+        'payment_reference' => ['nullable', 'string', 'max:2000'],
+        'notes' => ['nullable', 'string', 'max:2000'],
+        'evidence' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+    ]);
+
+    if ($payment->status !== 'pending' || $payment->provider !== 'manual') {
+        return back()->with('error', 'Este pago ya no está pendiente.');
+    }
+
+    $evidencePath = null;
+
+    try {
+        if ($request->hasFile('evidence')) {
+            $evidencePath = $request->file('evidence')->store("tenant-payments/{$tenant->id}", 'local');
+        }
+
+        DB::transaction(function () use ($tenant, $payment, $data, $evidencePath) {
+            $lockedPayment = TenantPayment::query()->lockForUpdate()->findOrFail($payment->id);
+
+            if (
+                (int) $lockedPayment->tenant_id !== (int) $tenant->id
+                || $lockedPayment->status !== 'pending'
+                || $lockedPayment->provider !== 'manual'
+            ) {
+                throw new \RuntimeException('El pago ya fue atendido por otra operación.');
+            }
+
+            $paidAt = Carbon::parse($data['paid_at']);
+            $lockedPayment->update([
+                'status' => 'paid',
+                'amount' => $data['amount'],
+                'payment_method' => $data['payment_method'],
+                'payment_reference' => $data['payment_reference'] ?? null,
+                'evidence_disk' => $evidencePath ? 'local' : $lockedPayment->evidence_disk,
+                'evidence_path' => $evidencePath,
+                'paid_at' => $paidAt,
+                'notes' => $data['notes'] ?? $lockedPayment->notes,
+            ]);
+
+            $subscription = $lockedPayment->tenant_subscription_id
+                ? TenantSubscription::query()->lockForUpdate()->find($lockedPayment->tenant_subscription_id)
+                : null;
+
+            if ($subscription && (int) $subscription->tenant_id === (int) $tenant->id) {
+                $subscription->update([
+                    'status' => $subscription->starts_at?->isFuture() ? 'scheduled' : 'active',
+                    'cancelled_at' => null,
+                ]);
+            }
+
+            $tenant->update([
+                'plan_id' => $lockedPayment->plan_id,
+                'trial_ends_at' => null,
+                'subscription_ends_at' => $lockedPayment->period_ends_at,
+                'status' => $tenant->activated_at ? 'active' : $tenant->status,
+                'is_active' => $tenant->activated_at ? true : $tenant->is_active,
+            ]);
+        });
+    } catch (Throwable $exception) {
+        if ($evidencePath) {
+            Storage::disk('local')->delete($evidencePath);
+        }
+
+        report($exception);
+
+        return back()->with('error', 'No fue posible registrar el pago.');
+    }
+
+    return back()->with('success', 'Pago registrado correctamente y acceso actualizado.');
+}
+
+public function downloadPaymentEvidence(Tenant $tenant, TenantPayment $payment)
+{
+    abort_unless((int) $payment->tenant_id === (int) $tenant->id, 404);
+    abort_unless($payment->evidence_path && $payment->evidence_disk, 404);
+    abort_unless(Storage::disk($payment->evidence_disk)->exists($payment->evidence_path), 404);
+
+    return Storage::disk($payment->evidence_disk)->download($payment->evidence_path);
 }
 
 public function stripeCheckoutLink(Request $request, Tenant $tenant)
