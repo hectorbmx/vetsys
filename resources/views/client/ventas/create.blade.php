@@ -112,6 +112,7 @@
 
                         {{-- Input Oculto para enviar el ID real al Backend --}}
                         <input type="hidden" name="customer_id" :value="selectedCustomer ? selectedCustomer.id : ''">
+                        <p x-show="selectedCustomer && selectedCustomer.status === 'inactive'" x-cloak role="alert" class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">El cliente no está activo y no podrás agregarle servicios.</p>
 
                         {{-- Lista Desplegable de Sugerencias --}}
                         <div x-show="customerSuggestions.length > 0" x-cloak class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden divide-y divide-slate-100">
@@ -136,7 +137,7 @@
 
                 {{-- PASO 3: BUSCADOR DE ARTICULOS (Habilitado solo si ya elegiste cliente y pacientes) --}}
                 {{-- PASO 2: SELECCIONAR MASCOTAS A LAS QUE SE APLICARA LA NOTA --}}
-                <div data-tour="sale-animals" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null}">
+                <div data-tour="sale-animals" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null || selectedCustomer.status === 'inactive'}">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">2. Seleccionar Pacientes</label>
@@ -168,7 +169,7 @@
                     </template>
                 </div>
 
-                <div data-tour="sale-items" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null || selectedAnimalIds.length === 0}">
+                <div data-tour="sale-items" class="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 space-y-4" :class="{'opacity-50 pointer-events-none': selectedCustomer === null || selectedCustomer.status === 'inactive' || selectedAnimalIds.length === 0}">
                     <div class="relative">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">3. Anadir Productos o Servicios al Detalle</label>
                         <input type="text" x-model="itemQuery" @input.debounce.300ms="searchItems()" placeholder="Escribe el nombre del servicio o escanea el SKU del producto..." class="w-full text-xs font-semibold theme-text-heading bg-white border border-slate-200 rounded-xl px-4 py-2.5 theme-input transition-colors">
@@ -347,7 +348,7 @@
 </div>
 
                     {{-- BOTÓN PRINCIPAL DE ENVÍO --}}
-                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="isSubmitting || isSavingNewService || hasPendingCatalogItems() || basket.length === 0 || selectedCustomer === null || selectedAnimalIds.length === 0 || hasBlockingStock()">
+                    <button type="submit" class="w-full theme-button-dark p-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-40 disabled:pointer-events-none" :disabled="isSubmitting || isSavingNewService || hasPendingCatalogItems() || basket.length === 0 || selectedCustomer === null || selectedCustomer.status === 'inactive' || selectedAnimalIds.length === 0 || hasBlockingStock()">
                         <span x-text="submitLabel()"></span>
                     </button>
                 </div>

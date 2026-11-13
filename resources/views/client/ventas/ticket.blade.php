@@ -37,7 +37,7 @@
     </div>
 
     {{-- Ticket Card --}}
-    <div class="bg-white border border-slate-200 shadow-xl rounded-[32px] overflow-hidden print:shadow-none print:border-none">
+    <div class="ticket-print bg-white border border-slate-200 shadow-xl rounded-[32px] overflow-hidden print:shadow-none print:border-none">
         {{-- Header con info del Tenant --}}
         <div class="bg-slate-50 p-8 text-center border-b border-dashed border-slate-200">
             <h2 class="text-xl font-black text-[#0F172A] uppercase tracking-tighter">{{ $tenant->name }}</h2>
@@ -120,11 +120,18 @@
 </div>
 
 <style>
+    @page { size: 80mm auto; margin: 3mm; }
     @media print {
-        body { background: white !important; }
-        .print\:hidden { display: none !important; }
-        .shadow-xl { box-shadow: none !important; }
-        .rounded-\[32px\] { border-radius: 0 !important; }
+        html, body { background: white !important; margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+        body > :not(:has(.ticket-print)),
+        body *:has(.ticket-print) > :not(:has(.ticket-print)):not(.ticket-print) { display: none !important; }
+        body *:has(.ticket-print) { display: block !important; margin: 0 !important; padding: 0 !important; min-height: 0 !important; width: auto !important; max-width: none !important; }
+        .ticket-print { width: 74mm !important; max-width: 100% !important; margin: 0 auto !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; overflow: visible !important; color: #000 !important; }
+        .ticket-print > div { background: white !important; padding: 3mm 1mm !important; }
+        .ticket-print p, .ticket-print span, .ticket-print h2 { color: #000 !important; }
+        .ticket-print svg { display: none !important; }
+        .ticket-print .space-y-6 > * + * { margin-top: 4mm !important; }
+        .ticket-print .space-y-3 > * + * { margin-top: 2mm !important; }
     }
 </style>
 @endsection

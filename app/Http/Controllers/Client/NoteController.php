@@ -151,7 +151,6 @@ class NoteController extends Controller
 
         if ($request->filled('customer_id')) {
             $customer = $tenant->customers()
-                ->where('status', 'active')
                 ->whereKey($request->integer('customer_id'))
                 ->with(['animals' => function ($q) {
                     $q->select('id', 'customer_id', 'name')
@@ -164,6 +163,7 @@ class NoteController extends Controller
                     'id' => $customer->id,
                     'full_name' => $customer->full_name,
                     'phone' => $customer->phone,
+                    'status' => $customer->status,
                     'animals' => $customer->animals,
                 ];
             }
@@ -177,17 +177,20 @@ class NoteController extends Controller
      */
     public function searchCustomers(Request $request)
     {
-        $search = $request->get('q');
+        $search = trim((string) $request->get('q', ''));
         if (strlen($search) < 2) {
             return response()->json([]);
         }
 
         $customers = auth()->user()->tenant->customers()
-            ->where('status', 'active')
             ->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('last_name', 'LIKE', "%{$search}%")
-                    ->orWhere('phone', 'LIKE', "%{$search}%");
+                foreach (preg_split('/\s+/', $search) as $term) {
+                    $query->where(function ($part) use ($term) {
+                        $part->where('name', 'LIKE', "%{$term}%")
+                            ->orWhere('last_name', 'LIKE', "%{$term}%")
+                            ->orWhere('phone', 'LIKE', "%{$term}%");
+                    });
+                }
             })
             ->with(['animals' => function ($q) {
                 $q->select('id', 'customer_id', 'name')
@@ -200,6 +203,7 @@ class NoteController extends Controller
                     'id' => $customer->id,
                     'full_name' => $customer->full_name,
                     'phone' => $customer->phone,
+                    'status' => $customer->status,
                     'animals' => $customer->animals,
                 ];
             });
@@ -253,7 +257,7 @@ class NoteController extends Controller
             'customer_id' => [
                 'required',
                 'integer',
-                Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)),
+                Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('status', 'active')),
             ],
             'date_at' => 'required|date',
             'animal_ids' => 'required|array|min:1',
@@ -428,6 +432,7 @@ public function edit(Note $note)
         'id' => $note->customer->id,
         'full_name' => $note->customer->full_name,
         'phone' => $note->customer->phone,
+        'status' => $note->customer->status,
         'animals' => $customerAnimals,
     ];
 
@@ -802,7 +807,7 @@ private function validateSaleRequest(Request $request, $tenant, bool $requiresPa
         'customer_id' => [
             'required',
             'integer',
-            Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)),
+            Rule::exists('customers', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('status', 'active')),
         ],
         'date_at' => 'required|date',
         'animal_ids' => 'required|array|min:1',

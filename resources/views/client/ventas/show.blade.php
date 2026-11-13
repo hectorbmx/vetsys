@@ -18,6 +18,10 @@
                 </p>
             </div>
             <div class="flex items-center gap-2">
+                <a href="{{ route('client.customers.show', ['customer' => $note->customer_id]) }}"
+                   class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    &larr; Volver al cliente
+                </a>
                 <a href="{{ route('client.ventas.ticket', $note) }}"
                    class="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
                     Ver ticket
@@ -61,30 +65,6 @@
         @endif
 
         {{-- CLIENTE + ESTADO --}}
-        <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cliente</p>
-                <a href="{{ route('client.customers.show', $note->customer->id) }}"
-                   class="text-base font-black theme-text-heading theme-hover-text-primary transition-colors">
-                    {{ $note->customer->full_name }}
-                </a>
-                <p class="text-xs text-slate-400 mt-0.5">{{ $note->customer->phone ?? 'Sin telefono' }}</p>
-            </div>
-
-            <div class="text-right space-y-1">
-                @if($usesMonthlyCutoffBilling ?? false)
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-600 bg-slate-100 px-3 py-1 rounded-full">Cargo interno</span>
-                @elseif($note->status === 'PAGADA')
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">Pagada</span>
-                @elseif($note->status === 'PENDIENTE')
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full">Credito / Pendiente</span>
-                @else
-                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Cancelada</span>
-                @endif
-            </div>
-        </div>
-
-
         @if($usesMonthlyCutoffBilling ?? false)
             <div class="bg-slate-900 text-white rounded-[20px] shadow-sm p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -103,52 +83,57 @@
             </div>
         @endif
 
-        {{-- DETALLES POR MASCOTA --}}
-        @foreach($detailsByAnimal as $animalId => $details)
-            <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <p class="text-xs font-black theme-text-heading uppercase tracking-wide">
-                        {{ $details->first()->animal->name ?? 'Sin mascota' }}
-                    </p>
+        {{-- NOTA UNIFICADA --}}
+        <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm overflow-hidden">
+
+            {{-- Cliente + estado --}}
+            <div class="px-6 py-5 flex items-center justify-between gap-4 theme-bg-primary theme-text-primary-ink">
+                <div>
+                    <a href="{{ route('client.customers.show', $note->customer->id) }}"
+                       class="text-base font-black theme-text-primary-ink underline-offset-2 hover:underline transition-colors">
+                        {{ $note->customer->full_name }}
+                    </a>
+                    <p class="text-xs theme-text-primary-ink opacity-80 mt-0.5">{{ $note->customer->phone ?? 'Sin telefono' }}</p>
                 </div>
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="border-b border-slate-100">
-                            <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Concepto</th>
-                            <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Cant.</th>
-                            <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Precio</th>
-                            <th class="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Subtotal</th>
-                        </tr>
+
+                @if($usesMonthlyCutoffBilling ?? false)
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-600 bg-slate-100 px-3 py-1 rounded-full">Cargo interno</span>
+                @elseif($note->status === 'PAGADA')
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">Pagada</span>
+                @elseif($note->status === 'PENDIENTE')
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full">Credito / Pendiente</span>
+                @else
+                    <span class="inline-flex text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Cancelada</span>
+                @endif
+            </div>
+
+            {{-- Caballos --}}
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[700px] text-left">
+                    <thead class="theme-bg-primary theme-text-primary-ink text-[10px] font-black uppercase tracking-widest">
+                        <tr><th class="px-6 py-3">Caballo</th><th class="px-4 py-3">Servicio / producto</th><th class="px-4 py-3 text-right">Cantidad</th><th class="px-4 py-3 text-right">Costo</th><th class="px-4 py-3">Fecha de nota</th><th class="px-6 py-3 text-right">Total</th></tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @foreach($details as $detail)
-                            <tr>
-                                <td class="px-6 py-3">
-                                    <span class="text-xs font-bold theme-text-heading">{{ $detail->catalogItem->name }}</span>
-                                    <span class="text-[10px] text-slate-400 block font-medium">
-                                        {{ $detail->catalogItem->type === 'service' ? 'Servicio' : 'Producto' }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-3 text-xs font-semibold text-slate-600 text-center">
-                                    {{ $detail->quantity }}
-                                </td>
-                                <td class="px-6 py-3 text-xs font-semibold text-slate-600 text-right">
-                                    ${{ number_format($detail->price_at_sale, 2) }}
-                                </td>
-                                <td class="px-6 py-3 text-xs font-black theme-text-heading text-right">
-                                    ${{ number_format($detail->subtotal, 2) }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+                    @foreach($detailsByAnimal as $animalId => $details)
+                        <tbody class="border-t-4 border-white {{ $loop->odd ? 'bg-slate-100' : 'bg-slate-50' }}">
+                            @foreach($details as $detail)
+                                <tr class="border-b border-white/80 text-xs">
+                                    @if($loop->first)
+                                        <th rowspan="{{ $details->count() }}" class="px-6 py-4 align-top font-black theme-text-heading uppercase">{{ $details->first()->animal->name ?? 'Sin caballo' }}</th>
+                                    @endif
+                                    <td class="px-4 py-4 font-bold theme-text-heading">{{ $detail->catalogItem->name ?? 'Servicio no disponible' }}</td>
+                                    <td class="px-4 py-4 text-right text-slate-600">{{ rtrim(rtrim(number_format($detail->quantity, 2), '0'), '.') }}</td>
+                                    <td class="px-4 py-4 text-right whitespace-nowrap text-slate-600">${{ number_format($detail->price_at_sale, 2) }}</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-slate-600">{{ $note->date_at->format('d/m/Y') }}</td>
+                                    <td class="px-6 py-4 text-right whitespace-nowrap font-black theme-text-heading">${{ number_format($detail->subtotal, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    @endforeach
                 </table>
             </div>
-        @endforeach
 
-        {{-- RESUMEN FINANCIERO --}}
-        <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Resumen</p>
-            <div class="space-y-2">
+            {{-- Totales --}}
+            <div class="border-t border-slate-100 bg-slate-50/60 px-6 py-5 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="font-semibold text-slate-600">Total de la nota</span>
                     <span class="font-black theme-text-heading">${{ number_format($note->total, 2) }}</span>
@@ -157,7 +142,7 @@
                     <span class="font-semibold text-slate-600">{{ ($usesMonthlyCutoffBilling ?? false) ? 'Abonos aplicados internamente' : 'Pagado' }}</span>
                     <span class="font-black text-emerald-600">${{ number_format($note->amount_paid, 2) }}</span>
                 </div>
-                <div class="border-t border-slate-100 pt-2 flex justify-between text-sm">
+                <div class="border-t border-slate-200 pt-2 flex justify-between text-base">
                     <span class="font-black text-slate-700">{{ ($usesMonthlyCutoffBilling ?? false) ? 'Balance interno de la nota' : 'Saldo pendiente' }}</span>
                     <span class="font-black {{ $note->balance > 0 ? 'text-rose-600' : 'text-slate-400' }}">
                         ${{ number_format($note->balance, 2) }}
@@ -165,7 +150,6 @@
                 </div>
             </div>
         </div>
-
         @if(!($usesMonthlyCutoffBilling ?? false) && $note->balance > 0)
             <div class="bg-white border border-slate-200 rounded-[20px] shadow-sm p-6 space-y-4">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

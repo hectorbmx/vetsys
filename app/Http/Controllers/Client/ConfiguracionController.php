@@ -662,6 +662,36 @@ public function updateVeterinarianProfile(
         ->with('success', 'Perfil profesional actualizado correctamente.');
 }
 
+public function updateOwnAvatar(Request $request)
+{
+    $request->validate(['avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120']]);
+    $user = $request->user();
+    $oldPath = $user->avatar;
+    $file = $request->file('avatar');
+    $path = "tenants/{$user->tenant_id}/users/{$user->id}/avatar-".Str::uuid().'.'.strtolower($file->getClientOriginalExtension());
+
+    try {
+        $stored = Storage::disk('r2')->putFileAs(dirname($path), $file, basename($path), ['mimetype' => $file->getMimeType()]);
+        if (! $stored) {
+            throw new \RuntimeException('No se pudo subir la imagen.');
+        }
+        $user->update(['avatar' => $path]);
+    } catch (\Throwable $exception) {
+        report($exception);
+        return back()->with('error', 'No se pudo actualizar la imagen. Intenta nuevamente.');
+    }
+
+    if ($oldPath && $oldPath !== $path) {
+        try {
+            Storage::disk('r2')->delete($oldPath);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    return back()->with('success', 'Imagen de perfil actualizada correctamente.');
+}
+
 public function userAvatar(User $teamUser)
 {
     $actor = auth()->user();

@@ -268,13 +268,23 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full theme-bg-primary-soft theme-text-primary font-black text-xs ring-2 ring-white shadow-sm">
+                <div class="flex items-center gap-2.5" x-data="{ uploadingAvatar: false }">
+                    <form method="POST" action="{{ route('client.mi-configuracion.own-avatar.update') }}" enctype="multipart/form-data" @submit="uploadingAvatar = true">
+                        @csrf
+                        <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" x-ref="avatarFile" class="hidden" @change="if ($event.target.files.length) $el.form.requestSubmit()">
+                        <button type="button" @click="$refs.avatarFile.click()" :disabled="uploadingAvatar" title="Cambiar imagen de perfil" aria-label="Cambiar imagen de perfil" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full theme-bg-primary-soft theme-text-primary font-black text-xs ring-2 ring-white shadow-sm hover:ring-teal-400 disabled:opacity-50">
                         @if(auth()->user()->avatar)
                             <img src="{{ route('client.mi-configuracion.users.avatar', auth()->user()) }}" alt="Imagen de {{ auth()->user()->name }}" class="h-full w-full object-cover">
                         @else
                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                         @endif
+                        </button>
+                    </form>
+                    <div x-show="uploadingAvatar" x-cloak class="fixed inset-0 z-[90] grid place-items-center theme-overlay backdrop-blur-md" role="status" aria-live="polite">
+                        <div class="rounded-3xl bg-white px-10 py-8 text-center shadow-2xl">
+                            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-teal-500"></div>
+                            <p class="mt-4 text-sm font-black theme-text-heading">Actualizando imagen...</p>
+                        </div>
                     </div>
                     <div class="text-right hidden sm:block">
                         <p class="text-xs font-bold text-slate-900 leading-none">{{ auth()->user()->name }}</p>

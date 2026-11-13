@@ -306,6 +306,7 @@ Route::middleware(['auth', 'access.web', 'tenant.plan', 'check.tenant.subscripti
         Route::post('mi-configuracion/users', [ClientConfiguracionController::class, 'storeUser'])->name('mi-configuracion.users.store');
         Route::put('mi-configuracion/users/{teamUser}/veterinarian-profile', [ClientConfiguracionController::class, 'updateVeterinarianProfile'])->name('mi-configuracion.veterinarian-profiles.update');
         Route::get('mi-configuracion/users/{teamUser}/avatar', [ClientConfiguracionController::class, 'userAvatar'])->name('mi-configuracion.users.avatar');
+        Route::post('mi-configuracion/mi-avatar', [ClientConfiguracionController::class, 'updateOwnAvatar'])->name('mi-configuracion.own-avatar.update');
         Route::get('mi-configuracion/veterinarian-profiles/{veterinarianProfile}/signature', [ClientConfiguracionController::class, 'veterinarianSignature'])->name('mi-configuracion.veterinarian-profiles.signature');
         Route::delete('mi-configuracion/veterinarian-profiles/{veterinarianProfile}/signature', [ClientConfiguracionController::class, 'destroyVeterinarianSignature'])->name('mi-configuracion.veterinarian-profiles.signature.destroy');
         Route::put('mi-configuracion/documentos', [ClientConfiguracionController::class, 'updateDocumentSettings'])->name('mi-configuracion.documents.update');
