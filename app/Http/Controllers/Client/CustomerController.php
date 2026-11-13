@@ -59,10 +59,14 @@ class CustomerController extends Controller
                     '(' . $chargesTotal->toSql() . ') - (' . $paymentsTotal->toSql() . ') as general_debt',
                     array_merge($chargesTotal->getBindings(), $paymentsTotal->getBindings())
                 );
-        }, function ($query) {
-            $query->withSum([
-                'saleNotes as general_debt' => fn ($query) => $query->where('status', 'PENDIENTE'),
-            ], 'total');
+        }, function ($query) use ($tenantId) {
+            $pendingNotes = Note::query()
+                ->whereColumn('notes.customer_id', 'customers.id')
+                ->where('notes.tenant_id', $tenantId)
+                ->where('notes.status', 'PENDIENTE')
+                ->selectRaw('COALESCE(SUM(CASE WHEN notes.total > COALESCE((SELECT SUM(np.amount_applied) FROM note_payments np WHERE np.note_id = notes.id), 0) THEN notes.total - COALESCE((SELECT SUM(np.amount_applied) FROM note_payments np WHERE np.note_id = notes.id), 0) ELSE 0 END), 0)');
+
+            $query->select('customers.*')->selectSub($pendingNotes, 'general_debt');
         })
         ->when($request->filled('q'), function ($query) use ($request) {
             $search = $request->q;
@@ -158,6 +162,8 @@ public function show($id)
         'saleNotes.payments.paymentMethod',
         'animals',
         'payments.paymentMethod',
+        'payments.editHistories',
+        'payments' => fn ($query) => $query->orderByDesc('created_at')->orderByDesc('id'),
         'accountSetting',
         'portalUserLinks.user',
         'portalAccesses.user',

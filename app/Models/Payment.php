@@ -28,6 +28,7 @@ class Payment extends Model
 
     public function customer() { return $this->belongsTo(Customer::class); }
     public function paymentMethod() { return $this->belongsTo(PaymentMethod::class); }
+    public function editHistories() { return $this->hasMany(PaymentEditHistory::class)->orderByDesc('id'); }
     
     public function notes()
     {

@@ -14,6 +14,7 @@ class Budget extends Model
     public const STATUS_ACCEPTED = 'accepted';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_EXPIRED = 'expired';
+    public const STATUS_CONVERTED = 'converted';
 
     protected $fillable = [
         'tenant_id',
@@ -56,5 +57,10 @@ class Budget extends Model
     public function items()
     {
         return $this->hasMany(BudgetItem::class);
+    }
+
+    public function note()
+    {
+        return $this->hasOne(Note::class);
     }
 }

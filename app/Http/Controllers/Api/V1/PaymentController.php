@@ -8,6 +8,7 @@ use App\Models\Note;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Services\CustomerPaymentService;
+use App\Services\CustomerPaymentEditService;
 use App\Services\StripeCustomerPaymentService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -114,6 +115,37 @@ class PaymentController extends Controller
 
         return response()->json([
             'data' => $this->serializePayment($payment->load(['customer', 'paymentMethod', 'notes'])),
+        ]);
+    }
+
+    public function update(Request $request, Payment $payment, CustomerPaymentEditService $editor)
+    {
+        abort_if($payment->tenant_id !== $request->user()->tenant_id, 404);
+        abort_if($payment->provider === 'stripe', 422, 'Los pagos de Stripe no se pueden editar.');
+
+        $tenantId = $request->user()->tenant_id;
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'paid_at' => ['required', 'date'],
+            'payment_method_id' => [
+                'required',
+                'integer',
+                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $tenantId)
+                    ->where('is_active', true)),
+            ],
+            'reference' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $updated = $editor->update($payment, [
+            'amount' => (float) $data['amount'],
+            'payment_method_id' => (int) $data['payment_method_id'],
+            'reference' => $data['reference'] ?? null,
+            'created_at' => Carbon::parse($data['paid_at'])->startOfDay(),
+        ]);
+
+        return response()->json([
+            'data' => $this->serializePayment($updated),
         ]);
     }
 

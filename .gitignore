@@ -19,3 +19,4 @@ yarn-error.log
 /.composer-cache
 GEMINI.md
 graphify-out/
+/tests/Feature/CustomerPaymentNotesModeTest.php

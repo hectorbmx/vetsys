@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Budget;
 use App\Models\Note;
 use App\Models\NotePaymentLink;
 use App\Models\PaymentMethod;
@@ -93,10 +94,32 @@ class NoteController extends Controller
             $amountReceived = (float) ($data['amount_received'] ?? 0);
             $status = $amountReceived >= $total ? 'PAGADA' : 'PENDIENTE';
 
+            $budget = null;
+            if (!empty($data['budget_id'])) {
+                $budget = Budget::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->whereKey($data['budget_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$budget || $budget->customer_id !== (int) $data['customer_id']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'budget_id' => 'El presupuesto no pertenece al cliente seleccionado.',
+                    ]);
+                }
+
+                if ($budget->status !== Budget::STATUS_DRAFT || $budget->note()->exists()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'budget_id' => 'Este presupuesto ya no puede convertirse en una venta.',
+                    ]);
+                }
+            }
+
             $note = $tenant->notes()->create([
                 'client_uuid' => $data['client_uuid'] ?? null,
                 'synced_from_mobile' => true,
                 'customer_id' => $data['customer_id'],
+                'budget_id' => $budget?->id,
                 'folio' => $folio,
                 'total' => $total,
                 'status' => $status,
@@ -143,6 +166,8 @@ class NoteController extends Controller
                     'amount_applied' => min($amountReceived, $total),
                 ]);
             }
+
+            $budget?->update(['status' => Budget::STATUS_CONVERTED]);
 
             return $note;
         });
@@ -215,6 +240,11 @@ class NoteController extends Controller
 
         $data = $request->validate([
             'client_uuid' => ['nullable', 'uuid'],
+            'budget_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('budgets', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_method_id' => [
                 'required',
@@ -323,6 +353,8 @@ class NoteController extends Controller
             'id' => $note->id,
             'client_uuid' => $note->client_uuid,
             'customer_id' => $note->customer_id,
+            'budget_id' => $note->budget_id,
+            'budget_id' => $note->budget_id,
             'customer_name' => $note->customer?->full_name,
             'folio' => $note->folio,
             'total' => $note->total,

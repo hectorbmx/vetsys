@@ -10,6 +10,17 @@
         hideCustomerKpis: false,
         animalModalOpen: false,
         animalSearch: '',
+        paymentEditOpen: false,
+        paymentSaving: false,
+        paymentSavingText: '',
+        paymentEdit: {
+            action: '',
+            amount: '',
+            paidAt: '',
+            paymentMethodId: '',
+            reference: '',
+            history: [],
+        },
         init() {
             this.hideCustomerKpis = localStorage.getItem('customerProfile.hideCustomerKpis') === '1';
             if (@js($usesMonthlyCutoffBilling) && this.tab === 'configuracion') {
@@ -19,6 +30,26 @@
         toggleCustomerKpis() {
             this.hideCustomerKpis = !this.hideCustomerKpis;
             localStorage.setItem('customerProfile.hideCustomerKpis', this.hideCustomerKpis ? '1' : '0');
+        },
+        openPaymentEdit(payment) {
+            this.paymentEdit = {
+                action: @js(route('client.payments.update', ['payment' => '__PAYMENT__'])),
+                amount: payment.amount,
+                paidAt: payment.paidAt,
+                paymentMethodId: payment.paymentMethodId,
+                reference: payment.reference || '',
+                history: payment.history || [],
+            };
+            this.paymentEdit.action = this.paymentEdit.action.replace('__PAYMENT__', payment.id);
+            this.paymentEditOpen = true;
+        },
+        closePaymentEdit() {
+            if (!this.paymentSaving) this.paymentEditOpen = false;
+        },
+        beginPaymentSave(event, message) {
+            if (this.paymentSaving) { event.preventDefault(); return; }
+            this.paymentSavingText = message;
+            this.paymentSaving = true;
         },
         ...pagoModal({{ $customer->id }}, @js($usesMonthlyCutoffBilling), {{ (float) max($billingBalance ?? 0, 0) }}),
         ...statementModalState()
@@ -232,7 +263,7 @@
                 </div>
 
                 {{-- Formulario --}}
-                <form method="POST" action="{{ route('client.customers.payments.store', $customer) }}">
+                <form method="POST" action="{{ route('client.customers.payments.store', $customer) }}" @submit="beginPaymentSave($event, 'Registrando pago...')">
                     @csrf
                     <div class="px-6 py-5 space-y-4">
 
@@ -382,8 +413,8 @@
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 class="text-2xl font-black theme-text-heading">CLIENTE: {{ $customer->full_name }}</h1>
-                    <p class="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        {{ $customer->email ?? 'Sin correo' }} | {{ $customer->phone ?? 'Sin telefono' }}
+                    <p class="mt-1 text-xs font-bold uppercase tracking-widest {{ $billingBalance > 0 ? 'text-red-600' : 'text-slate-400' }}">
+                        {{ $billingBalance < 0 ? 'Saldo a favor' : 'Saldo' }}: ${{ number_format(abs($billingBalance), 2) }}
                     </p>
                 </div>
                 <a href="{{ route('client.customers.index') }}"
@@ -615,7 +646,7 @@
                                                 </div>
                                                 <button type="button" @click="openPayment = false" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 font-black">x</button>
                                             </div>
-                                            <form method="POST" action="{{ route('client.ventas.manual-payment', $note) }}" class="space-y-4">
+                                            <form method="POST" action="{{ route('client.ventas.manual-payment', $note) }}" class="space-y-4" @submit="beginPaymentSave($event, 'Registrando pago...')">
                                                 @csrf
                                                 <input type="hidden" name="amount" value="{{ $note->balance }}">
                                                 <div>
@@ -1061,6 +1092,7 @@
                         <th class="px-6 py-4 font-black text-right">Aplicado</th>
                         <th class="px-6 py-4 font-black text-right">Saldo a favor</th>
                         <th class="px-6 py-4 font-black text-right">Monto</th>
+                        <th class="px-6 py-4 font-black text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -1074,10 +1106,32 @@
                             <td class="py-4 text-xs font-black text-slate-600 text-right">${{ number_format($payment->amount_applied, 2) }}</td>
                             <td class="py-4 text-xs font-black text-amber-600 text-right">${{ number_format($payment->unapplied_amount, 2) }}</td>
                             <td class="py-4 text-xs font-black text-emerald-600 text-right">+${{ number_format($payment->amount, 2) }}</td>
+                            <td class="py-4 text-right">
+                                @if($usesMonthlyCutoffBilling)
+                                    <span class="inline-flex rounded-xl bg-slate-100 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400">Solo modo Notas</span>
+                                @elseif($payment->provider === 'stripe')
+                                    <span class="inline-flex rounded-xl bg-slate-100 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400">Stripe bloqueado</span>
+                                @else
+                                    <button
+                                        type="button"
+                                        @click="openPaymentEdit({
+                                            id: {{ $payment->id }},
+                                            amount: @js($payment->amount),
+                                            paidAt: @js($payment->created_at->format('Y-m-d')),
+                                            paymentMethodId: {{ $payment->payment_method_id }},
+                                            reference: @js($payment->reference),
+                                            history: @js($payment->editHistories->map(fn ($entry) => ['user' => $entry->user_name, 'date' => $entry->created_at->format('d/m/Y H:i'), 'before' => $entry->before, 'after' => $entry->after])),
+                                        })"
+                                        class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-700 transition hover:bg-amber-100"
+                                    >
+                                        Editar
+                                    </button>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-4 text-xs text-slate-400 text-center">Sin pagos registrados para este cliente.</td>
+                            <td colspan="7" class="py-4 text-xs text-slate-400 text-center">Sin pagos registrados para este cliente.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -1266,6 +1320,80 @@
 
         </div>
         @endunless
+    </div>
+
+    @if(!$usesMonthlyCutoffBilling)
+        <div x-show="paymentEditOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6" @keydown.escape.window="closePaymentEdit()">
+            <div class="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[28px] bg-white shadow-2xl">
+                <form :action="paymentEdit.action" method="POST" @submit="beginPaymentSave($event, 'Guardando cambios del pago...')">
+                    @csrf
+                    @method('PATCH')
+                    <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Corrección de pago</p>
+                            <h3 class="mt-1 text-xl font-black theme-text-heading">Editar pago manual</h3>
+                            <p class="mt-1 text-xs font-semibold text-slate-400">La cuenta del cliente se recalculará con el nuevo monto.</p>
+                        </div>
+                        <button type="button" @click="closePaymentEdit()" class="text-2xl font-light text-slate-400 hover:text-slate-700" aria-label="Cerrar">&times;</button>
+                    </div>
+
+                    <div class="space-y-4 px-6 py-6">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <label class="block">
+                                <span class="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-slate-400">Monto</span>
+                                <input type="number" name="amount" min="0.01" step="0.01" x-model="paymentEdit.amount" required class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-black theme-text-heading focus:outline-none theme-input">
+                            </label>
+                            <label class="block">
+                                <span class="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha del pago</span>
+                                <input type="date" name="paid_at" x-model="paymentEdit.paidAt" required class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-black theme-text-heading focus:outline-none theme-input">
+                            </label>
+                        </div>
+
+                        <label class="block">
+                            <span class="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-slate-400">Método de pago</span>
+                            <select name="payment_method_id" x-model="paymentEdit.paymentMethodId" required class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
+                                @foreach($paymentMethods as $method)
+                                    <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-slate-400">Referencia</span>
+                            <input type="text" name="reference" x-model="paymentEdit.reference" maxlength="255" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold theme-text-heading focus:outline-none theme-input">
+                        </label>
+                        <div x-show="paymentEdit.history.length" class="rounded-xl bg-slate-50 p-4">
+                            <h4 class="text-xs font-black text-slate-700">Historial de modificaciones</h4>
+                            <div class="mt-3 max-h-48 space-y-3 overflow-y-auto">
+                                <template x-for="(entry, index) in paymentEdit.history" :key="index">
+                                    <div class="border-b border-slate-200 pb-2 text-xs text-slate-600">
+                                        <p class="font-bold" x-text="'Modificado por: ' + (entry.user || 'Usuario no disponible')"></p>
+                                        <p x-text="'Fecha de modificación: ' + entry.date"></p>
+                                        <p x-text="'Monto: $' + entry.before.amount + ' → $' + entry.after.amount"></p>
+                                        <p x-text="'Fecha: ' + entry.before.paid_at + ' → ' + entry.after.paid_at"></p>
+                                        <p x-text="'Método: ' + (entry.before.payment_method || '—') + ' → ' + (entry.after.payment_method || '—')"></p>
+                                        <p x-text="'Referencia: ' + (entry.before.reference || '—') + ' → ' + (entry.after.reference || '—')"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-5">
+                        <button type="button" @click="closePaymentEdit()" class="rounded-xl bg-slate-100 px-5 py-3 text-xs font-black text-slate-600 transition hover:bg-slate-200">Cancelar</button>
+                        <button type="submit" :disabled="paymentSaving" class="theme-button-primary rounded-xl px-5 py-3 text-xs font-black shadow-sm disabled:opacity-60">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <div x-show="paymentSaving" x-cloak class="fixed inset-0 z-[90] grid place-items-center theme-overlay backdrop-blur-md" role="status" aria-live="polite">
+        <div class="rounded-3xl bg-white px-10 py-8 text-center shadow-2xl">
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-teal-500"></div>
+            <p class="mt-4 text-sm font-black theme-text-heading" x-text="paymentSavingText"></p>
+            <p class="mt-1 text-xs text-slate-500">Espera un momento.</p>
+        </div>
     </div>
 
     @include('client.customers.partials.statement-modal')

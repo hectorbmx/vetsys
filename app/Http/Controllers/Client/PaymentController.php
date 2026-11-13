@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Note;
 use App\Models\PaymentMethod;
 use App\Services\CustomerPaymentService;
+use App\Services\CustomerPaymentEditService;
 use App\Services\StripeCustomerPaymentService;
 use App\Services\TenantOnboardingService;
 use Carbon\Carbon;
@@ -98,6 +99,37 @@ class PaymentController extends Controller
         abort_unless($this->isCardMethod($method), 422, 'Selecciona un metodo de pago con tarjeta.');
 
         return $this->generateStripeLink($customer, $method, (float) $data['amount']);
+    }
+
+    public function update(Request $request, \App\Models\Payment $payment, CustomerPaymentEditService $editor)
+    {
+        abort_if($payment->tenant_id !== auth()->user()->tenant_id, 404);
+        abort_if($payment->provider === 'stripe', 422, 'Los pagos de Stripe no se pueden editar.');
+
+        $tenantId = auth()->user()->tenant_id;
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'paid_at' => ['required', 'date'],
+            'payment_method_id' => [
+                'required',
+                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $tenantId)
+                    ->where('is_active', true)),
+            ],
+            'reference' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $updated = $editor->update($payment, [
+            'amount' => (float) $data['amount'],
+            'payment_method_id' => (int) $data['payment_method_id'],
+            'reference' => $data['reference'] ?? null,
+            'created_at' => Carbon::parse($data['paid_at'])->startOfDay(),
+        ]);
+
+        return redirect()
+            ->route('client.customers.show', $updated->customer_id)
+            ->with('activeCustomerTab', 'pagos')
+            ->with('success', 'Pago actualizado correctamente.');
     }
 
     private function validatePayment(Request $request, int $tenantId): array

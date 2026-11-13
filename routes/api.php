@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AnimalClinicalMediaController;
 use App\Http\Controllers\Api\V1\AnimalController;
 use App\Http\Controllers\Api\V1\AnimalTypeController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BudgetController;
 use App\Http\Controllers\Api\V1\CatalogItemController;
 use App\Http\Controllers\Api\V1\ClubController;
 use App\Http\Controllers\Api\V1\CustomerAppointmentController;
@@ -131,6 +132,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/animals/{animal}/telemedicine-shares', [AnimalClinicalMediaController::class, 'share']);
         Route::apiResource('catalog-items', CatalogItemController::class)
             ->only(['index', 'store', 'show', 'update']);
+        Route::get('/budgets/{budget}/pdf', [BudgetController::class, 'pdf']);
+        Route::post('/budgets/{budget}/convert', [BudgetController::class, 'convert']);
+        Route::apiResource('budgets', BudgetController::class)
+            ->only(['index', 'store', 'show', 'destroy']);
         Route::apiResource('notes', NoteController::class)
             ->only(['index', 'store', 'show']);
         Route::post('/notes/{note}/payment-links', [NoteController::class, 'createPaymentLink']);
@@ -145,6 +150,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/customers/{customer}/statements/{statement}', [CustomerStatementController::class, 'show']);
         Route::apiResource('payments', PaymentController::class)
             ->only(['index', 'store', 'show']);
+        Route::patch('/payments/{payment}', [PaymentController::class, 'update']);
         Route::post('/sync/push', [SyncController::class, 'push']);
     });
 });

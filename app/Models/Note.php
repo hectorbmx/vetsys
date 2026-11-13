@@ -14,6 +14,7 @@ class Note extends Model
         'client_uuid',
         'synced_from_mobile',
         'customer_id',
+        'budget_id',
         'folio',
         'public_token',
         'total',
@@ -45,6 +46,7 @@ class Note extends Model
 
     public function tenant() { return $this->belongsTo(Tenant::class); }
     public function customer() { return $this->belongsTo(Customer::class); }
+    public function budget() { return $this->belongsTo(Budget::class); }
     public function details() { return $this->hasMany(NoteDetail::class); }
     public function paymentLinks() { return $this->hasMany(NotePaymentLink::class); }
     

@@ -363,6 +363,7 @@ a           |-------------------------------------------------------------------
         // PAGOS A NMOTAS DE CLIENTES
 
         Route::post('customers/{customer}/payments', [PaymentController::class, 'store'])->name('customers.payments.store');
+        Route::patch('payments/{payment}', [PaymentController::class, 'update'])->name('payments.update');
         Route::post('customers/{customer}/stripe-payment-link', [PaymentController::class, 'createStripePaymentLink'])->name('customers.stripe-payment-link');
         Route::get('customers/{customer}/payments/preview', [PaymentController::class, 'preview'])->name('customers.payments.preview');
         Route::get('customers/{customer}/statement', [StatementController::class, 'generate'])->name('customers.statement.generate');
