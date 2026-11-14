@@ -1,3 +1,7 @@
+## Paridad con la app móvil del tenant
+
+Cuando se actualice alguna función de Laravel, revisar su equivalente en la app móvil del tenant (`../gorozpeApp`) y llevar el cambio a la app también cuando aplique. Revisar contratos de API, permisos, modos de trabajo y funcionamiento sin conexión; coordinar la implementación según el alcance autorizado. Si queda trabajo pendiente, documentarlo explícitamente junto con las pruebas necesarias. No asumir que compilar o modificar la API garantiza paridad funcional.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

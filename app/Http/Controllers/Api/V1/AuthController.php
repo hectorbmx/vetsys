@@ -100,6 +100,10 @@ class AuthController extends Controller
     public function serializeUser(User $user): array
     {
         $tenant = $user->tenant;
+        $logoUrl = $tenant?->logoUrl();
+        if ($logoUrl && str_starts_with($logoUrl, '/')) {
+            $logoUrl = url($logoUrl);
+        }
 
         return [
             'id' => $user->id,
@@ -109,6 +113,7 @@ class AuthController extends Controller
             'tenant' => $tenant ? [
                 'id' => $tenant->id,
                 'name' => $tenant->name,
+                'logo_url' => $logoUrl,
                 'business_name' => $tenant->business_name,
                 'email' => $tenant->email,
                 'phone' => $tenant->phone,

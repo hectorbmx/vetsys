@@ -80,9 +80,39 @@ class CatalogItemController extends Controller
             'type' => ['required', Rule::in(['product', 'service'])],
             'description' => ['nullable', 'string', 'max:500'],
             'price' => ['required', 'numeric', 'min:0'],
+            'from_sale' => ['sometimes', 'boolean'],
+            'client_uuid' => ['nullable', 'uuid'],
         ]);
 
+        if (! $request->boolean('from_sale') && ! empty($data['client_uuid'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['client_uuid' => 'El identificador solo se admite para captura rápida.']);
+        }
+
+        if ($request->boolean('from_sale')) {
+            if ($data['type'] !== 'service') {
+                throw \Illuminate\Validation\ValidationException::withMessages(['type' => 'La captura rápida solo permite servicios.']);
+            }
+            if (! empty($data['client_uuid']) && ((float) $data['price'] > 9999999999.99 || abs((float) $data['price'] * 100 - round((float) $data['price'] * 100)) > 0.00001)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['price' => 'El precio debe tener como máximo dos decimales y caber en el catálogo.']);
+            }
+            $tenant = $request->user()->tenant;
+            $result = app(\App\Services\QuickCatalogService::class)->createOrReuse($tenant, $data['name'], (float) $data['price'], $data['client_uuid'] ?? null);
+            app(\App\Services\TenantOnboardingService::class)->reconcileSafely($tenant);
+
+            return response()->json([
+                'data' => $this->serializeItem($result['item']),
+                'created' => $result['created'],
+                'idempotent' => $result['idempotent'],
+                'client_uuid' => $data['client_uuid'] ?? null,
+                'sale_price' => (float) $data['price'],
+            ], $result['created'] && ! $result['idempotent'] ? 201 : 200);
+        }
+
         $item = DB::transaction(function () use ($data, $tenantId) {
+            $tenant = \App\Models\Tenant::query()->whereKey($tenantId)->lockForUpdate()->firstOrFail();
+            if ($data['type'] === 'service') {
+                app(\App\Services\QuickCatalogService::class)->assertServiceNameAvailable($tenant, $data['name']);
+            }
             $item = CatalogItem::create([
                 'tenant_id' => $tenantId,
                 'name' => $data['name'],

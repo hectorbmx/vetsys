@@ -184,8 +184,13 @@ class NoteController extends Controller
     {
         abort_if($note->tenant_id !== $request->user()->tenant_id, 404);
 
+        $note->load(['customer', 'details.catalogItem', 'details.animal', 'payments.paymentMethod']);
+
         return response()->json([
-            'data' => $this->serializeNote($note->load(['customer', 'details.catalogItem', 'details.animal', 'payments.paymentMethod'])),
+            'data' => array_merge($this->serializeNote($note), [
+                'ticket_url' => $note->public_token ? route('public.ventas.ticket', $note->public_token) : null,
+                'customer_phone' => $note->customer?->phone,
+            ]),
         ]);
     }
 

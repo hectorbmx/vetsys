@@ -189,6 +189,10 @@ class CatalogItemController extends Controller
 
         // Ejecutamos en transacción para asegurar integridad total
         DB::transaction(function () use ($request, $tenant, $sku) {
+            $tenant = \App\Models\Tenant::query()->whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            if ($request->type === 'service') {
+                app(\App\Services\QuickCatalogService::class)->assertServiceNameAvailable($tenant, $request->name);
+            }
             $hasInventory = $request->type === 'product' && $request->boolean('has_inventory');
 
             // 1. Crear el artículo base
@@ -258,37 +262,8 @@ class CatalogItemController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
-        $serviceName = trim($data['name']);
-
-        $item = DB::transaction(function () use ($tenant, $data, $serviceName) {
-            $existingItem = $tenant->catalogItems()
-                ->where('type', 'service')
-                ->where('is_active', true)
-                ->whereRaw('LOWER(name) = ?', [mb_strtolower($serviceName)])
-                ->first();
-
-            if ($existingItem) {
-                return $existingItem->load('inventory');
-            }
-
-            $item = $tenant->catalogItems()->create([
-                'name' => $serviceName,
-                'type' => 'service',
-                'description' => null,
-                'has_inventory' => false,
-                'tax_percentage' => 0.00,
-                'is_active' => true,
-            ]);
-
-            $item->priceHistories()->create([
-                'tenant_id' => $tenant->id,
-                'price' => $data['price'],
-                'start_date' => now(),
-                'end_date' => null,
-            ]);
-
-            return $item->load('inventory');
-        });
+        $result = app(\App\Services\QuickCatalogService::class)->createOrReuse($tenant, $data['name'], (float) $data['price']);
+        $item = $result['item'];
 
         app(TenantOnboardingService::class)->reconcileSafely($tenant);
 
@@ -303,6 +278,7 @@ class CatalogItemController extends Controller
             'stock_actual' => null,
             'stock_minimo' => null,
             'allow_negative_stock' => false,
+            'created' => $result['created'],
         ], 201);
     }
 

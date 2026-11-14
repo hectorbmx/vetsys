@@ -7,6 +7,7 @@ use App\Models\Animal;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SyncController extends Controller
@@ -18,6 +19,8 @@ class SyncController extends Controller
             'customers.*' => ['array'],
             'animals' => ['nullable', 'array'],
             'animals.*' => ['array'],
+            'services' => ['nullable', 'array'],
+            'services.*' => ['array'],
             'notes' => ['nullable', 'array'],
             'notes.*' => ['array'],
             'payments' => ['nullable', 'array'],
@@ -27,6 +30,7 @@ class SyncController extends Controller
         $results = [
             'customers' => [],
             'animals' => [],
+            'services' => [],
             'notes' => [],
             'payments' => [],
         ];
@@ -53,9 +57,28 @@ class SyncController extends Controller
             }
         }
 
+        $failedServices = [];
+        foreach ($payload['services'] ?? [] as $item) {
+            $item['type'] = 'service';
+            $item['from_sale'] = true;
+            if (empty($item['client_uuid'])) {
+                $results['services'][] = ['status' => 'error', 'client_uuid' => null, 'message' => 'Falta el identificador del servicio.', 'http_status' => 422];
+                continue;
+            }
+            $result = $this->runItem($request, CatalogItemController::class, 'store', $item);
+            $results['services'][] = $result;
+            if ($result['status'] !== 'synced') {
+                $failedServices[] = $item['client_uuid'];
+            }
+        }
+
         foreach ($payload['notes'] ?? [] as $item) {
             $item = $this->resolveCustomerReference($request, $item, $customerMap);
             $item = $this->resolveAnimalReferences($request, $item, $animalMap);
+            if (! $this->resolveServiceReferences($request, $item, $failedServices)) {
+                $results['notes'][] = ['status' => 'error', 'client_uuid' => $item['client_uuid'] ?? null, 'message' => 'La nota depende de un servicio pendiente o no disponible.', 'http_status' => 422];
+                continue;
+            }
             $result = $this->runItem($request, NoteController::class, 'store', $item);
             $results['notes'][] = $result;
         }
@@ -70,6 +93,35 @@ class SyncController extends Controller
             'server_time' => now()->toISOString(),
             'results' => $results,
         ]);
+    }
+
+    private function resolveServiceReferences(Request $request, array &$item, array $failedServices): bool
+    {
+        if (! isset($item['items']) || ! is_array($item['items'])) {
+            return true;
+        }
+        foreach ($item['items'] as &$detail) {
+            if (! is_array($detail) || ! array_key_exists('catalog_client_uuid', $detail)) {
+                continue;
+            }
+            $uuid = $detail['catalog_client_uuid'];
+            if (! is_string($uuid) || in_array($uuid, $failedServices, true)) {
+                return false;
+            }
+            $id = DB::table('quick_service_operations as ops')
+                ->join('catalog_items as catalog', 'catalog.id', '=', 'ops.catalog_item_id')
+                ->where('ops.tenant_id', $request->user()->tenant_id)
+                ->where('catalog.tenant_id', $request->user()->tenant_id)
+                ->where('ops.client_uuid', $uuid)
+                ->where('catalog.type', 'service')->where('catalog.is_active', true)
+                ->whereNull('catalog.deleted_at')->value('catalog.id');
+            if (! $id) {
+                return false;
+            }
+            $detail['id'] = $id;
+            unset($detail['catalog_client_uuid']);
+        }
+        return true;
     }
 
     private function runItem(Request $parentRequest, string $controllerClass, string $method, array $item): array
